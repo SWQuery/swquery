@@ -56,10 +56,10 @@ export default function Home() {
           transition={{ duration: 0.8 }}
         >
           <h2 className="text-6xl font-bold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-[#9C88FF] via-[#6C5CE7] to-[#2D88E6]">
-            Consultas de transações em sua wallet com linguagem natural
+            Query transactions in your wallet with natural language
           </h2>
           <p className="text-lg mb-8 text-gray-300 leading-relaxed">
-            Utilize o potencial da tecnologia blockchain da Solana para consultar e visualizar transações com facilidade e velocidade inigualável, usando a inteligência da nossa plataforma.
+            Utilize the power of Solana blockchain technology to easily and quickly query and visualize transactions using the intelligence of our platform.
           </p>
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -71,19 +71,19 @@ export default function Home() {
               <div className="bg-gradient-to-r from-[#9C88FF] to-[#6C5CE7] p-2 rounded-full shadow-md">
                 <Database className="text-black" size={32} />
               </div>
-              <span className="text-lg">Extração de Dados Simplificada</span>
+              <span className="text-lg">Simplified Data Extraction</span>
             </div>
             <div className="flex items-center space-x-4">
               <div className="bg-gradient-to-r from-[#6C5CE7] to-[#2D88E6] p-2 rounded-full shadow-md">
                 <Layers className="text-black" size={32} />
               </div>
-              <span className="text-lg">Transformação Inteligente de Dados</span>
+              <span className="text-lg">Intelligent Data Transformation</span>
             </div>
             <div className="flex items-center space-x-4">
               <div className="bg-gradient-to-r from-[#9C88FF] to-[#6C5CE7] p-2 rounded-full shadow-md">
                 <ZoomIn className="text-black" size={32} />
               </div>
-              <span className="text-lg">Visualização de Dados Abrangente</span>
+              <span className="text-lg">Comprehensive Data Visualization</span>
             </div>
           </motion.div>
           <div className="mt-10 flex space-x-4">
@@ -153,7 +153,7 @@ export default function Home() {
           transition={{ duration: 0.6 }}
           className="text-4xl font-bold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-[#14F195] to-[#00D1FF]"
         >
-          Como Funciona
+          How It Works
         </motion.h3>
         <motion.div
           initial={{ opacity: 0 }}
@@ -169,9 +169,9 @@ export default function Home() {
             className="bg-[#1A1A1A] rounded-xl p-6 shadow-md"
           >
             <ChevronRight className="text-[#14F195] mx-auto" size={48} />
-            <h4 className="text-xl font-bold mt-4">Conecte sua Wallet</h4>
+            <h4 className="text-xl font-bold mt-4">Connect Your Wallet</h4>
             <p className="text-gray-400 mt-2">
-              Use sua carteira Solana para integrar ao sistema SWquery.
+              Use your Solana wallet to integrate with the SWquery system.
             </p>
           </motion.div>
           <motion.div
@@ -181,9 +181,9 @@ export default function Home() {
             className="bg-[#1A1A1A] rounded-xl p-6 shadow-md"
           >
             <ChevronRight className="text-[#9945FF] mx-auto" size={48} />
-            <h4 className="text-xl font-bold mt-4">Selecione os Dados</h4>
+            <h4 className="text-xl font-bold mt-4">Select Data</h4>
             <p className="text-gray-400 mt-2">
-              Escolha as transações que deseja consultar e filtrar.
+              Choose the transactions you want to query and filter.
             </p>
           </motion.div>
           <motion.div
@@ -193,9 +193,9 @@ export default function Home() {
             className="bg-[#1A1A1A] rounded-xl p-6 shadow-md"
           >
             <ChevronRight className="text-[#00D1FF] mx-auto" size={48} />
-            <h4 className="text-xl font-bold mt-4">Visualize Resultados</h4>
+            <h4 className="text-xl font-bold mt-4">Visualize Results</h4>
             <p className="text-gray-400 mt-2">
-              Acesse visualizações intuitivas e relatórios personalizados.
+              Access intuitive visualizations and personalized reports.
             </p>
           </motion.div>
         </motion.div>
@@ -203,7 +203,7 @@ export default function Home() {
 
       <section className="container mx-auto px-6 py-16 text-center">
         <h3 className="text-4xl font-bold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-[#14F195] to-[#00D1FF]">
-          Funcionalidades que destacam nossa plataforma
+          Key Features of Our Platform
         </h3>
         <div className="grid md:grid-cols-3 gap-8">
           <motion.div
@@ -213,9 +213,9 @@ export default function Home() {
             className="bg-[#1A1A1A] rounded-xl p-6 shadow-md hover:scale-105 transition-transform"
           >
             <Brain className="text-[#14F195] mx-auto" size={48} />
-            <h4 className="text-xl font-bold mt-4">IA Avançada</h4>
+            <h4 className="text-xl font-bold mt-4">Advanced AI</h4>
             <p className="text-gray-400 mt-2">
-              Soluções inteligentes para análise automatizada de dados complexos.
+              Intelligent solutions for automated analysis of complex data.
             </p>
           </motion.div>
           <motion.div
@@ -225,9 +225,9 @@ export default function Home() {
             className="bg-[#1A1A1A] rounded-xl p-6 shadow-md hover:scale-105 transition-transform"
           >
             <PieChart className="text-[#9945FF] mx-auto" size={48} />
-            <h4 className="text-xl font-bold mt-4">Visualizações Intuitivas</h4>
+            <h4 className="text-xl font-bold mt-4">Intuitive Visualizations</h4>
             <p className="text-gray-400 mt-2">
-              Gráficos e relatórios claros para interpretação instantânea.
+              Clear charts and reports for instant interpretation.
             </p>
           </motion.div>
           <motion.div
@@ -237,9 +237,9 @@ export default function Home() {
             className="bg-[#1A1A1A] rounded-xl p-6 shadow-md hover:scale-105 transition-transform"
           >
             <Globe className="text-[#00D1FF] mx-auto" size={48} />
-            <h4 className="text-xl font-bold mt-4">Conexão Global</h4>
+            <h4 className="text-xl font-bold mt-4">Global Connection</h4>
             <p className="text-gray-400 mt-2">
-              Integração perfeita com a rede Solana em qualquer lugar do mundo.
+              Seamless integration with the Solana network anywhere in the world.
             </p>
           </motion.div>
         </div>
@@ -247,7 +247,7 @@ export default function Home() {
 
       <section className="container mx-auto px-6 py-16 text-center">
         <h3 className="text-4xl font-bold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-[#14F195] to-[#00D1FF]">
-          Benefícios Técnicos
+          Technical Benefits
         </h3>
         <div className="grid md:grid-cols-2 gap-12 text-left">
           <motion.div
@@ -257,9 +257,9 @@ export default function Home() {
             className="bg-[#1A1A1A] rounded-xl p-6 shadow-md"
           >
             <ShieldCheck className="text-[#14F195]" size={48} />
-            <h4 className="text-xl font-bold mt-4">Segurança de Ponta</h4>
+            <h4 className="text-xl font-bold mt-4">Cutting-Edge Security</h4>
             <p className="text-gray-400 mt-2">
-              Garantimos a segurança dos seus dados com criptografia avançada e padrões de segurança de blockchain.
+              We ensure the security of your data with advanced encryption and blockchain security standards.
             </p>
           </motion.div>
           <motion.div
@@ -269,9 +269,9 @@ export default function Home() {
             className="bg-[#1A1A1A] rounded-xl p-6 shadow-md"
           >
             <PieChart className="text-[#9945FF]" size={48} />
-            <h4 className="text-xl font-bold mt-4">Escalabilidade</h4>
+            <h4 className="text-xl font-bold mt-4">Scalability</h4>
             <p className="text-gray-400 mt-2">
-              Nossa solução é otimizada para lidar com grandes volumes de transações sem perda de desempenho.
+              Our solution is optimized to handle large volumes of transactions without performance loss.
             </p>
           </motion.div>
         </div>
