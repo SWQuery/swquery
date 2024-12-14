@@ -1,7 +1,7 @@
 'use client';
 
 import Image from "next/image";
-import HorizontalLogo from "../public/horizontal-logo.svg";
+import HorizontalLogo from "../public/logo-horizontal.png";
 import { motion } from 'framer-motion';
 import { Database, Layers, ZoomIn, PieChart, Brain, Globe, ChevronRight, ShieldCheck, Copy } from 'lucide-react';
 import { useState } from "react";
@@ -30,7 +30,7 @@ export default function Home() {
           transition={{ duration: 0.6 }}
           className="flex items-center space-x-4"
         >
-          <Image src={HorizontalLogo} alt="Logo" width={250} unoptimized />
+          <Image src={HorizontalLogo} alt="Logo" width={300} unoptimized />
         </motion.div>
         <motion.div
           initial={{ opacity: 0, y: -20 }}
