@@ -1,0 +1,24 @@
+[package]
+name = "credit-sales"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib", "lib"]
+
+[dependencies]
+pinocchio = { git = "https://github.com/febo/pinocchio" }
+pinocchio-system = { git = "https://github.com/febo/pinocchio" }
+pinocchio-token = { git = "https://github.com/febo/pinocchio" }
+five8_const = "0.1.3"
+
+[dev-dependencies]
+# mollusk-svm = { git = "https://github.com/deanmlittle/mollusk" }
+mollusk-svm = { path = "../../mollusk/harness" }
+# mollusk-token = { git = "https://github.com/deanmlittle/mollusk" }
+mollusk-token = { path = "../../mollusk/programs/token" }
+solana-sdk = "2.0.8"
+spl-token = "6.0.0"
+
+[features]
+default = []

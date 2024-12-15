@@ -1,7 +1,10 @@
 [workspace]
 resolver = "2"
-members = ["sdk"]
-exclude = ["frontend","frontend_test"]
+members = [
+    "sdk",
+    "credit-sales"
+]
+exclude = ["frontend"]
 
 [workspace.package]
 edition = "2021"
@@ -10,7 +13,5 @@ authors = ["Marcelo G Feitoza <feitoza.marcelo7@gmail.com>", "Victor Carvalho <v
 repository = "https://github.com/vict0rcarvalh0/swquery"
 
 [workspace.dependencies]
-solana-client = "2.0"
-solana-sdk = "2.0"
 serde = { version = "1.0", features = ["derive"] }
 tokio = { version = "1", features = ["full"] }

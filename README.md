@@ -1,134 +1,109 @@
-# **🔍 SWquery: Smart Wallet Query**
+**🔍 SWquery: Smart Wallet Query**
 
 <h1 align="center">
     <a href="https://github.com/swquery">
-        <img src="https://via.placeholder.com/200?text=SWquery+Logo" width="200px" alt="SWquery Logo">
+        <img src=".docs/5be57833-5a4f-41a1-849c-260b660df496-2.png" width="200px" alt="SWquery Logo">
     </a>
 </h1>
 
 <p align="center">
-    <i>Conectando você ao mundo das transações on-chain, com clareza e inteligência.</i>
+    <i>"Connecting intelligence and accessibility to the world of blockchain transactions."</i>
 </p>
 
 <p align="center">
-    <img src="https://via.placeholder.com/800x200?text=SWquery+Banner" width="800px" alt="SWquery Banner">
+    <img src="https://via.placeholder.com/800x400?text=SWquery+Banner" width="800px" alt="SWquery Banner">
 </p>
 
 ---
 
-## **🚨 O Problema**
+## **📜 About the Project**
 
-A blockchain é poderosa, mas sua complexidade pode afastar os usuários:
-- **Dificuldade em interpretar dados brutos**: Usuários não técnicos enfrentam barreiras ao entender transações on-chain.
-- **Falta de ferramentas de visualização acessíveis**: A maioria das soluções exige conhecimento técnico avançado.
-- **Integração limitada**: Poucas ferramentas permitem personalização ou integração com outros aplicativos.
+**SWquery** (Smart Wallet Query) is an innovative solution that simplifies interaction with transactions on the Solana blockchain. It offers a user-friendly interface and a versatile SDK in Rust, integrating natural language processing (NLP) to make blockchain queries intuitive and accessible.
 
 ---
 
-## **💡 Nossa Solução**
+## **🚨 The Problem**
 
-**SWquery** é uma plataforma e SDK que:
-- **Consulta e interpreta transações on-chain** com suporte a **linguagem natural**.
-- Oferece uma interface visual para **explorar dados da Solana**.
-- **Integra-se com um chatbot** para interação personalizada com dados de carteira.
-- Disponibiliza um SDK em **Rust** para desenvolvedores, permitindo fácil integração em outras aplicações.
+Blockchain is powerful but presents challenges:
+- **Complex Data**: On-chain transactions are difficult for non-technical users to interpret.
+- **Lack of Accessible Tools**: Existing solutions require advanced technical knowledge.
+- **Difficulty in Customization**: Few tools offer modular integration or customizable interfaces.
+
+These barriers limit adoption and efficiency for both users and developers.
+
+---
+
+## **💡 Our Solution**
+
+**SWquery** addresses these challenges with:
+- **Natural Language Queries**: Ask *"What were my transactions greater than 10 SOL in the last week?"* and receive clear and structured responses.
+- **Intelligent Chatbot**: An integrated assistant that helps in visualization and customization of queries.
+- **SDK in Rust**: A toolkit for developers to create customized solutions.
+- **Real-Time Notifications**: Receive automatic alerts of important transactions directly in the interface.
 
 <p align="center">
-    <img src="https://via.placeholder.com/600x300?text=SWquery+Solution" width="600px" alt="SWquery Solution">
+    <img src="https://via.placeholder.com/600x300?text=Our+Solution" width="600px" alt="Our Solution">
 </p>
 
 ---
 
-## **🚀 Funcionalidades**
+## **🎯 Use Cases**
 
-- **Linguagem Natural**: Permite perguntas como *"Quais transações ocorreram nos últimos 7 dias?"*.
-- **Chatbot Inteligente**: Consultas simplificadas diretamente na interface.
-- **Notificações em Tempo Real**: Acompanhe novas transações via WebSockets.
-- **SDK em Rust**: Solução modular para integração em outras plataformas.
-- **Visualizações Avançadas**: Transforme dados complexos em gráficos e relatórios claros.
+### **1. End User**
+- **Problem**: Difficulty in understanding blockchain transactions.
+- **Solution**: Use **SWquery** to query *"Which transactions involve more than 100 USDC in the last 30 days?"* and receive a detailed visual summary.
 
----
+### **2. Developers**
+- **Problem**: Need to integrate on-chain data into their applications.
+- **Solution**: The SDK allows easy access to transactions and metadata, optimized for robust integrations.
 
-## **🛠️ Tecnologias**
-
-| Tecnologia          | Uso                              |
-|---------------------|----------------------------------|
-| **Rust**            | SDK para integração com Solana  |
-| **Next.js**         | Frontend interativo             |
-| **Redis**           | Cache para otimizar consultas   |
-| **OpenAI**          | Processamento de linguagem natural |
-| **Prometheus/Grafana** | Monitoramento e observabilidade |
+### **3. Companies**
+- **Problem**: Monitoring transactions in real time.
+- **Solution**: Utilize notifications for instant alerts of on-chain events.
 
 ---
 
-## **🔧 Diagrama de Arquitetura**
+## **🌟 Features**
+
+- **Natural Language**: Perform intuitive queries directly on the blockchain.
+- **Customized Chatbot**: Assist users with explanations and actions based on their data.
+- **Modular SDK**: Complete tools for developers to use in any application.
+- **Interactive Visualizations**: Graphs and tables to facilitate transaction analysis.
+- **Real-Time Notifications**: Receive instant updates of relevant events.
+
+---
+
+## **🛠️ Technologies Used**
+
+| Technology          | Usage                                     |
+|---------------------|-------------------------------------------|
+| **Rust**            | SDK for integration with Solana           |
+| **Next.js**         | Interactive frontend                      |
+| **OpenAI**          | Natural language processing               |
+
+---
+
+## **🔧 Architecture Diagram**
 
 <p align="center">
-    <img src="https://via.placeholder.com/800x400?text=SWquery+Architecture" width="800px" alt="Arquitetura do SWquery">
+    <img src="https://via.placeholder.com/800x400?text=SWquery+Architecture" width="800px" alt="Project Architecture">
 </p>
 
 ---
 
-## **💻 Casos de Uso**
+## **📦 How to Use**
 
-### **1. Usuários Finais**
-- **Problema**: Um usuário deseja entender suas transações, mas encontra dificuldades para interpretar os dados on-chain.
-- **Solução**: O SWquery permite consultar *"Todas as transações maiores que 100 SOL na última semana"* e apresenta um relatório detalhado.
-
-### **2. Desenvolvedores**
-- **Problema**: Desenvolvedores precisam de uma API para integrar consultas à blockchain em seus produtos.
-- **Solução**: O SDK em Rust oferece APIs robustas para acessar e interpretar dados de transações.
-
-### **3. Monitoramento em Tempo Real**
-- **Problema**: Empresas precisam de notificações de eventos on-chain para suas operações.
-- **Solução**: O SWquery fornece notificações instantâneas via WebSockets.
+### **1. SDK in Rust**
 
 ---
 
-## **📦 Como Usar**
-
-### **1. Frontend**
-- Clone o repositório:
-  ```bash
-  git clone https://github.com/swquery/frontend.git
-  cd frontend
-  ```
-- Instale as dependências:
-  ```bash
-  npm install
-  ```
-- Execute a aplicação:
-  ```bash
-  npm run dev
-  ```
-
-### **2. Backend (SDK em Rust)**
-- Clone o repositório:
-  ```bash
-  git clone https://github.com/swquery/sdk.git
-  cd sdk
-  ```
-- Compile e execute o SDK:
-  ```bash
-  cargo build
-  cargo run
-  ```
-
-### **3. Configuração de Redis**
-- Suba o Redis com Docker:
-  ```bash
-  docker run --name redis -p 6379:6379 -d redis
-  ```
-
----
-
-## **🌳 Estrutura do Projeto**
+## **🌳 Project Structure**
 
 ```
 .
 ├── frontend
 │   ├── components
-│   ├── pages
+│   ├── app
 │   ├── public
 │   └── utils
 ├── sdk
@@ -138,53 +113,39 @@ A blockchain é poderosa, mas sua complexidade pode afastar os usuários:
 │   │   ├── cache.rs
 │   │   └── utils.rs
 └── docs
-    ├── Arquitetura.png
-    ├── Fluxo.png
+    ├── Architecture.png
+    ├── Flow.png
     └── README.md
 ```
 
 ---
 
-## **🛤️ Roadmap**
-
-- **Versão 1.0**
-  - Lançamento inicial com consultas básicas por PLN.
-  - Chatbot integrado.
-- **Versão 2.0**
-  - Suporte a múltiplos idiomas.
-  - Visualizações personalizadas no frontend.
-- **Versão 3.0**
-  - Integração com DeFi e NFTs.
-  - Suporte a exportação de relatórios.
-
----
-
-## **👥 Nossa Equipe**
+## **👥 Our Team**
 
 <table>
   <tr>
     <td align="center">
       <a href="https://www.linkedin.com/in/arthur-bretas/">
-        <img src="https://via.placeholder.com/100?text=Foto" width="100px;" alt="Perfil"/><br>
+        <img src=".docs/1712878340984.jpeg" width="100px;" alt="Profile"/><br>
         <sub><b>Arthur Bretas</b></sub>
       </a>
     </td>
     <td align="center">
+      <a href="https://www.linkedin.com/in/marcelofeitoza7/">
+        <img src=".docs/1685121810573.jpeg" width="100px;" alt="Profile"/><br>
+        <sub><b>Marcelo Feitoza</b></sub>
+      </a>
+    </td>
+     <td align="center">
       <a href="https://www.linkedin.com/in/victor-severiano-de-carvalho/">
-        <img src="https://via.placeholder.com/100?text=Foto" width="100px;" alt="Perfil"/><br>
+        <img src=".docs/1672973855007.jpeg" width="100px;" alt="Profile"/><br>
         <sub><b>Victor Carvalho</b></sub>
       </a>
     </td>
-    <td align="center">
-      <a href="https://www.linkedin.com/in/marcelofeitoza7/">
-        <img src="https://via.placeholder.com/100?text=Foto" width="100px;" alt="Perfil"/><br>
-        <sub><b>Pedro </b></sub>
-      </a>
-    </td>
-    <td align="center">
+     <td align="center">
       <a href="https://www.linkedin.com/in/pedro-hagge/">
-        <img src="https://via.placeholder.com/100?text=Foto" width="100px;" alt="Perfil"/><br>
-        <sub><b>Nome do Membro</b></sub>
+        <img src=".docs/1684025179170.jpeg" width="100px;" alt="Profile"/><br>
+        <sub><b>Pedro Hagge</b></sub>
       </a>
     </td>
   </tr>
@@ -192,12 +153,4 @@ A blockchain é poderosa, mas sua complexidade pode afastar os usuários:
 
 ---
 
-<p align="center">Feito com ❤️ pela equipe SWquery 🚀</p>
-```
-
-### **Personalização**
-- Substitua os links e imagens (`https://via.placeholder.com/...`) pelos recursos visuais e URLs do seu projeto.
-- Complete a seção da equipe com fotos e nomes dos integrantes.
-- Adicione gráficos e diagramas ao diretório `docs` para ilustrar o projeto.
-
-Se precisar de mais ajustes ou novos elementos, posso ajudar!
+<p align="center">Made with ❤️ by the SWquery team 🚀</p>
