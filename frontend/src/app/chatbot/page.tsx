@@ -174,7 +174,7 @@ export default function ChatInterface() {
                 </h1>
                 <p className="text-sm text-gray-400">
                   You can ask about a prompt below or type in your own query.
-                  I'll try my best to provide a good response based on the mode
+                  I&apos;ll try my best to provide a good response based on the mode
                   selected below.
                 </p>
               </div>
