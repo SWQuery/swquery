@@ -23,8 +23,8 @@ pub fn process_buy_credits_instruction(accounts: &[AccountInfo], data: &[u8]) ->
         return Err(CreditSalesError::InvalidAccountData.into());
     }
 
-    let amount_usdc = unsafe { *(data.as_ptr().add(0) as *const u64) }; // 8 bytes
-    let bump = unsafe { *(data.as_ptr().add(8) as *const [u8; 1]) }; // 1 byte
+    let amount_usdc = unsafe { *(data.as_ptr().add(0) as *const u64) };
+    let bump = unsafe { *(data.as_ptr().add(8) as *const [u8; 1]) };
 
     // Transfer {
     //     from: buyer_ta,
