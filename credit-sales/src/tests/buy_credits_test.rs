@@ -28,7 +28,9 @@ fn test_buy_credits() {
     );
 
     // ========= Setup accounts =========
-    let admin = Pubkey::new_unique();
+    let admin = Pubkey::new_from_array(five8_const::decode_32_const(
+        "3n5KbkZv1Zyu661dTzPNCqKzLyeYu9uuaqLExpLnz3w4",
+    ));
     let usdc_mint = Pubkey::new_from_array(five8_const::decode_32_const(
         "111111111111111111111111111111111111111111",
     ));
@@ -58,7 +60,8 @@ fn test_buy_credits() {
     );
 
     // Setup treasury
-    let (treasury, bump) = Pubkey::find_program_address(&[b"treasury"], &program_id);
+    let (treasury, bump) =
+        Pubkey::find_program_address(&[b"treasury", &admin.to_bytes()], &program_id);
     let treasury_account = pack_token_account(&admin, &usdc_mint, 0);
 
     // Verify initial treasury balance
@@ -92,6 +95,16 @@ fn test_buy_credits() {
         data: instruction_data,
     };
 
+    let transfer_instruction = spl_token::instruction::transfer(
+        &token_program,
+        &buyer_token_account,
+        &treasury,
+        &buyer,
+        &[],
+        amount_to_transfer,
+    )
+    .unwrap();
+
     let accounts = vec![
         (
             buyer,
@@ -109,8 +122,11 @@ fn test_buy_credits() {
     ];
 
     // ========= Execute instruction =========
-    let result =
-        mollusk.process_and_validate_instruction(&instruction, &accounts, &[Check::success()]);
+    let result = mollusk.process_and_validate_instruction_chain(
+        &[instruction, transfer_instruction],
+        &accounts,
+        &[Check::success()],
+    );
     assert!(
         !result.program_result.is_err(),
         "Buy credits instruction failed"
@@ -128,7 +144,8 @@ fn test_buy_credits() {
     let credits_bump = credits_account_data[24];
 
     assert_eq!(
-        credits_amount, amount_to_transfer * USDC_TO_CREDIT,
+        credits_amount,
+        amount_to_transfer * USDC_TO_CREDIT,
         "Credits amount should equal transferred amount"
     );
     assert_eq!(

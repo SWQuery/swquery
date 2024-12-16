@@ -25,7 +25,9 @@ fn test_withdraw_usdc() {
     );
 
     // Admin and buyer accounts
-    let admin = Pubkey::new_unique();
+    let admin = Pubkey::new_from_array(five8_const::decode_32_const(
+        "3n5KbkZv1Zyu661dTzPNCqKzLyeYu9uuaqLExpLnz3w4",
+    ));
     let buyer = Pubkey::new_unique();
 
     // Mint authority and USDC mint
@@ -36,7 +38,8 @@ fn test_withdraw_usdc() {
     let usdc_mint_account = pack_mint(&mint_authority, 1_000_000);
 
     // Initialize the treasury PDA
-    let (treasury_pda, treasury_bump) = Pubkey::find_program_address(&[b"treasury"], &program_id);
+    let (treasury_pda, treasury_bump) =
+        Pubkey::find_program_address(&[b"treasury", &admin.to_bytes()], &program_id);
     let treasury_account = pack_token_account(
         &treasury_pda, // owner is treasury PDA itself
         &usdc_mint,    // USDC mint
@@ -165,18 +168,18 @@ fn test_withdraw_usdc() {
         program_id,
         accounts: vec![
             AccountMeta::new(treasury_pda, false), // Treasury account
+            AccountMeta::new(admin, true),         // Admin (signer)
             AccountMeta::new(admin_usdc, false),   // Admin's USDC account
-            // AccountMeta::new(admin, true),         // Admin (signer)
             AccountMeta::new_readonly(token_program, false), // Token program
         ],
         data: withdraw_instruction_data,
     };
 
     // Add admin and admin_usdc accounts
-    // accounts.push((
-    //     admin,
-    //     AccountSharedData::new(1_000_000, 0, &system_program::id()),
-    // ));
+    accounts.push((
+        admin,
+        AccountSharedData::new(1_000_000, 0, &system_program::id()),
+    ));
     accounts.push((admin_usdc, admin_usdc_account));
 
     // Process the WithdrawUSDC instruction
@@ -186,15 +189,12 @@ fn test_withdraw_usdc() {
         &[Check::success()],
     );
 
-    // Retrieve updated accounts
     let final_treasury = withdraw_result.get_account(&treasury_pda).unwrap();
     let final_admin_usdc = withdraw_result.get_account(&admin_usdc).unwrap();
 
-    // Deserialize token accounts
     let treasury_token_account = TokenAccount::unpack(final_treasury.data()).unwrap();
     let admin_token_account = TokenAccount::unpack(final_admin_usdc.data()).unwrap();
 
-    // Verify balances after withdrawal
     assert_eq!(
         treasury_token_account.amount, 0,
         "Treasury balance should be 0 after withdrawal"

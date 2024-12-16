@@ -5,6 +5,7 @@ pub enum CreditSalesError {
     NotEnoughAccountKeys,
     UninitializedAccount,
     InvalidAccountData,
+    Unauthorized,
 }
 
 impl From<CreditSalesError> for ProgramError {

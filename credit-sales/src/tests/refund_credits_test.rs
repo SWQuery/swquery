@@ -1,12 +1,13 @@
 use {
     super::*,
-    crate::constants::USDC_TO_CREDIT,
+    crate::state::CreditsAccount,
     mollusk_svm::result::Check,
     solana_sdk::{
         account::{AccountSharedData, ReadableAccount},
         instruction::{AccountMeta, Instruction},
         program_pack::Pack,
         pubkey::Pubkey,
+        system_program,
         sysvar::SysvarId,
     },
     spl_token::state::Account as TokenAccount,
@@ -25,7 +26,9 @@ fn test_refund_credits() {
     );
 
     // Admin and buyer accounts
-    let _admin = Pubkey::new_unique();
+    let admin = Pubkey::new_from_array(five8_const::decode_32_const(
+        "3n5KbkZv1Zyu661dTzPNCqKzLyeYu9uuaqLExpLnz3w4",
+    ));
     let buyer = Pubkey::new_unique();
 
     // Mint authority and USDC mint
@@ -36,7 +39,8 @@ fn test_refund_credits() {
     let _usdc_mint_account = pack_mint(&mint_authority, 1_000_000);
 
     // Initialize the treasury PDA with initial balance
-    let (treasury_pda, treasury_bump) = Pubkey::find_program_address(&[b"treasury"], &program_id);
+    let (treasury_pda, treasury_bump) =
+        Pubkey::find_program_address(&[b"treasury", &admin.to_bytes()], &program_id);
     let treasury_account = pack_token_account(
         &treasury_pda, // Owner is treasury PDA
         &usdc_mint,    // USDC mint
@@ -54,8 +58,11 @@ fn test_refund_credits() {
     // Initialize credits account with some existing credits
     let (credits_account, _) =
         Pubkey::find_program_address(&[b"credits_account", &buyer.to_bytes()], &program_id);
-    let mut credits_account_data =
-        AccountSharedData::new(mollusk.sysvars.rent.minimum_balance(32), 32, &program_id);
+    let mut credits_account_data = AccountSharedData::new(
+        mollusk.sysvars.rent.minimum_balance(CreditsAccount::LEN),
+        CreditsAccount::LEN,
+        &program_id,
+    );
 
     // Set initial credits state
     let credits_data = credits_account_data.data_as_mut_slice();
@@ -63,6 +70,9 @@ fn test_refund_credits() {
     credits_data[8..16].copy_from_slice(&1_000u64.to_le_bytes()); // credits_amount
     credits_data[16..24].copy_from_slice(&0u64.to_le_bytes()); // credits_amount_refunded
     credits_data[24] = treasury_bump; // bump
+    credits_data[25..57].copy_from_slice(&buyer.to_bytes()); // owner
+
+    println!("credits_data: {:?}", credits_data);
 
     // Create refund instruction
     let refund_amount = 500_000u64;
@@ -76,7 +86,8 @@ fn test_refund_credits() {
     let instruction = Instruction {
         program_id,
         accounts: vec![
-            // AccountMeta::new(buyer, true),
+            AccountMeta::new(admin, true),
+            AccountMeta::new(buyer, false),
             AccountMeta::new(buyer_token_account, false),
             AccountMeta::new(treasury_pda, false),
             AccountMeta::new(credits_account, false),
@@ -86,10 +97,14 @@ fn test_refund_credits() {
     };
 
     let accounts = vec![
-        // (
-        //     buyer,
-        //     AccountSharedData::new(1_000_000, 0, &system_program::id()),
-        // ),
+        (
+            admin,
+            AccountSharedData::new(1_000_000, 0, &system_program::id()),
+        ),
+        (
+            buyer,
+            AccountSharedData::new(1_000_000, 0, &system_program::id()),
+        ),
         (buyer_token_account, buyer_token_account_data),
         (treasury_pda, treasury_account.clone()),
         (credits_account, credits_account_data),
