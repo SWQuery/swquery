@@ -1,15 +1,16 @@
 use {
     crate::{
-        constants::{TREASURY, USDC_MINT, USDC_TO_CREDIT},
+        constants::{TREASURY, USDC_TO_CREDIT},
         errors::CreditSalesError,
     },
-    pinocchio::{account_info::AccountInfo, msg, program_error::ProgramError, ProgramResult},
-    pinocchio_token::{instructions::Transfer, state::TokenAccount},
-    std::convert::TryInto,
+    pinocchio::{account_info::AccountInfo, program_error::ProgramError, ProgramResult},
+    pinocchio_token::instructions::Transfer,
 };
 
 pub fn process_buy_credits_instruction(accounts: &[AccountInfo], data: &[u8]) -> ProgramResult {
-    msg!("Starting process_buy_credits_instruction");
+    if data.len() != 9 {
+        return Err(ProgramError::InvalidInstructionData);
+    }
 
     let [
         buyer,          // signer
@@ -22,38 +23,12 @@ pub fn process_buy_credits_instruction(accounts: &[AccountInfo], data: &[u8]) ->
         return Err(ProgramError::NotEnoughAccountKeys);
     };
 
-    if data.len() != 9 {
-        return Err(ProgramError::InvalidInstructionData);
-    }
-
-    let amount_usdc = u64::from_le_bytes(data[0..8].try_into().unwrap()); // 0-8 bytes
-    msg!("amount_usdc ");
-    let bump = data[8]; // 8-9 bytes
-    msg!("bump");
-
-    {
-        let buyer_ta_account = TokenAccount::from_account_info(buyer_ta)?;
-        if !buyer_ta_account.is_initialized() {
-            return Err(CreditSalesError::UninitializedAccount.into());
-        }
-        if buyer_ta_account.mint() != &USDC_MINT {
-            return Err(CreditSalesError::InvalidAccountData.into());
-        }
-    }
-
-    {
-        let treasury_account = TokenAccount::from_account_info(treasury)?;
-        if !treasury_account.is_initialized() {
-            return Err(CreditSalesError::UninitializedAccount.into());
-        }
-        if treasury_account.mint() != &USDC_MINT {
-            return Err(CreditSalesError::InvalidAccountData.into());
-        }
-    } // treasury_account borrow ends here
-
     if treasury.key() != &TREASURY {
         return Err(CreditSalesError::InvalidAccountData.into());
     }
+
+    let amount_usdc = unsafe { *(data.as_ptr().add(0) as *const u64) }; // 8 bytes
+    let bump = unsafe { *(data.as_ptr().add(8) as *const [u8; 1]) }; // 1 byte
 
     Transfer {
         from: buyer_ta,
@@ -69,7 +44,7 @@ pub fn process_buy_credits_instruction(accounts: &[AccountInfo], data: &[u8]) ->
         *(credits_account_ptr.add(0) as *mut i64) = 0; // timestamp
         *(credits_account_ptr.add(8) as *mut u64) = amount_usdc * USDC_TO_CREDIT; // credits_amount
         *(credits_account_ptr.add(16) as *mut u64) = 0; // credits_amount_refunded
-        *(credits_account_ptr.add(24)) = bump; // bump
+        *(credits_account_ptr.add(24) as *mut [u8; 1]) = bump; // bump
     }
 
     Ok(())
