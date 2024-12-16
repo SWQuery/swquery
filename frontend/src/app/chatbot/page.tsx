@@ -182,19 +182,19 @@ export default function ChatInterface() {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 {[
                   {
-                    title: "Smart Project Assistant",
+                    title: "Lorem ipsun",
                     description:
-                      "Get help with planning and organizing your projects",
+                      "Lorem ipsun dolor sit amet, consectetur adipiscing elit",
                   },
                   {
-                    title: "Media Type Selection",
+                    title: "Lorem ipsun",
                     description:
-                      "Choose from different media types for your content",
+                      "Lorem ipsun dolor sit amet, consectetur adipiscing elit",
                   },
                   {
-                    title: "Multimodal Support",
+                    title: "Lorem ipsun",
                     description:
-                      "Combine different types of content in your queries",
+                      "Lorem ipsun dolor sit amet, consectetur adipiscing elit",
                   },
                 ].map((card) => (
                   <Card
@@ -212,9 +212,9 @@ export default function ChatInterface() {
           </div>
         )}
 
-        <div className="p-6 border-t border-[#141416]">
-          <div className="max-w-2xl mx-auto space-y-4">
-            {!currentChat && (
+        {!currentChat && (
+          <div className="p-6 border-t border-[#141416]">
+            <div className="max-w-2xl mx-auto space-y-4">
               <div className="flex gap-2">
                 <Input
                   value={prompt}
@@ -229,9 +229,9 @@ export default function ChatInterface() {
                   Send
                 </Button>
               </div>
-            )}
+            </div>
           </div>
-        </div>
+        )}
       </div>
     </div>
   );
