@@ -6,7 +6,6 @@ use {
     pinocchio::{
         account_info::AccountInfo, program_error::ProgramError, pubkey::Pubkey, ProgramResult,
     },
-    pinocchio_token::instructions::Transfer,
 };
 
 pub fn process_buy_credits_instruction(accounts: &[AccountInfo], data: &[u8]) -> ProgramResult {
@@ -14,10 +13,11 @@ pub fn process_buy_credits_instruction(accounts: &[AccountInfo], data: &[u8]) ->
         return Err(ProgramError::InvalidInstructionData);
     }
 
-    let [buyer, buyer_ta, treasury, credits_account, _clock_sysvar, _token_program] = accounts
+    let [buyer, _buyer_ta, treasury, credits_account, _clock_sysvar, _token_program] = accounts
     else {
         return Err(ProgramError::NotEnoughAccountKeys);
     };
+    assert!(buyer.is_signer());
 
     if treasury.key() != &TREASURY {
         return Err(CreditSalesError::InvalidAccountData.into());
@@ -33,7 +33,7 @@ pub fn process_buy_credits_instruction(accounts: &[AccountInfo], data: &[u8]) ->
     //     amount: amount_usdc,
     // }
     // .invoke()?; // 5,949 CUs
-    //             // Can happen off of the instruction??? 
+    //             // Can happen off of the instruction???
 
     let mut credits_account_data = credits_account.try_borrow_mut_data()?;
     let credits_account_ptr = credits_account_data.as_mut_ptr();

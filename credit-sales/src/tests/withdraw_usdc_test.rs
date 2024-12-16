@@ -43,7 +43,7 @@ fn test_withdraw_usdc() {
     let treasury_account = pack_token_account(
         &treasury_pda, // owner is treasury PDA itself
         &usdc_mint,    // USDC mint
-        0,             // Initial amount
+        500_000,       // Initial amount
     );
 
     // Buyer's token account with initial USDC balance

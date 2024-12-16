@@ -72,8 +72,6 @@ fn test_refund_credits() {
     credits_data[24] = treasury_bump; // bump
     credits_data[25..57].copy_from_slice(&buyer.to_bytes()); // owner
 
-    println!("credits_data: {:?}", credits_data);
-
     // Create refund instruction
     let refund_amount = 500_000u64;
     let instruction_data = [
