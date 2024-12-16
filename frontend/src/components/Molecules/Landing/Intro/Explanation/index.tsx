@@ -11,7 +11,7 @@ export const Explanation = () => {
 			transition={{ duration: 0.8 }}
 			className="w-full"
 		>
-			<h2 className="text-4xl md:text-6xl font-bold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-[#9C88FF] via-[#6C5CE7] to-[#2D88E6]">
+			<h2 className="text-4xl md:text-6xl font-bold mb-6 pb-4 bg-clip-text text-transparent bg-gradient-to-r from-[#9C88FF] via-[#6C5CE7] to-[#2D88E6]">
 				Query transactions in your wallet with natural language
 			</h2>
 			<p className="text-base md:text-lg mb-8 text-gray-300 leading-relaxed">
@@ -26,7 +26,7 @@ export const Explanation = () => {
 				className="space-y-4"
 			>
 				<div className="flex items-center space-x-4">
-					<div className="bg-gradient-to-r from-[#9C88FF] to-[#6C5CE7] p-2 rounded-full shadow-md">
+					<div className="bg-gradient-to-r from-[#6C5CE7] to-[#2D88E6] p-2 rounded-full shadow-md">
 						<Database className="text-black" size={24} />
 					</div>
 					<span className="text-base md:text-lg">
@@ -42,7 +42,7 @@ export const Explanation = () => {
 					</span>
 				</div>
 				<div className="flex items-center space-x-4">
-					<div className="bg-gradient-to-r from-[#9C88FF] to-[#6C5CE7] p-2 rounded-full shadow-md">
+					<div className="bg-gradient-to-r from-[#6C5CE7] to-[#2D88E6] p-2 rounded-full shadow-md">
 						<ZoomIn className="text-black" size={24} />
 					</div>
 					<span className="text-base md:text-lg">
@@ -57,9 +57,9 @@ export const Explanation = () => {
 					transition={{ duration: 0.4, delay: 0.3 }}
 					className="bg-gradient-to-r from-[#9C88FF] to-[#6C5CE7] px-6 py-3 rounded-full hover:opacity-80 transition-all shadow-lg w-full sm:w-auto"
 				>
-                    <Link href={"/demo"} target="_blank">
-                    Explore Platform
-				</Link>
+					<Link href={"/demo"} target="_blank">
+						Explore Platform
+					</Link>
 				</motion.button>
 
 				<motion.button
