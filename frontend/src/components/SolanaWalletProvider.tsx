@@ -1,3 +1,5 @@
+"use client"
+
 import React, { FC, useMemo } from "react";
 import {
 	ConnectionProvider,
@@ -49,7 +51,7 @@ const AuthProviderWrapper: FC<{ children: React.ReactNode }> = ({
 			wallet={walletContext}
 			message={"Sign in into your wallet"}
 			authTimeout={60}
-		>
+		> 
 			{children}
 		</SolanaAuthProvider>
 	);

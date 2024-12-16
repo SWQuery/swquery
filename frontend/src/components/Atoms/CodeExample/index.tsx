@@ -43,7 +43,6 @@ export const CodeExample: React.FC<CodeExampleProps> = ({ code }) => {
 							text={code}
 							language="rust"
 							theme={customTheme}
-							codeBlock
 						/>
 					</div>
 				</div>

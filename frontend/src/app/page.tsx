@@ -1,4 +1,4 @@
-"use client";
+"use client"
 
 import { Landing } from "@/components/Organisms/Landing";
 import { SolanaWalletProvider } from "@/components/SolanaWalletProvider";

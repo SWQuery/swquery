@@ -3,8 +3,8 @@ import { Explanation } from "./Explanation";
 
 export const Intro: React.FC = () => {
 	return (
-		<main className={`container mx-auto px-4 py-16`}>
-			<div className="flex flex-col md:flex-row gap-8 items-center">
+		<main className={`container mx-auto px-4py-16`}>
+			<div className="flex flex-col md:flex-row gap-8 overflow-x-hidden items-center">
 				<div className="w-full md:w-1/2">
 					<Explanation />
 				</div>
