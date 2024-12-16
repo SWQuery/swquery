@@ -53,27 +53,23 @@ export const Navbar = () => {
 					transition={{ duration: 0.6, delay: 0.2 }}
 					className="space-x-4 flex items-center"
 				>
-					<motion.button
+					<motion.a
 						initial={{ opacity: 0, y: -20 }}
 						animate={{ opacity: 1, y: 0 }}
 						transition={{ duration: 0.6, delay: 0.1 }}
-						className="bg-[#1A1A1A] bg-opacity-50 text-gray-400 px-4 py-2 rounded-full border border-[#14F195] hover:opacity-80 transition-all"
+						href="https://bretasarthur1.gitbook.io/swquery/"
+						target="_blank"
+						rel="noopener noreferrer"
+						className="pr-12 text-white hover:opacity-80 transition-opacity font-bold"
 					>
-						<a
-							href="https://bretasarthur1.gitbook.io/swquery/"
-							target="_blank"
-							rel="noopener noreferrer"
-						>
-							Docs
-						</a>
-					</motion.button>
+						Docs
+					</motion.a>
 
 					<WalletMultiButton
 						style={{
 							width: "auto",
-							color: "black",
-							background:
-								"linear-gradient(90deg, #14F195 0%, #00D1FF 100%)",
+							color: "white",
+							background: "transparent",
 							padding: "0.5rem 1rem",
 							borderRadius: "1rem",
 							boxShadow: "0px 4px 4px rgba(0, 0, 0, 0.25)",

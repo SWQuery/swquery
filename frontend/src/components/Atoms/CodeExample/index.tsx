@@ -1,8 +1,7 @@
 "use client";
 import { motion } from "framer-motion";
 import { CopyBlock, obsidian } from "react-code-blocks";
-import { Fira_Code } from 'next/font/google';
-
+import { Fira_Code } from "next/font/google";
 
 interface CodeExampleProps
 	extends React.ButtonHTMLAttributes<HTMLButtonElement> {
@@ -10,8 +9,8 @@ interface CodeExampleProps
 }
 
 const firaCode = Fira_Code({
-    weight: '400',
-    subsets: ['latin'],
+	weight: "400",
+	subsets: ["latin"],
 });
 
 export const CodeExample: React.FC<CodeExampleProps> = ({ code }) => {
@@ -28,8 +27,8 @@ export const CodeExample: React.FC<CodeExampleProps> = ({ code }) => {
 			transition={{ duration: 0.8 }}
 			className={`flex justify-center items-center w-full overflow-x-hidden ${firaCode.className}`}
 		>
-			<div className="w-full bg-[#1A1A1A] rounded-2xl p-2 md:p-4 shadow-lg">
-				<div className="bg-[#0A0A0A] rounded-md border border-[#9C88FF]">
+			<div className="w-full bg-[#1A1A1A] rounded-2xl p-2 md:p-2 shadow-lg">
+				<div className="bg-[#0A0A0A] rounded-md p-8">
 					<div className="flex justify-between items-center p-2 border-b border-[#9C88FF]/20">
 						<div className="flex space-x-2 items-center">
 							<div className="w-3 h-3 bg-red-500 rounded-full"></div>

@@ -16,7 +16,7 @@ export const Landing = () => {
 	const itemsHowItWorks = [
 		{
 			Icon: Wallet,
-			iconColor: "#14F195",
+			iconColor: "#9945FF",
 			title: "Connect Your Wallet",
 			description:
 				"Use your Solana wallet to integrate with the SWquery system.",
@@ -30,7 +30,7 @@ export const Landing = () => {
 		},
 		{
 			Icon: BarChart,
-			iconColor: "#00D1FF",
+			iconColor: "#9945FF",
 			title: "Visualize Results",
 			description:
 				"Access intuitive visualizations and personalized reports.",
