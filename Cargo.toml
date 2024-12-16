@@ -16,4 +16,24 @@ repository = "https://github.com/vict0rcarvalh0/swquery"
 
 [workspace.dependencies]
 serde = { version = "1.0", features = ["derive"] }
-tokio = { version = "1", features = ["full"] }
+tokio = { version = "1.0", features = ["full"] }
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+axum = { version = "0.7.9" }
+serde_json = "1.0"
+sqlx = { version = "0.8.2", features = [
+    "runtime-tokio-native-tls",
+    "postgres",
+    "chrono",
+] }
+dotenvy = "0.15"
+chrono = "0.4"
+tower = { version = "0.5.1", features = ["util"] }
+http-body-util = "0.1.0"
+hyper-util = { version = "0.1", features = [
+    "client",
+    "http1",
+    "client-legacy",
+] }
+tower-http = { version = "0.6.1", features = ["trace"] }
+solana-sdk = "2.0.8"
