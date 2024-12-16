@@ -1,24 +1,54 @@
-# Define default options
+# Default target listing all commands
 default:
     @echo "Available commands:"
     @just --list
 
+# ========= Build Commands =========
 # Build SDK
 build-sdk:
     @echo "Building SDK..."
     cargo build -p sdk
+
+# Build Server
+build-server:
+    @echo "Building Server..."
+    cargo build -p server
 
 # Build Credit-Sales Program
 build-credit-sales:
     @echo "Building Credit-Sales Program..."
     cargo build-sbf --manifest-path credit-sales/Cargo.toml
 
+# Build Frontend
+build-frontend:
+    @echo "Building Frontend..."
+    cd frontend && yarn build
+
 # Build All
 build-all:
     @echo "Building all projects..."
     just build-sdk
     just build-credit-sales
+    just build-server
+    just build-frontend
 
+# ========= Run Commands =========
+# Run Server
+run-server:
+    @echo "Running Server..."
+    cargo run -p server
+
+# Run Frontend
+run-frontend:
+    @echo "Running Frontend..."
+    cd frontend && yarn dev
+
+# Run All
+run-all:
+    @echo "Running all services..."
+    just run-server & just run-frontend
+
+# ========= Test Commands =========
 # Test SDK
 test-sdk:
     @echo "Testing SDK..."
@@ -29,12 +59,19 @@ test-credit-sales:
     @echo "Testing Credit-Sales Program..."
     cargo test-sbf --manifest-path credit-sales/Cargo.toml -- --nocapture
 
+# Test Server
+test-server:
+    @echo "Testing Server..."
+    cargo test -p server
+
 # Test All
 test-all:
     @echo "Testing all projects..."
     just test-sdk
     just test-credit-sales
+    just test-server
 
+# ========= Clean Commands =========
 # Clean SDK
 clean-sdk:
     @echo "Cleaning SDK..."
@@ -45,16 +82,24 @@ clean-credit-sales:
     @echo "Cleaning Credit-Sales Program..."
     cargo clean --manifest-path credit-sales/Cargo.toml
 
+# Clean Server
+clean-server:
+    @echo "Cleaning Server..."
+    cargo clean -p server
+
 # Clean All
 clean-all:
     @echo "Cleaning all projects..."
     cargo clean
     just clean-sdk
     just clean-credit-sales
-    
-# Check and format all
+    just clean-server
+
+# ========= Check and Format Commands =========
+# Check and Format All
 check-fmt:
     @echo "Checking and formatting..."
     cargo check -p sdk
     cargo check --manifest-path credit-sales/Cargo.toml
+    cargo check -p server
     cargo +nightly fmt --all

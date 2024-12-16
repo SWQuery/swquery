@@ -1,0 +1,14 @@
+services:
+  swquery-db:
+    image: postgres:12
+    environment:
+      POSTGRES_DB: swquery
+      POSTGRES_USER: swquery
+      POSTGRES_PASSWORD: swquery
+    ports:
+      - "5432:5432"
+    volumes:
+      - "../database/init.sql:/docker-entrypoint-initdb.d/init.sql"
+
+volumes:
+  swquery-db-data:
