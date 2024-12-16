@@ -1,15 +1,17 @@
 [workspace]
 resolver = "2"
-members = [
-    "sdk",
-    "credit-sales"
-]
+members = ["sdk", "credit-sales", "server"]
 exclude = ["frontend"]
 
 [workspace.package]
 edition = "2021"
 license = "Apache-2.0"
-authors = ["Marcelo G Feitoza <feitoza.marcelo7@gmail.com>", "Victor Carvalho <victordecarvalho342@gmail.com>", "Arthur Bretas <arthurbretas1@gmail.com>"]
+authors = [
+    "Arthur Bretas <arthurbretas1@gmail.com>",
+    "Marcelo G Feitoza <feitoza.marcelo7@gmail.com>",
+    "Pedro Hagge Baptista <pedro.baptista@sou.inteli.edu.br>",
+    "Victor Carvalho <victordecarvalho342@gmail.com>",
+]
 repository = "https://github.com/vict0rcarvalh0/swquery"
 
 [workspace.dependencies]
