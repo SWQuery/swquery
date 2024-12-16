@@ -51,3 +51,10 @@ clean-all:
     cargo clean
     just clean-sdk
     just clean-credit-sales
+    
+# Check and format all
+check-fmt:
+    @echo "Checking and formatting..."
+    cargo check -p sdk
+    cargo check --manifest-path credit-sales/Cargo.toml
+    cargo +nightly fmt --all
