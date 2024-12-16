@@ -1,4 +1,5 @@
 mod buy_credits_test;
+mod refund_credits_test;
 mod withdraw_usdc_test;
 
 use {

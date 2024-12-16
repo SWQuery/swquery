@@ -9,6 +9,7 @@ use {
         system_program,
         sysvar::SysvarId,
     },
+    spl_token::state::Account as TokenAccount,
 };
 
 #[test]
@@ -140,23 +141,42 @@ fn test_withdraw_usdc() {
     ]
     .concat();
 
+    // After BuyCredits processing - get updated treasury state
+    let updated_treasury = buy_result.get_account(&treasury_pda).unwrap();
+    let updated_treasury_account =
+        spl_token::state::Account::unpack(updated_treasury.data()).unwrap();
+
+    // Unpack admin's initial USDC account
+    let admin_initial_balance =
+        spl_token::state::Account::unpack(admin_usdc_account.data()).unwrap();
+
+    // Verify initial balances with updated treasury state
+    assert_eq!(
+        updated_treasury_account.amount, withdraw_amount,
+        "Initial treasury balance should equal withdraw amount"
+    );
+    assert_eq!(
+        admin_initial_balance.amount, 0,
+        "Initial admin USDC balance should be 0"
+    );
+
     // Create the WithdrawUSDC instruction
     let withdraw_instruction = Instruction {
         program_id,
         accounts: vec![
             AccountMeta::new(treasury_pda, false), // Treasury account
             AccountMeta::new(admin_usdc, false),   // Admin's USDC account
-            AccountMeta::new(admin, true),         // Admin (signer)
+            // AccountMeta::new(admin, true),         // Admin (signer)
             AccountMeta::new_readonly(token_program, false), // Token program
         ],
         data: withdraw_instruction_data,
     };
 
     // Add admin and admin_usdc accounts
-    accounts.push((
-        admin,
-        AccountSharedData::new(1_000_000, 0, &system_program::id()),
-    ));
+    // accounts.push((
+    //     admin,
+    //     AccountSharedData::new(1_000_000, 0, &system_program::id()),
+    // ));
     accounts.push((admin_usdc, admin_usdc_account));
 
     // Process the WithdrawUSDC instruction
@@ -171,16 +191,17 @@ fn test_withdraw_usdc() {
     let final_admin_usdc = withdraw_result.get_account(&admin_usdc).unwrap();
 
     // Deserialize token accounts
-    let treasury_token_account = spl_token::state::Account::unpack(final_treasury.data()).unwrap();
-    let admin_token_account = spl_token::state::Account::unpack(final_admin_usdc.data()).unwrap();
+    let treasury_token_account = TokenAccount::unpack(final_treasury.data()).unwrap();
+    let admin_token_account = TokenAccount::unpack(final_admin_usdc.data()).unwrap();
 
     // Verify balances after withdrawal
     assert_eq!(
         treasury_token_account.amount, 0,
-        "Treasury balance incorrect after withdrawal"
+        "Treasury balance should be 0 after withdrawal"
     );
     assert_eq!(
         admin_token_account.amount, withdraw_amount,
-        "Admin's USDC balance incorrect after withdrawal"
+        "Admin's USDC balance should equal withdrawn amount ({} tokens)",
+        withdraw_amount
     );
 }

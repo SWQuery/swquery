@@ -578,6 +578,7 @@ dependencies = [
  "pinocchio",
  "pinocchio-system",
  "pinocchio-token",
+ "solana-program",
  "solana-sdk",
  "spl-token",
 ]
