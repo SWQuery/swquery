@@ -1,6 +1,6 @@
 "use client";
 
-import { Card } from "@/components/ui/card";
+import { Card } from "@/components/Atoms/card";
 import { motion, AnimatePresence } from "framer-motion";
 
 interface Transaction {

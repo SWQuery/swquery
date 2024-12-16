@@ -1,13 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { Button } from "@/components/Atoms/Buttons/button";
+import { Card } from "@/components/Atoms/card";
+import { Input } from "@/components/Atoms/input";
+import { ScrollArea } from "@/components/Atoms/scroll-area";
 import { cn } from "@/lib/utils";
 import { MessageSquare, Plus, Search } from "lucide-react";
-import { TransactionPreview } from "@/components/TransactionPreview";
+import { TransactionPreview } from "@/components/Molecules/TransactionPrev/TransactionPreview";
 import { Navbar } from "@/components/Molecules/Navbar";
 import { motion, AnimatePresence } from "framer-motion";
 
