@@ -67,9 +67,6 @@ export default function ChatInterface() {
             <MessageSquare className="w-5 h-5 text-gray-400" />
             <span className="text-gray-200">My Chats</span>
           </div>
-          <Button variant="ghost" size="icon">
-            <Settings className="w-4 h-4" />
-          </Button>
         </div>
 
         <div className="p-4">
@@ -77,7 +74,7 @@ export default function ChatInterface() {
             <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-500" />
             <Input
               placeholder="Search"
-              className="pl-9 bg-gray-900 border-[#141416]"
+              className="pl-9 bg-[#1A1A1A] border-[#141416]"
             />
           </div>
         </div>
@@ -90,7 +87,7 @@ export default function ChatInterface() {
                 key={chat.id}
                 variant="ghost"
                 className={cn(
-                  "w-full justify-start text-gray-300 hover:bg-gray-900",
+                  "w-full justify-start text-gray-300 hover:bg-[#2b2b2b]",
                   currentChatId === chat.id && "bg-[#1A1A1A]"
                 )}
                 onClick={() => setCurrentChatId(chat.id)}
@@ -105,7 +102,8 @@ export default function ChatInterface() {
         <div className="p-4 mt-auto border-t border-[#141416]">
           <Button
             onClick={startNewChat}
-            className="w-full bg-purple-600 hover:bg-purple-700 text-white gap-2"
+            className="w-full bg-gradient-to-r from-[#9C88FF] to-[#6C5CE7] hover:bg-purple-700 text-white gap-2"
+            // className="bg-gradient-to-r from-[#9C88FF] to-[#6C5CE7] px-6 py-3 rounded-full hover:opacity-80 transition-all shadow-lg w-full sm:w-auto"
           >
             <Plus className="h-4 w-4" />
             New Chat
@@ -129,7 +127,7 @@ export default function ChatInterface() {
                 >
                   {message.isUser ? (
                     // User message
-                    <p className="bg-gray-900/50 border border-[#141416] rounded-lg p-4 text-gray-200">
+                    <p className="bg-[#1A1A1A]/50 border border-[#141416] rounded-lg p-4 text-gray-200">
                       {message.content}
                     </p>
                   ) : (
@@ -168,8 +166,8 @@ export default function ChatInterface() {
           <div className="flex-1 p-6 flex items-center justify-center">
             <div className="max-w-2xl w-full space-y-8">
               <div className="text-center space-y-2">
-                <div className="w-8 h-8 rounded-full bg-purple-600/10 flex items-center justify-center mx-auto mb-4">
-                  <div className="w-2 h-2 rounded-full bg-purple-600" />
+                <div className="w-8 h-8 rounded-full  bg-gradient-to-r from-[#9C88FF]/10 to-[#6C5CE7]/10 flex items-center justify-center mx-auto mb-4">
+                  <div className="w-2 h-2 rounded-full bg-gradient-to-r from-[#9C88FF] to-[#6C5CE7]" />
                 </div>
                 <h1 className="text-2xl font-semibold text-gray-200">
                   How can I help you today?
@@ -201,7 +199,7 @@ export default function ChatInterface() {
                 ].map((card) => (
                   <Card
                     key={card.title}
-                    className="p-4 bg-gray-900/50 border-[#141416] hover:bg-gray-900/70 transition-colors cursor-pointer"
+                    className="p-4 bg-[#1A1A1A]/50 border-[#141416] hover:bg-[#2b2b2b]/70 transition-colors cursor-pointer"
                   >
                     <h3 className="font-medium text-gray-200 mb-2">
                       {card.title}
@@ -222,11 +220,11 @@ export default function ChatInterface() {
                   value={prompt}
                   onChange={(e) => setPrompt(e.target.value)}
                   placeholder="Type your prompt here..."
-                  className="flex-1 bg-gray-900 border-[#141416]"
+                  className="flex-1 bg-[#1A1A1A] border-[#141416]"
                 />
                 <Button
                   onClick={handleSend}
-                  className="bg-purple-600 hover:bg-purple-700 text-white px-8"
+                  className="bg-gradient-to-r from-[#9C88FF] to-[#6C5CE7] hover:bg-purple-700 text-white px-8"
                 >
                   Send
                 </Button>
