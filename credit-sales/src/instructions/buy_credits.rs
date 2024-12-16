@@ -1,10 +1,11 @@
-use pinocchio::{account_info::AccountInfo, msg, program_error::ProgramError, ProgramResult};
-use pinocchio_token::{instructions::Transfer, state::TokenAccount};
-use std::convert::TryInto;
-
-use crate::{
-    constants::{TREASURY, USDC_MINT, USDC_TO_CREDIT},
-    errors::CreditSalesError,
+use {
+    crate::{
+        constants::{TREASURY, USDC_MINT, USDC_TO_CREDIT},
+        errors::CreditSalesError,
+    },
+    pinocchio::{account_info::AccountInfo, msg, program_error::ProgramError, ProgramResult},
+    pinocchio_token::{instructions::Transfer, state::TokenAccount},
+    std::convert::TryInto,
 };
 
 pub fn process_buy_credits_instruction(accounts: &[AccountInfo], data: &[u8]) -> ProgramResult {

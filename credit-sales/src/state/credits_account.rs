@@ -1,4 +1,4 @@
-use pinocchio::{account_info::AccountInfo, program_error::ProgramError, pubkey::Pubkey};
+use pinocchio::{account_info::AccountInfo, program_error::ProgramError};
 
 pub struct CreditsAccount(*mut u8);
 
@@ -7,6 +7,8 @@ impl CreditsAccount {
                          + 8  // credits_amount
                          + 8  // credits_amount_refunded
                          + 1; // bump
+                              // 0..8 => timestamp | 8..16 => credits_amount | 16..24 =>
+                              // credits_amount_refunded | 24..25 => bump
 
     #[inline(always)]
     pub fn from_account_info_unchecked(account_info: &AccountInfo) -> Self {
@@ -18,5 +20,10 @@ impl CreditsAccount {
         assert_eq!(*account_info.owner(), crate::ID);
         assert_eq!(account_info.data_len(), Self::LEN);
         Ok(Self::from_account_info_unchecked(account_info))
+    }
+
+    #[inline(always)]
+    pub fn bump(&self) -> [u8; 1] {
+        unsafe { [*self.0.add(24)] }
     }
 }
