@@ -4,6 +4,7 @@ import { CardItem } from '@/components/Atoms/SectionItem';
 interface SectionProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
     title: string;
     items?: {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         Icon: any;
         iconColor: string;
         title: string;

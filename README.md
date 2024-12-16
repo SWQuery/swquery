@@ -100,22 +100,80 @@ These barriers limit adoption and efficiency for both users and developers.
 ## **🌳 Project Structure**
 
 ```
-.
+├── Cargo.lock
+├── Cargo.toml
+├── Docker-compose.yaml
+├── README.md
+├── credit-sales
+│   ├── Cargo.toml
+│   └── src
+│       ├── constants.rs
+│       ├── errors.rs
+│       ├── instructions
+│       │   ├── buy_credits.rs
+│       │   ├── mod.rs
+│       │   └── refund_credits.rs
+│       ├── lib.rs
+│       ├── state
+│       │   ├── credits_account.rs
+│       │   └── mod.rs
+│       └── tests
+│           └── mod.rs
 ├── frontend
-│   ├── components
-│   ├── app
-│   ├── public
-│   └── utils
-├── sdk
+│   ├── README.md
+│   ├── eslint.config.mjs
+│   ├── next-env.d.ts
+│   ├── next.config.ts
+│   ├── package-lock.json
+│   ├── package.json
+│   ├── postcss.config.mjs
 │   ├── src
-│   │   ├── main.rs
-│   │   ├── transactions.rs
-│   │   ├── cache.rs
-│   │   └── utils.rs
-└── docs
-    ├── Architecture.png
-    ├── Flow.png
-    └── README.md
+│   │   ├── app
+│   │   │   ├── demo
+│   │   │   │   └── page.tsx
+│   │   │   ├── favicon.ico
+│   │   │   ├── globals.css
+│   │   │   ├── layout.tsx
+│   │   │   └── page.tsx
+│   │   └── components
+│   │       ├── Atoms
+│   │       │   ├── CodeExample
+│   │       │   │   └── index.tsx
+│   │       │   └── SectionItem
+│   │       │       └── index.tsx
+│   │       ├── Molecules
+│   │       │   ├── Landing
+│   │       │   │   ├── Footer
+│   │       │   │   │   └── index.tsx
+│   │       │   │   ├── Intro
+│   │       │   │   │   ├── Explanation
+│   │       │   │   │   │   └── index.tsx
+│   │       │   │   │   └── index.tsx
+│   │       │   │   └── Section
+│   │       │   │       └── index.tsx
+│   │       │   └── Navbar
+│   │       │       └── index.tsx
+│   │       └── Organisms
+│   │           └── Landing
+│   │               └── index.tsx
+│   ├── tailwind.config.ts
+│   ├── tsconfig.json
+│   └── yarn.lock
+├── justfile
+└── sdk
+    ├── Cargo.toml
+    └── src
+        ├── errors.rs
+        ├── examples
+        │   └── example.rs
+        ├── lib.rs
+        ├── llm
+        │   ├── mod.rs
+        │   └── transformer.rs
+        └── parser
+            ├── bytecode.rs
+            ├── json.rs
+            └── mod.rs
 ```
 
 ---

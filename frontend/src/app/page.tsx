@@ -1,7 +1,12 @@
-'use client';
+"use client";
 
-import { Landing } from '@/components/Organisms/Landing';
+import { Landing } from "@/components/Organisms/Landing";
+import { SolanaWalletProvider } from "@/components/SolanaWalletProvider";
 
 export default function Home() {
-  return <Landing />
+	return (
+		<SolanaWalletProvider>
+			<Landing />
+		</SolanaWalletProvider>
+	);
 }

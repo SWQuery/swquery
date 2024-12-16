@@ -1,20 +1,17 @@
 'use client';
 import { motion } from 'framer-motion';
-import { Copy } from 'lucide-react';
-import { useState } from 'react';
+import { CopyBlock, obsidian } from 'react-code-blocks';
 
 interface CodeExampleProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-	code: string;
+    code: string;
 }
 
-export const CodeExample: React.FC<CodeExampleProps>  = ({ code, ...rest }) => {
-
-    const [copySuccess, setCopySuccess] = useState(false);
-
-    const handleCopy = () => {
-        navigator.clipboard.writeText(code);
-        setCopySuccess(true);
-        setTimeout(() => setCopySuccess(false), 2000);
+export const CodeExample: React.FC<CodeExampleProps> = ({ code }) => {
+    const customTheme = {
+        ...obsidian,
+        backgroundColor: '#0A0A0A',
+        lineNumberColor: '#666',
+        lineNumberBgColor: '#0A0A0A',
     };
 
     return (
@@ -22,34 +19,29 @@ export const CodeExample: React.FC<CodeExampleProps>  = ({ code, ...rest }) => {
             initial={{ opacity: 0, x: 50 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.8 }}
-            className="flex justify-center items-center"
-            >
-            <div className="w-full max-w-lg bg-[#1A1A1A] rounded-2xl p-8 shadow-lg">
-                <div className="bg-[#0A0A0A] rounded-md p-4 border border-[#9C88FF]">
-                <div className="flex justify-between items-center mb-2">
-                    <div className="flex space-x-2 items-center">
-                    <div className="w-3 h-3 bg-red-500 rounded-full"></div>
-                    <div className="w-3 h-3 bg-yellow-400 rounded-full"></div>
-                    <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+            className="flex justify-center items-center w-full"
+        >
+            <div className="w-full bg-[#1A1A1A] rounded-2xl p-2 md:p-4 shadow-lg">
+                <div className="bg-[#0A0A0A] rounded-md border border-[#9C88FF]">
+                    <div className="flex justify-between items-center p-2 border-b border-[#9C88FF]/20">
+                        <div className="flex space-x-2 items-center">
+                            <div className="w-3 h-3 bg-red-500 rounded-full"></div>
+                            <div className="w-3 h-3 bg-yellow-400 rounded-full"></div>
+                            <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                        </div>
+                        <span className="text-sm text-gray-400">main.rs</span>
                     </div>
-                    <span className="text-sm text-gray-400">main.rs</span>
-                </div>
-                <pre className="bg-[#101010] rounded-lg p-4 text-sm text-[#9C88FF] font-mono overflow-x-auto">
-                    <code>
-                        {code}
-                    </code>
-                </pre>
-                <div className="flex justify-end mt-4">
-                    <button
-                    onClick={handleCopy}
-                    className="bg-gradient-to-r from-[#9C88FF] to-[#6C5CE7] px-4 py-2 rounded-full text-white shadow-md hover:opacity-80 transition-all flex items-center"
-                    >
-                    <Copy size={16} className="mr-2" />
-                    {copySuccess ? "Copied!" : "Copy Code"}
-                    </button>
-                </div>
+                    <div className="text-sm md:text-base">
+                        <CopyBlock
+                            text={code}
+                            language="rust"
+                            theme={customTheme}
+                            codeBlock
+                        />
+                    </div>
                 </div>
             </div>
         </motion.div>
     );
 };
+
