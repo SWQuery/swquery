@@ -1,8 +1,6 @@
 "use client";
 import React, { useEffect, useState, ChangeEvent, useCallback } from "react";
 import { useWallet } from "@solana/wallet-adapter-react";
-import { Navbar } from "@/components/Molecules/Navbar";
-import { SolanaWalletProvider } from "@/components/SolanaWalletProvider";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -181,9 +179,7 @@ type Transaction = {
 
 export const History = () => {
 	return (
-		<SolanaWalletProvider>
-			<Content />
-		</SolanaWalletProvider>
+			<Content />	
 	);
 };
 
@@ -308,17 +304,17 @@ const Content: React.FC = () => {
 				{!connected ? (
 					<div className="flex flex-col items-start space-y-4">
 						<p className="text-gray-300">
-							Conecte sua wallet para visualizar suas transações:
+							Connect your wallet to view your transactions:
 						</p>
 						<p className="text-gray-500 text-sm">
-							Use o botão &quot;Connect Wallet&quot; no topo.
+							Use the button &quot;Select Wallet&quot; above.
 						</p>
 					</div>
 				) : (
 					<div className="space-y-6">
 						<div>
 							<p className="mb-6 text-gray-200">
-								Wallet conectada:{" "}
+								Wallet Connected:{" "}
 								<span className="font-semibold">
 									{publicKey?.toBase58()}
 								</span>
