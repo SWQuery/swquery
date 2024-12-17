@@ -15,13 +15,13 @@ router = APIRouter(
 
 class QueryBody(BaseModel):
     inputUser: str
+    address: str
 
 
 @router.post("/generate-query")
 async def generate_query_route(
     body: QueryBody
 ):
-    result = query_generator_openai(body.inputUser)
-    print("Result: ", result)
+    result = query_generator_openai(body.inputUser, body.address)
 
     return result
