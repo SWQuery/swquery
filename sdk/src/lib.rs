@@ -1,5 +1,7 @@
-mod llm;
-mod parser;
+pub mod llm;
+pub mod parser;
+pub mod errors;
 
-// pub use llm::*;
-// pub use parser::*;
+pub use llm::TransformerModel;
+pub use parser::JsonParser;
+

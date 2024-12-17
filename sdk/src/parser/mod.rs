@@ -1,5 +1,5 @@
 pub mod bytecode;
 pub mod json;
 
-// pub use json::*;
-// pub use bytecode::*;
+pub use bytecode::BytecodeParser;
+pub use json::JsonParser;
