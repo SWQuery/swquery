@@ -6,13 +6,15 @@ use {
     },
     reqwest::Client,
     serde::{Deserialize, Serialize},
+    serde_json::Value,
     sqlx::PgPool,
 };
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, Debug)]
 pub struct QueryRequest {
     #[serde(rename = "inputUser")]
     pub input_user: String,
+    pub address: String,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -25,6 +27,7 @@ pub struct QueryResponse {
 pub struct QueryResult {
     response: String,
     status: String,
+    params: Value,
 }
 
 pub async fn generate_query(
@@ -36,7 +39,6 @@ pub async fn generate_query(
         .get("x-api-key")
         .and_then(|v| v.to_str().ok())
         .ok_or((StatusCode::UNAUTHORIZED, "Missing API key".to_string()))?;
-    println!("API key: {}", api_key);
 
     println!("Getting user info");
     let credit = sqlx::query_as::<_, (i32, String, i64, String)>(
@@ -52,7 +54,6 @@ pub async fn generate_query(
     .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?
     .ok_or((StatusCode::UNAUTHORIZED, "Invalid API key".to_string()))?;
 
-    println!("Sending query to agent");
     let client = Client::new();
     payload.input_user = payload.input_user.to_lowercase();
     let response = client

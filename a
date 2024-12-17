@@ -1,0 +1,48 @@
+Testing SDK...
+
+running 1 test
+Raw response: {"result":{"response":"getSignaturesForAddress","status":"success","params":{"address":"GtJHNhKQnnJZQTHq2Vh49HpR4yKKJmUonVYbLeS1RPs8"}},"tokens":991}
+Parsed result: Object {
+    "result": Object {
+        "params": Object {
+            "address": String("GtJHNhKQnnJZQTHq2Vh49HpR4yKKJmUonVYbLeS1RPs8"),
+        },
+        "response": String("getSignaturesForAddress"),
+        "status": String("success"),
+    },
+    "tokens": Number(991),
+}
+Response type: getSignaturesForAddress
+Params: Object {
+    "address": String("GtJHNhKQnnJZQTHq2Vh49HpR4yKKJmUonVYbLeS1RPs8"),
+}
+Success: Object {
+    "id": String("1"),
+    "jsonrpc": String("2.0"),
+    "result": Array [
+        Object {
+            "blockTime": Number(1734443896),
+            "confirmationStatus": String("finalized"),
+            "err": Object {
+                "InstructionError": Array [
+                    Number(2),
+                    Object {
+                        "Custom": Number(3012),
+                    },
+                ],
+            },
+            "memo": Null,
+            "signature": String("4HyqJDQs1UVPJBTDptPEN3XK72TiY57qDqNCRRequ4MFBjaoyoQvnSLBAfJgpGcteMJK5Jp34oYK1PnNFhMa6SKQ"),
+            "slot": Number(308061851),
+        },
+    ],
+}
+test tests::test_query_get_recent_transactions ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.15s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

@@ -61,15 +61,13 @@ export const Navbar = () => {
             onMouseEnter={(e) => {
               const button = e.currentTarget.querySelector('a');
               if (button) {
-                button.style.boxShadow = "0 0 20px rgba(168, 85, 247, 0.4)";
-                button.style.transform = "scale(1.02)";
+                button.classList.add("shadow-lg", "scale-105");
               }
             }}
             onMouseLeave={(e) => {
               const button = e.currentTarget.querySelector('a');
               if (button) {
-                button.style.boxShadow = "0 0 15px rgba(59, 130, 246, 0.3)";
-                button.style.transform = "scale(1)";
+                button.classList.remove("shadow-lg", "scale-105");
               }
             }}
           >
@@ -77,23 +75,7 @@ export const Navbar = () => {
               href="https://bretasarthur1.gitbook.io/swquery/"
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-block text-white hover:opacity-80 transition-all duration-300 font-bold relative group"
-              style={{
-                background: "linear-gradient(90deg, rgba(59, 130, 246, 0.1), rgba(168, 85, 247, 0.1))",
-                padding: "0.5rem 1rem",
-                borderRadius: "1rem",
-                boxShadow: "0 0 15px rgba(59, 130, 246, 0.3)",
-                cursor: "pointer",
-                border: "1px solid rgba(255, 255, 255, 0.1)",
-                outline: "none",
-                fontSize: "1rem",
-                fontWeight: "bold",
-                transition: "all 0.3s ease",
-                position: "relative",
-                overflow: "hidden",
-                minWidth: "120px",
-                textAlign: "center",
-              }}
+              className="inline-block text-white hover:opacity-80 transition-all duration-300 font-bold relative group bg-gradient-to-r from-blue-500/10 to-purple-500/10 px-4 py-2 rounded-lg shadow-md border border-white/10 outline-none text-center min-w-[120px]"
             >
               <span className="relative z-10">Docs</span>
               <span className="absolute inset-0 bg-gradient-to-r from-blue-500/30 to-purple-500/30 rounded-lg opacity-0 group-hover:opacity-100 blur-sm transition-opacity duration-300"></span>
@@ -108,37 +90,19 @@ export const Navbar = () => {
             onMouseEnter={(e) => {
               const button = e.currentTarget.querySelector('button');
               if (button) {
-                button.style.boxShadow = "0 0 20px rgba(168, 85, 247, 0.4)";
-                button.style.transform = "scale(1.02)";
+                button.classList.add("shadow-lg", "scale-105");
               }
             }}
             onMouseLeave={(e) => {
               const button = e.currentTarget.querySelector('button');
               if (button) {
-                button.style.boxShadow = "0 0 15px rgba(59, 130, 246, 0.3)";
-                button.style.transform = "scale(1)";
+                button.classList.remove("shadow-lg", "scale-105");
               }
             }}
           >
             <button
               onClick={() => setIsCreditsSidebarOpen(true)}
-              className="inline-flex items-center text-white hover:opacity-80 transition-all duration-300 font-bold relative group"
-              style={{
-                background: "linear-gradient(90deg, rgba(59, 130, 246, 0.1), rgba(168, 85, 247, 0.1))",
-                padding: "0.5rem 1rem",
-                borderRadius: "1rem",
-                boxShadow: "0 0 15px rgba(59, 130, 246, 0.3)",
-                cursor: "pointer",
-                border: "1px solid rgba(255, 255, 255, 0.1)",
-                outline: "none",
-                fontSize: "1rem",
-                fontWeight: "bold",
-                transition: "all 0.3s ease",
-                position: "relative",
-                overflow: "hidden",
-                minWidth: "120px",
-                textAlign: "center",
-              }}
+              className="inline-flex items-center text-white hover:opacity-80 transition-all duration-300 font-bold relative group bg-gradient-to-r from-blue-500/10 to-purple-500/10 px-4 py-2 rounded-lg shadow-md border border-white/10 outline-none text-center min-w-[120px]"
             >
               <CreditCard className="mr-2 h-4 w-4" />
               <span className="relative z-10">Buy Credits</span>
@@ -150,15 +114,13 @@ export const Navbar = () => {
             onMouseEnter={(e) => {
               const button = e.currentTarget.querySelector('button');
               if (button) {
-                button.style.boxShadow = "0 0 20px rgba(168, 85, 247, 0.4)";
-                button.style.transform = "scale(1.02)";
+                button.classList.add("shadow-lg", "scale-105");
               }
             }}
             onMouseLeave={(e) => {
               const button = e.currentTarget.querySelector('button');
               if (button) {
-                button.style.boxShadow = "0 0 15px rgba(59, 130, 246, 0.3)";
-                button.style.transform = "scale(1)";
+                button.classList.remove("shadow-lg", "scale-105");
               }
             }}
           >
@@ -189,4 +151,3 @@ export const Navbar = () => {
     </nav>
   );
 };
-

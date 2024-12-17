@@ -3,6 +3,12 @@ default:
     @echo "Available commands:"
     @just --list
 
+# ========= Container Commands =========
+# Run compose
+run-compose:
+    @echo "Running compose..."
+    docker compose -f deployment/compose.yml up --build -d
+
 # ========= Build Commands =========
 # Build SDK
 build-sdk:
@@ -47,6 +53,14 @@ run-frontend:
 run-all:
     @echo "Running all services..."
     just run-server & just run-frontend
+
+# Run AI Agent
+run-agent:
+    @echo "Running AI Agent..."
+    cd ai-agent && \
+    python -m venv .venv && \
+    pip install -r requirements.txt && \
+    uvicorn main:app --host 0.0.0.0 --port 8000 --reload
 
 # ========= Test Commands =========
 # Test SDK
