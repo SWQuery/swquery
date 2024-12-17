@@ -1,8 +1,9 @@
-use axum::{extract::State, http::StatusCode, Json};
-use serde::{Deserialize, Serialize};
-use sqlx::PgPool;
-
-use crate::models::{CreditModel, UserModel};
+use {
+    crate::models::{CreditModel, UserModel},
+    axum::{extract::State, http::StatusCode, Json},
+    serde::{Deserialize, Serialize},
+    sqlx::PgPool,
+};
 
 #[derive(Deserialize)]
 pub struct BuyCredits {

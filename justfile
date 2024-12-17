@@ -52,7 +52,7 @@ run-all:
 # Test SDK
 test-sdk:
     @echo "Testing SDK..."
-    cargo test -p sdk
+    cargo test -p sdk -- --nocapture
 
 # Test Credit-Sales
 test-credit-sales:

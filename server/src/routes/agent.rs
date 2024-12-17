@@ -1,11 +1,13 @@
-use axum::{
-    extract::State,
-    http::{HeaderMap, StatusCode},
-    Json,
+use {
+    axum::{
+        extract::State,
+        http::{HeaderMap, StatusCode},
+        Json,
+    },
+    reqwest::Client,
+    serde::{Deserialize, Serialize},
+    sqlx::PgPool,
 };
-use reqwest::Client;
-use serde::{Deserialize, Serialize};
-use sqlx::PgPool;
 
 #[derive(Deserialize, Serialize)]
 pub struct QueryRequest {
@@ -34,7 +36,9 @@ pub async fn generate_query(
         .get("x-api-key")
         .and_then(|v| v.to_str().ok())
         .ok_or((StatusCode::UNAUTHORIZED, "Missing API key".to_string()))?;
+    println!("API key: {}", api_key);
 
+    println!("Getting user info");
     let credit = sqlx::query_as::<_, (i32, String, i64, String)>(
         "SELECT c.user_id, u.pubkey, c.balance, c.api_key 
          FROM credits c 
@@ -48,6 +52,7 @@ pub async fn generate_query(
     .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?
     .ok_or((StatusCode::UNAUTHORIZED, "Invalid API key".to_string()))?;
 
+    println!("Sending query to agent");
     let client = Client::new();
     payload.input_user = payload.input_user.to_lowercase();
     let response = client

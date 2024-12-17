@@ -1,5 +1,4 @@
-use reqwest;
-use thiserror::Error;
+use {reqwest, thiserror::Error};
 
 #[derive(Debug, Error)]
 pub enum SdkError {

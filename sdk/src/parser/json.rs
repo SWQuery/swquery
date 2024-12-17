@@ -7,4 +7,3 @@ impl JsonParser {
         serde_json::from_str(data).map_err(|e| crate::errors::SdkError::ParseError(e.to_string()))
     }
 }
-

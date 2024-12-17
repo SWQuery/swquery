@@ -22,5 +22,6 @@ async def generate_query_route(
     body: QueryBody
 ):
     result = query_generator_openai(body.inputUser)
+    print("Result: ", result)
 
     return result

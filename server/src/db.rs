@@ -1,5 +1,7 @@
-use sqlx::{postgres::PgPoolOptions, Pool, Postgres};
-use std::env;
+use {
+    sqlx::{postgres::PgPoolOptions, Pool, Postgres},
+    std::env,
+};
 
 pub type DbPool = Pool<Postgres>;
 

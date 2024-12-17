@@ -1,5 +1,4 @@
 pub mod credits;
 pub mod user;
 
-pub use credits::*;
-pub use user::*;
+pub use {credits::*, user::*};

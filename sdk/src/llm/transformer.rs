@@ -1,8 +1,10 @@
-use reqwest;
-use serde::Deserialize;
-use serde_json::{self, Value};
-use std::collections::HashMap;
-use thiserror::Error;
+use {
+    reqwest,
+    serde::Deserialize,
+    serde_json::{self, Value},
+    std::collections::HashMap,
+    thiserror::Error,
+};
 
 /// Tipo de entrada e saída do modelo.
 type Input = Value;
@@ -20,7 +22,8 @@ pub enum TransformerError {
     InferenceError(String),
 }
 
-/// `TransformerModel` representa o modelo que extrai o "inputUser" do JSON recebido.
+/// `TransformerModel` representa o modelo que extrai o "inputUser" do JSON
+/// recebido.
 pub struct TransformerModel {
     pub name: String,
     pub version: String,
@@ -50,7 +53,8 @@ impl TransformerModel {
         }
     }
 
-    /// Extrai o campo "inputUser" do JSON. Se não existir, retorna um `InferenceError`.
+    /// Extrai o campo "inputUser" do JSON. Se não existir, retorna um
+    /// `InferenceError`.
     fn run(&self, input: Input) -> Result<Output, TransformerError> {
         if let Some(user_input) = input.get("inputUser") {
             if let Some(user_str) = user_input.as_str() {
@@ -67,8 +71,9 @@ impl TransformerModel {
         }
     }
 
-    /// `run_inference` recebe uma string JSON, parseia para `Input`, chama `run` para extrair o prompt
-    /// do usuário e retorna esse prompt como `String`.
+    /// `run_inference` recebe uma string JSON, parseia para `Input`, chama
+    /// `run` para extrair o prompt do usuário e retorna esse prompt como
+    /// `String`.
     pub fn run_inference(&self, input: &str) -> Result<String, TransformerError> {
         let input_val: Input = serde_json::from_str(input)?;
         let output_val = self.run(input_val)?;

@@ -1,3 +1,3 @@
 mod transformer;
 
-pub use transformer::{TransformerModel, TransformerError};
+pub use transformer::{TransformerError, TransformerModel};

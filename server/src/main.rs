@@ -2,13 +2,15 @@ mod db;
 mod models;
 mod routes;
 
-use axum::{
-    routing::{get, post},
-    Router,
+use {
+    axum::{
+        routing::{get, post},
+        Router,
+    },
+    db::connect,
+    dotenvy::dotenv,
+    routes::{agent::generate_query, credits::*, users::*},
 };
-use db::connect;
-use dotenvy::dotenv;
-use routes::{agent::generate_query, credits::*, users::*};
 
 pub const AGENT_API_URL: &str = "http://localhost:8000";
 
@@ -19,7 +21,7 @@ async fn main() {
 
     let pool = connect().await;
 
-    let agent_router = Router::new().route("/generate_query", post(generate_query));
+    let agent_router = Router::new().route("/generate-query", post(generate_query));
     let app = Router::new()
         .route("/health", get(|| async { "ok" }))
         .route("/users", get(get_users).post(create_user))
