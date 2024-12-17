@@ -25,7 +25,7 @@ def query_generator_openai(user_input: str, wallet: str):
     "}\n\n"
     "If the user's request can be answered by one of the methods in the list, "
     "return the method name and \"status\": \"success\"."
-    "If the method requires parameters, include them in the \"params\" array. And always return too the wallet address as a parameter\n"
+    "If the method requires parameters, include them in the \"params\" array. And always return too the wallet address as a parameter named as 'address'\n"
     "If the user's request is recognized as a Solana RPC query but no suitable method "
     "is available in the list, return:\n"
     "{\n"
