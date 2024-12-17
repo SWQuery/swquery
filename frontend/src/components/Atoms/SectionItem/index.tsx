@@ -22,7 +22,7 @@ export const CardItem: React.FC<CardItemProps> = ({
 			initial={{ opacity: 0, y: 20 }}
 			whileInView={{ opacity: 1, y: 0 }}
 			transition={{ duration: 0.5 }}
-			className={`group relative p-[1px] rounded-xl bg-[#101010] transition-all duration-300 hover:bg-gradient-to-r hover:from-[#14F195] hover:via-[#9945FF] hover:to-[#00D1FF] ${className}`}
+			className={`group relative p-[1px] rounded-xl bg-[#101010] transition-all duration-300 bg-gradient-to-r from-[#14F195] via-[#9945FF] to-[#00D1FF] ${className}`}
 		>
 			{/* Gradient shadow effect */}
 			<div className="absolute inset-0 rounded-xl opacity-0 group-hover:opacity-40 transition-opacity duration-300 blur-xl bg-gradient-to-r from-[#14F195] via-[#9945FF] to-[#00D1FF]" />

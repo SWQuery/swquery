@@ -1,11 +1,12 @@
+use reqwest;
+use serde::Deserialize;
+use serde_json::{self, Value};
 use std::collections::HashMap;
-use serde_json::{self, json, Value};
 use thiserror::Error;
 
-/// Tipo de entrada do modelo.
-/// podem representar qualquer estrutura JSON dinâmica.
+/// Tipo de entrada e saída do modelo.
 type Input = Value;
-type Output = Value;
+type Output = String;
 
 /// Erros que podem ocorrer durante o processo de transformação.
 #[derive(Debug, Error)]
@@ -14,15 +15,12 @@ pub enum TransformerError {
     #[error("Failed to parse input as JSON: {0}")]
     ParseError(#[from] serde_json::Error),
 
-    /// Erro durante a inferência. Por exemplo, se o campo "prompt" não estiver presente.
+    /// Erro se não encontrar o campo "inputUser" no JSON.
     #[error("Inference error: {0}")]
     InferenceError(String),
 }
 
-/// `TransformerModel` representa um modelo que transforma prompts em queries.
-/// 
-/// `input` e `output` podem ser exemplos de entradas e saídas, metadados, ou quaisquer dados auxiliares 
-/// que você queira associar ao modelo.
+/// `TransformerModel` representa o modelo que extrai o "inputUser" do JSON recebido.
 pub struct TransformerModel {
     pub name: String,
     pub version: String,
@@ -52,88 +50,66 @@ impl TransformerModel {
         }
     }
 
-    /// Transforma um `Input` (espera-se que contenha um campo "prompt") em uma query JSON-RPC.
-    /// Caso não encontre o campo "prompt", retorna um `InferenceError`.
+    /// Extrai o campo "inputUser" do JSON. Se não existir, retorna um `InferenceError`.
     fn run(&self, input: Input) -> Result<Output, TransformerError> {
-        // Tenta extrair o campo "prompt" do input.
-        if let Some(prompt) = input.get("prompt") {
-            // Cria uma query JSON-RPC simples como exemplo:
-            let query = json!({
-                "jsonrpc": "2.0",
-                "method": "transform_prompt",
-                "params": {
-                    "prompt": prompt
-                },
-                "id": 1
-            });
-            Ok(query)
+        if let Some(user_input) = input.get("inputUser") {
+            if let Some(user_str) = user_input.as_str() {
+                Ok(user_str.to_string())
+            } else {
+                Err(TransformerError::InferenceError(
+                    "'inputUser' field is not a string.".to_string(),
+                ))
+            }
         } else {
             Err(TransformerError::InferenceError(
-                "No 'prompt' field found in input JSON.".to_string(),
+                "No 'inputUser' field found in input JSON.".to_string(),
             ))
         }
     }
 
-    /// `run_inference` recebe uma string JSON, parseia para `Input`, chama `run` para converter o prompt
-    /// em uma query, e retorna o resultado como string JSON.
+    /// `run_inference` recebe uma string JSON, parseia para `Input`, chama `run` para extrair o prompt
+    /// do usuário e retorna esse prompt como `String`.
     pub fn run_inference(&self, input: &str) -> Result<String, TransformerError> {
-        // Parseia a entrada para um `Value`.
         let input_val: Input = serde_json::from_str(input)?;
-
-        // Executa a transformação.
         let output_val = self.run(input_val)?;
+        Ok(output_val)
+    }
 
-        // Serializa o resultado de volta para string.
-        let output_str = serde_json::to_string(&output_val)?;
-        Ok(output_str)
+    /// Esta função recebe o prompt extraído e envia via POST para a rota do LLM
+    /// Espera que o LLM retorne uma string (por exemplo, a query gerada).
+    pub async fn send_prompt_to_llm(
+        &self,
+        prompt: &str,
+    ) -> Result<QueryResponse, Box<dyn std::error::Error>> {
+        let client = reqwest::Client::new();
+        let resp = client
+            .post("http://localhost:5500/agent/generate_query")
+            .json(&serde_json::json!({"inputUser": prompt}))
+            .send()
+            .await?;
+
+        match resp.status() {
+            status if status.is_success() => {
+                let response: QueryResponse = resp.json().await?;
+                match response.result.status.as_str() {
+                    "error" => Err(format!("LLM Error: {}", response.result.response).into()),
+                    "success" => Ok(response),
+                    _ => Err("Unknown response status".into()),
+                }
+            }
+            status => Err(format!("Server returned status: {}", status).into()),
+        }
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
+#[derive(Deserialize)]
+pub struct QueryResponse {
+    result: QueryResult,
+    pub tokens: i64,
+}
 
-    #[test]
-    fn test_run_inference_ok() {
-        let model = TransformerModel::new(
-            "TestModel".into(),
-            "1.0".into(),
-            "A test transformer model.".into(),
-            vec![],
-            vec![],
-            HashMap::new(),
-        );
-
-        let input_json = r#"{ "prompt": "Hello, world!" }"#;
-        let result = model.run_inference(input_json);
-        assert!(result.is_ok());
-
-        let output_str = result.unwrap();
-        let output_val: serde_json::Value = serde_json::from_str(&output_str).unwrap();
-        assert_eq!(output_val["method"], "transform_prompt");
-        assert_eq!(output_val["params"]["prompt"], "Hello, world!");
-    }
-
-    #[test]
-    fn test_run_inference_missing_prompt() {
-        let model = TransformerModel::new(
-            "TestModel".into(),
-            "1.0".into(),
-            "A test transformer model.".into(),
-            vec![],
-            vec![],
-            HashMap::new(),
-        );
-
-        let input_json = r#"{"wrong_field": "no prompt"}"#;
-        let result = model.run_inference(input_json);
-        assert!(result.is_err());
-
-        match result.err().unwrap() {
-            TransformerError::InferenceError(msg) => {
-                assert!(msg.contains("No 'prompt' field found"))
-            }
-            _ => panic!("Expected an InferenceError"),
-        }
-    }
+#[derive(Deserialize, Debug)]
+struct QueryResult {
+    pub response: String,
+    pub status: String,
 }

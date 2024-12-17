@@ -14,8 +14,29 @@ pub struct BuyCredits {
 pub struct CreditResponse {
     pub user_pubkey: String,
     pub new_balance: i64,
+    pub api_key: Option<String>,
+}
+#[derive(Serialize)]
+pub struct ValidateCreditsResponse {
+    pub success: bool,
+    pub remaining_balance: i64,
 }
 
+// Add function to generate API key
+fn generate_api_key() -> String {
+    use rand::{thread_rng, Rng};
+    const CHARSET: &[u8] = b"ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+    let mut rng = thread_rng();
+    let key: String = (0..32)
+        .map(|_| {
+            let idx = rng.gen_range(0..CHARSET.len());
+            CHARSET[idx] as char
+        })
+        .collect();
+    key
+}
+
+// Modify buy_credits to handle API key
 pub async fn buy_credits(
     State(pool): State<PgPool>,
     Json(payload): Json<BuyCredits>,
@@ -34,16 +55,18 @@ pub async fn buy_credits(
 
     match user {
         Some(user) => {
-            // Use INSERT ... ON CONFLICT ... DO UPDATE for atomic upsert
+            let api_key = generate_api_key();
             let credit = sqlx::query_as::<_, CreditModel>(
-                "INSERT INTO credits (user_id, balance) 
-                 VALUES ($1, $2)
+                "INSERT INTO credits (user_id, balance, api_key) 
+                 VALUES ($1, $2, $3)
                  ON CONFLICT (user_id) 
-                 DO UPDATE SET balance = credits.balance + EXCLUDED.balance
+                 DO UPDATE SET balance = credits.balance + EXCLUDED.balance,
+                             api_key = COALESCE(credits.api_key, EXCLUDED.api_key)
                  RETURNING *",
             )
             .bind(user.id)
             .bind(payload.amount)
+            .bind(&api_key)
             .fetch_one(&pool)
             .await
             .map_err(|e| {
@@ -59,6 +82,7 @@ pub async fn buy_credits(
                 Json(CreditResponse {
                     user_pubkey: payload.user_pubkey,
                     new_balance: credit.balance,
+                    api_key: Some(api_key),
                 }),
             ))
         }
@@ -67,6 +91,7 @@ pub async fn buy_credits(
             Json(CreditResponse {
                 user_pubkey: payload.user_pubkey,
                 new_balance: 0,
+                api_key: None,
             }),
         )),
     }
@@ -104,6 +129,7 @@ pub async fn refund_credits(
                     Json(CreditResponse {
                         user_pubkey: payload.user_pubkey,
                         new_balance: credit.balance,
+                        api_key: None,
                     }),
                 ));
             }
@@ -125,6 +151,7 @@ pub async fn refund_credits(
         Json(CreditResponse {
             user_pubkey: payload.user_pubkey,
             new_balance: balance,
+            api_key: None,
         }),
     ))
 }

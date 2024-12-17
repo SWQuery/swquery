@@ -1,3 +1,4 @@
+-- SQLBook: Code
 CREATE TABLE users (
     id SERIAL PRIMARY KEY,
     pubkey VARCHAR NOT NULL UNIQUE
@@ -7,5 +8,6 @@ CREATE TABLE IF NOT EXISTS credits (
     id SERIAL PRIMARY KEY,
     user_id INTEGER NOT NULL REFERENCES users (id) UNIQUE, -- UNIQUE constraint here
     balance BIGINT NOT NULL DEFAULT 0,
+    api_key VARCHAR,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );

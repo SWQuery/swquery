@@ -1,12 +1,15 @@
 from openai import OpenAI
 from configs.settings import settings
+import json
 
 openAIClient = OpenAI(
     api_key=settings.openai_key_secret,
 )
 
+
 def query_generator(input: str):
     return input + " generated"
+
 
 def query_generator_openai(user_input: str):
     system_prompt = (
@@ -47,10 +50,17 @@ def query_generator_openai(user_input: str):
     response = openAIClient.chat.completions.create(
         model="gpt-4o",
         messages=[
-            {"role":"system","content": system_prompt},
-            {"role":"user","content": user_input}
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": user_input}
         ],
         response_format={"type": "json_object"}
     )
 
-    return response.choices[0].message.content.strip()
+    promptResult = response.choices[0].message.content.strip();
+
+    promptResult = json.loads(promptResult);
+
+    return {
+        "result": promptResult,
+        "tokens": response.usage.total_tokens
+    }

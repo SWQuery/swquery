@@ -7,12 +7,12 @@ default:
 # Build SDK
 build-sdk:
     @echo "Building SDK..."
-    cargo build -p sdk
+    cargo build -p sdk --release
 
 # Build Server
 build-server:
     @echo "Building Server..."
-    cargo build -p server
+    cargo build -p server --release
 
 # Build Credit-Sales Program
 build-credit-sales:

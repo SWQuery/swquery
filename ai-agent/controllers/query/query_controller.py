@@ -12,6 +12,7 @@ router = APIRouter(
     tags=["Query"]
 )
 
+
 class QueryBody(BaseModel):
     inputUser: str
 
@@ -22,6 +23,4 @@ async def generate_query_route(
 ):
     result = query_generator_openai(body.inputUser)
 
-    result = json.loads(result)
-
-    return result;
+    return result
