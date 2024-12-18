@@ -10,6 +10,7 @@ authors = [
     "Victor Carvalho <victordecarvalho342@gmail.com>",
 ]
 repository = "https://github.com/vict0rcarvalh0/swquery"
+license = "../LICENSE"
 
 [lib]
 name = "swquery"
