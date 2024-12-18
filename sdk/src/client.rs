@@ -1,6 +1,5 @@
 use crate::{errors::SdkError, models::*, utils::*};
 use reqwest::Client;
-use serde::Deserialize;
 use serde_json::{json, Value};
 use std::time::Duration;
 use tracing::error;
@@ -144,19 +143,6 @@ impl SWqueryClient {
                         "Missing address parameter".to_string(),
                     ));
                 }
-                let from = get_optional_u64_param(params, "from", 0);
-                let to = get_optional_u64_param(params, "to", 0);
-
-                let response = self.get_recent_transactions(address, days).await?;
-                to_value_response(response)
-            }
-            "getTransactionPeriod" => {
-                let address = get_optional_str_param(params, "address").unwrap_or_default();
-                if address.is_empty() {
-                    return Err(SdkError::InvalidInput(
-                        "Missing address parameter".to_string(),
-                    ));
-                }
                 let days: u64 = get_optional_u64_param(params, "days", 1);
 
                 let response = self.get_recent_transactions(address, days).await?;
@@ -203,11 +189,11 @@ impl SWqueryClient {
             //     let response = self.get_signatures_for_asset(asset).await?;
             //     to_value_response(response)
             // }
-            "getBalance" => {
-                let address = get_required_str_param(params, "address")?;
-                let response = self.get_balance(address).await?;
-                to_value_response(response)
-            }
+            // "getBalance" => {
+            //     let address = get_required_str_param(params, "address")?;
+            //     let response = self.get_balance(address).await?;
+            //     to_value_response(response)
+            // }
             // "getBlockHeight" => {
             //     let response = self.get_block_height().await?;
             //     to_value_response(response)
@@ -336,11 +322,11 @@ impl SWqueryClient {
             //     let response = self.get_supply().await?;
             //     to_value_response(response)
             // }
-            "getTokenAccountBalance" => {
-                let pubkey = get_required_str_param(params, "pubkey")?;
-                let response = self.get_token_account_balance(pubkey).await?;
-                to_value_response(response)
-            }
+            // "getTokenAccountBalance" => {
+            //     let pubkey = get_required_str_param(params, "pubkey")?;
+            //     let response = self.get_token_account_balance(pubkey).await?;
+            //     to_value_response(response)
+            // }
             // "getTokenLargestAccounts" => {
             //     let mint = get_required_str_param(params, "mint")?;
             //     let response = self.get_token_largest_accounts(mint).await?;
@@ -396,148 +382,39 @@ impl SWqueryClient {
         address: &str,
         days: u64,
     ) -> Result<Vec<FullTransaction>, SdkError> {
-        if address.trim().is_empty() {
-            return Err(SdkError::InvalidInput(
-                "Address cannot be empty".to_string(),
-            ));
-        }
+        validate_address(address)?;
 
-        // Calculate the timestamp for filtering
+        // Calculate timestamp range
         let now = chrono::Utc::now().timestamp();
         let from_timestamp = now - (days as i64 * 24 * 60 * 60);
 
-        // Step 1: Fetch signatures for the given address
         let url = self.get_helius_rpc_url();
-        let payload = json!({
-            "jsonrpc": "2.0",
-            "id": 1,
-            "method": "getSignaturesForAddress",
-            "params": [address, { "commitment": "finalized" }]
-        });
 
-        println!("Fetching signatures for address: {}", address);
-        let response = self
-            .client
-            .post(&url)
-            .json(&payload)
-            .send()
-            .await
-            .map_err(|e| SdkError::NetworkError(e.to_string()))?;
-
-        if !response.status().is_success() {
-            println!("Failed to fetch signatures: {}", response.status());
-            return Err(SdkError::ApiRequestFailed(response.status().to_string()));
-        }
-
-        let signatures_response: SignaturesResponse = response
-            .json()
-            .await
-            .map_err(|e| SdkError::ParseError(e.to_string()))?;
-
+        // Get signatures
+        let signatures_response = get_signatures(&self.client, &url, address).await?;
         println!("Fetched {} signatures", signatures_response.result.len());
 
-        // Step 2: Filter and fetch full transaction details
+        // Process signatures and get transaction details
         let mut transactions = Vec::new();
         for signature_info in signatures_response.result {
+            // Get block time
             let block_time = if let Some(bt) = signature_info.blockTime {
                 bt
             } else {
-                // Fetch block time for transactions missing `blockTime`
-                let block_time_payload = json!({
-                    "jsonrpc": "2.0",
-                    "id": 1,
-                    "method": "getBlockTime",
-                    "params": [signature_info.slot]
-                });
-
-                let block_time_response = self
-                    .client
-                    .post(&url)
-                    .json(&block_time_payload)
-                    .send()
-                    .await
-                    .map_err(|e| SdkError::NetworkError(e.to_string()))?;
-
-                if block_time_response.status().is_success() {
-                    let block_time_result: GetBlockTimeResponse = block_time_response
-                        .json()
-                        .await
-                        .map_err(|e| SdkError::ParseError(e.to_string()))?;
-                    block_time_result.result.unwrap_or(0)
-                } else {
-                    println!(
-                        "Failed to fetch block time for slot {}: {}",
-                        signature_info.slot,
-                        block_time_response.status()
-                    );
-                    continue;
-                }
+                get_block_time(&self.client, &url, signature_info.slot).await?
             };
 
-            if block_time < from_timestamp as u64 {
+            // Filter by timestamp
+            if !is_within_timerange(block_time, Some(from_timestamp as u64), None) {
                 continue;
             }
 
-            // Step 3: Fetch full transaction details
-            let transaction_payload = json!({
-                "jsonrpc": "2.0",
-                "id": 1,
-                "method": "getTransaction",
-                "params": [signature_info.signature, { "encoding": "json", "maxSupportedTransactionVersion": 0 }]
-            });
-
-            println!(
-                "Fetching transaction details for signature: {}",
-                signature_info.signature
-            );
-
-            let transaction_response = self
-                .client
-                .post(&url)
-                .json(&transaction_payload)
-                .send()
+            // Get full transaction details
+            match get_transaction_details_with_info(&self.client, &url, &signature_info.signature)
                 .await
-                .map_err(|e| SdkError::NetworkError(e.to_string()))?;
-
-            if transaction_response.status().is_success() {
-                let response_text = transaction_response.text().await.map_err(|e| {
-                    SdkError::ParseError(format!("Failed to read transaction response: {}", e))
-                })?;
-
-                match serde_json::from_str::<GetTransactionResponse>(&response_text) {
-                    Ok(transaction_response) => {
-                        let transaction_result = transaction_response.result;
-                        let full_transaction = FullTransaction {
-                            signature: transaction_result.transaction.signatures[0].clone(),
-                            slot: transaction_result.slot,
-                            timestamp: transaction_result.blockTime.unwrap_or_default(),
-                            status: transaction_result.meta.as_ref().map_or(
-                                "unknown".to_string(),
-                                |m| {
-                                    if m.err.is_some() {
-                                        "failed".to_string()
-                                    } else {
-                                        "success".to_string()
-                                    }
-                                },
-                            ),
-                            details: transaction_result,
-                        };
-                        transactions.push(full_transaction);
-                    }
-                    Err(e) => {
-                        eprintln!(
-                            "Error parsing transaction response: {}. Raw response: {}",
-                            e, response_text
-                        );
-                        continue;
-                    }
-                }
-            } else {
-                println!(
-                    "Failed to fetch transaction details: {}",
-                    transaction_response.status()
-                );
+            {
+                Ok(transaction) => transactions.push(transaction),
+                Err(e) => eprintln!("Error getting transaction details: {}", e),
             }
         }
 
@@ -606,193 +483,48 @@ impl SWqueryClient {
         }
 
         let url = self.get_helius_rpc_url();
-        let payload = json!({
-            "jsonrpc": "2.0",
-            "id": 1,
-            "method": "getSignaturesForAddress",
-            "params": [address, { "commitment": "finalized" }]
-        });
 
-        let response = self
-            .client
-            .post(&url)
-            .json(&payload)
-            .send()
-            .await
-            .map_err(|e| SdkError::NetworkError(e.to_string()))?;
+        // Get signatures using helper
+        let mut signatures_response = get_signatures(&self.client, &url, address).await?;
 
-        if !response.status().is_success() {
-            println!("Failed to fetch signatures: {}", response.status());
-            return Err(SdkError::ApiRequestFailed(response.status().to_string()));
-        }
-
-        let mut signatures_response: SignaturesResponse = response
-            .json()
-            .await
-            .map_err(|e| SdkError::ParseError(e.to_string()))?;
-
-        if let Some(from) = from {
-            let bt = signatures_response.result.iter().find_map(|s| s.blockTime);
-        }
-
-        if let Some(to) = to {
-            signatures_response.result.retain(|s| s.slot <= to);
-        }
-
-        Ok(signatures_response)
-    }
-
-    async fn get_transactions_period(
-        &self,
-        address: &str,
-        from: Option<u64>,
-        to: Option<u64>,
-    ) -> Result<FullTransaction, SdkError> {
-        if address.trim().is_empty() {
-            return Err(SdkError::InvalidInput(
-                "Address cannot be empty".to_string(),
-            ));
-        }
-
-        let url = self.get_helius_rpc_url();
-        let payload = json!({
-            "jsonrpc": "2.0",
-            "id": 1,
-            "method": "getSignaturesForAddress",
-            "params": [address, { "commitment": "finalized" }]
-        });
-
-        let response = self
-            .client
-            .post(&url)
-            .json(&payload)
-            .send()
-            .await
-            .map_err(|e| SdkError::NetworkError(e.to_string()))?;
-
-        if !response.status().is_success() {
-            println!("Failed to fetch signatures: {}", response.status());
-            return Err(SdkError::ApiRequestFailed(response.status().to_string()));
-        }
-
-        let mut signatures_response: SignaturesResponse = response
-            .json()
-            .await
-            .map_err(|e| SdkError::ParseError(e.to_string()))?;
-
-        if let Some(from) = from {
-            let bt = signatures_response.result.iter().find_map(|s| s.blockTime);
-        }
-
-        if let Some(to) = to {
-            signatures_response.result.retain(|s| s.slot <= to);
-        }
-
-        let mut transactions = Vec::new();
+        // Filter signatures
+        let mut filtered_signatures = Vec::new();
         for signature_info in signatures_response.result {
             let block_time = if let Some(bt) = signature_info.blockTime {
                 bt
             } else {
-                // Fetch block time for transactions missing `blockTime`
-                let block_time_payload = json!({
-                    "jsonrpc": "2.0",
-                    "id": 1,
-                    "method": "getBlockTime",
-                    "params": [signature_info.slot]
-                });
-
-                let block_time_response = self
-                    .client
-                    .post(&url)
-                    .json(&block_time_payload)
-                    .send()
-                    .await
-                    .map_err(|e| SdkError::NetworkError(e.to_string()))?;
-
-                if block_time_response.status().is_success() {
-                    let block_time_result: GetBlockTimeResponse = block_time_response
-                        .json()
-                        .await
-                        .map_err(|e| SdkError::ParseError(e.to_string()))?;
-                    block_time_result.result.unwrap_or(0)
-                } else {
-                    println!(
-                        "Failed to fetch block time for slot {}: {}",
-                        signature_info.slot,
-                        block_time_response.status()
-                    );
-                    continue;
-                }
+                // Get block time using helper
+                get_block_time(&self.client, &url, signature_info.slot).await?
             };
 
-            if block_time < from_timestamp as u64 {
-                continue;
+            // Apply timestamp filters
+            let mut include_signature = true;
+
+            if let Some(from_timestamp) = from {
+                if block_time < from_timestamp {
+                    include_signature = false;
+                }
             }
 
-            // Step 3: Fetch full transaction details
-            let transaction_payload = json!({
-                "jsonrpc": "2.0",
-                "id": 1,
-                "method": "getTransaction",
-                "params": [signature_info.signature, { "encoding": "json", "maxSupportedTransactionVersion": 0 }]
-            });
-
-            println!(
-                "Fetching transaction details for signature: {}",
-                signature_info.signature
-            );
-
-            let transaction_response = self
-                .client
-                .post(&url)
-                .json(&transaction_payload)
-                .send()
-                .await
-                .map_err(|e| SdkError::NetworkError(e.to_string()))?;
-
-            if transaction_response.status().is_success() {
-                let response_text = transaction_response.text().await.map_err(|e| {
-                    SdkError::ParseError(format!("Failed to read transaction response: {}", e))
-                })?;
-
-                match serde_json::from_str::<GetTransactionResponse>(&response_text) {
-                    Ok(transaction_response) => {
-                        let transaction_result = transaction_response.result;
-                        let full_transaction = FullTransaction {
-                            signature: transaction_result.transaction.signatures[0].clone(),
-                            slot: transaction_result.slot,
-                            timestamp: transaction_result.blockTime.unwrap_or_default(),
-                            status: transaction_result.meta.as_ref().map_or(
-                                "unknown".to_string(),
-                                |m| {
-                                    if m.err.is_some() {
-                                        "failed".to_string()
-                                    } else {
-                                        "success".to_string()
-                                    }
-                                },
-                            ),
-                            details: transaction_result,
-                        };
-                        transactions.push(full_transaction);
-                    }
-                    Err(e) => {
-                        eprintln!(
-                            "Error parsing transaction response: {}. Raw response: {}",
-                            e, response_text
-                        );
-                        continue;
-                    }
+            if let Some(to_timestamp) = to {
+                if block_time > to_timestamp {
+                    include_signature = false;
                 }
-            } else {
-                println!(
-                    "Failed to fetch transaction details: {}",
-                    transaction_response.status()
-                );
+            }
+
+            if include_signature {
+                filtered_signatures.push(signature_info);
             }
         }
 
-  sadas    }
+        signatures_response.result = filtered_signatures;
+        println!(
+            "Total filtered signatures: {}",
+            signatures_response.result.len()
+        );
+
+        Ok(signatures_response)
+    }
 
     // /// Fetch assets owned by a given address.
     // async fn get_assets_by_owner(&self, owner: &str) -> Result<AssetsResponse, SdkError> {
@@ -890,41 +622,10 @@ impl SWqueryClient {
     // }
 
     // // Below are all RPC calls structured consistently with the helius_rpc_call method.
-    async fn get_balance(&self, address: &str) -> Result<GetBalanceResponse, SdkError> {
-        if address.trim().is_empty() {
-            return Err(SdkError::InvalidInput(
-                "Address cannot be empty".to_string(),
-            ));
-        }
-
-        let url = self.get_helius_rpc_url();
-        let payload = json!({
-            "jsonrpc": "2.0",
-            "id": 1,
-            "method": "getBalance",
-            "params": [address]
-        });
-
-        let response = self
-            .client
-            .post(&url)
-            .json(&payload)
-            .send()
-            .await
-            .map_err(|e| SdkError::NetworkError(e.to_string()))?;
-
-        if !response.status().is_success() {
-            println!("Failed to fetch signatures: {}", response.status());
-            return Err(SdkError::ApiRequestFailed(response.status().to_string()));
-        }
-
-        let result: GetBalanceResponse = response
-            .json()
-            .await
-            .map_err(|e| SdkError::ParseError(e.to_string()))?;
-
-        Ok(result)
-    }
+    // async fn get_balance(&self, address: &str) -> Result<GetBalanceResponse, SdkError> {
+    //     let params = json!([address]);
+    //     self.helius_rpc_call("getBalance", params).await
+    // }
 
     // async fn get_block_height(&self) -> Result<GetBlockHeightResponse, SdkError> {
     //     let params = json!([]);
@@ -1113,14 +814,13 @@ impl SWqueryClient {
     //     self.helius_rpc_call("getSupply", params).await
     // }
 
-    async fn get_token_account_balance(
-        &self,
-        pubkey: &str,
-    ) -> Result<GetTokenAccountBalanceResponse, SdkError> {
-        // let params = json!([pubkey]);
-        // self.helius_rpc_call("getTokenAccountBalance", params).await
-        todo!();
-    }
+    // async fn get_token_account_balance(
+    //     &self,
+    //     pubkey: &str,
+    // ) -> Result<GetTokenAccountBalanceResponse, SdkError> {
+    //     let params = json!([pubkey]);
+    //     self.helius_rpc_call("getTokenAccountBalance", params).await
+    // }
 
     // async fn get_token_largest_accounts(
     //     &self,

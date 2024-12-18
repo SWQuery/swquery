@@ -1,3 +1,4 @@
+from typing import Dict, Any
 from openai import OpenAI
 from configs.settings import settings
 import json
@@ -120,75 +121,71 @@ def query_generator_openai(user_input: str, wallet: str):
     }
 
 
-def generate_visualization(input: str):
-    # system_prompt = (
-    #     "You are a highly specialized RPC assistant for the SWQuery SDK, which enhances Solana RPC functionalities. "
-    #     "You will be provided with a JSON in a varying format, and your role is to return a Markdown visualization of the data.\n"
-    #     "You can use the following Markdown syntax to create a table:\n"
-    #     "| Header 1 | Header 2 |\n"
-    #     "| -------- | -------- |\n"
-    #     "| Cell 1   | Cell 2   |\n"
-    #     "\n"
-    #     "You can use the following Markdown syntax to create a list:\n"
-    #     "- Item 1\n"
-    #     "- Item 2\n"
-    #     "\n"
-    #     "You can use the following Markdown syntax to create a link:\n"
-    #     "[Link text](https://www.example.com)\n"
-    #     "\n"
-    # )
-    # Salvei oq jamanta
+def generate_visualization(input_json: str) -> Dict[str, Any]:
+    """
+    Generate a Markdown visualization from JSON input using OpenAI's GPT-4.
 
+    Args:
+        input_json: JSON string containing blockchain data
+
+    Returns:
+        Dictionary containing the markdown result and token usage
+    """
     system_prompt = (
-        "Você é um agente LLM especializado em interações com blockchain, "
-        "especificamente com a Solana. Você utiliza JSONs retornados por chamadas "
-        "RPC feitas pela API da Helius para gerar resumos claros e organizados. "
+        "You are a Solana blockchain data analyzer that generates clear Markdown summaries. "
+        "Analyze the provided JSON data and create a structured summary with these exact sections:"
         "\n\n"
-        "Contexto: "
-        "\n"
-        "O Remote Procedure Call (RPC) é um método que permite executar operações em um "
-        "servidor remoto como se fossem funções locais. Na blockchain Solana, chamadas "
-        "RPC são amplamente utilizadas para consultar dados sobre transações, contas, "
-        "estados de programas, eventos e outros dados da rede. "
-        "\n"
-        "A Helius é uma API que simplifica a interação com a Solana, fornecendo ferramentas "
-        "para acessar dados complexos de maneira eficiente. Por meio dela, os desenvolvedores "
-        "podem consultar informações como transações, logs, estados de contas e eventos, o que "
-        "facilita o desenvolvimento de aplicações baseadas na blockchain."
-        "\n\n"
-        "Sua tarefa é transformar o JSON retornado por chamadas RPC em um resumo em Markdown, "
-        "extraindo e organizando as informações mais relevantes. Considere o seguinte ao gerar o resumo:"
-        "\n\n"
-        "1. Identifique os dados mais importantes presentes no JSON, como transações, "
-        "contas, tokens, logs de eventos, programas ou estados."
-        "\n"
-        "2. Estruture o resumo em Markdown com as seguintes seções (se aplicáveis): "
-        "   - **Resumo Geral:** Descrição breve do conteúdo do JSON. "
-        "   - **Principais Campos:** Destaque os campos mais relevantes e seus valores. "
-        "   - **Entidades ou Contas Envolvidas:** Liste contas, programas ou entidades mencionadas, "
-        "     incluindo detalhes relevantes como saldos ou identificadores. "
-        "   - **Eventos ou Logs:** Apresente logs, mensagens ou eventos destacados, se existirem. "
-        "   - **Outras Informações:** Qualquer dado adicional relevante que não se encaixe nas seções acima."
-        "\n"
-        "3. Ignore informações redundantes ou irrelevantes para um resumo."
-        "4. Se o JSON for extenso, priorize apenas os dados mais significativos."
-        "\n\n"
-        "Certifique-se de manter a organização lógica, clareza e incluir apenas informações "
-        "que agreguem valor ao entendimento do conteúdo."
+        "# General Overview\n"
+        "- Transaction count and overall status\n"
+        "- Key characteristics of the data\n"
+        "- Any critical errors or issues\n\n"
+        "# Key Fields\n"
+        "- Transaction signatures\n"
+        "- Block times and slots\n"
+        "- Fees and balance changes\n"
+        "- Format amounts in both lamports and SOL\n\n"
+        "# Involved Entities/Accounts\n"
+        "- List all account addresses with inferred roles\n"
+        "- Identify known programs (e.g. System Program)\n"
+        "- Group by transaction if multiple exist\n\n"
+        "# Events/Logs\n"
+        "- Program invocations and status\n"
+        "- Error messages if present\n"
+        "- Log frequencies (e.g. 'occurred X times')\n\n"
+        "# Additional Information\n"
+        "- Unique transaction aspects\n"
+        "- Missing or unclear data\n"
+        "- Technical implications\n\n"
+        "Guidelines:\n"
+        "- Use clean, consistent Markdown formatting\n"
+        "- Keep descriptions concise and technical\n"
+        "- Format addresses as `code` style\n"
+        "- Use bullet points for lists\n"
+        "- Convert lamports to SOL where relevant (1 SOL = 1,000,000,000 lamports)\n"
+        "- Highlight any errors or anomalies\n"
     )
 
-    response = openAIClient.chat.completions.create(
-        model="gpt-4o",
-        messages=[
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": input}
-        ],
-        response_format={"type": "json_object"}
-    )
+    try:
+        print(f"Generating visualization for JSON input...")
+        response = openAIClient.chat.completions.create(
+            model="gpt-4",
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": input_json}
+            ],
+            temperature=0.7
+        )
 
-    promptResult = response.choices[0].message.content.strip()
+        result = response.choices[0].message.content.strip()
+        tokens = response.usage.total_tokens
 
-    return {
-        "result": promptResult,
-        "tokens": response.usage.total_tokens
-    }
+        print(f"Successfully generated visualization. Tokens used: {tokens}")
+
+        return {
+            "result": result,
+            "tokens": tokens
+        }
+
+    except Exception as e:
+        print(f"Error generating visualization: {str(e)}")
+        raise

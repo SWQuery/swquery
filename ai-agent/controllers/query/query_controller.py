@@ -18,8 +18,10 @@ class QueryBody(BaseModel):
     inputUser: str
     address: str
 
+
 class VisualizationBody(BaseModel):
     jsonReturned: str
+
 
 @router.post("/generate-query")
 async def generate_query_route(
@@ -36,10 +38,8 @@ async def generate_query_route(
 
 @router.post("/generate-visualization")
 async def generate_visualization_route(
-    body: VisualizationBody # { "jsonReturned": "{\"abc\":\"abc\"}" }
+    body: VisualizationBody  # { "jsonReturned": "{\"abc\":\"abc\"}" }
 ):
-    print("Body: ", body)
     result = generate_visualization(body.jsonReturned)
-    print("Result: ", result)
 
     return result
