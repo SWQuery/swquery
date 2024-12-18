@@ -71,7 +71,6 @@ pub struct Asset {
     pub id: String,
     pub content: Value,
     pub ownership: Value,
-    // Add other relevant fields
 }
 
 /// [SWqueryClient](https://bretasarthur1.gitbook.io/swquery/) API client

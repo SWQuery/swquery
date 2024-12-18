@@ -11,7 +11,7 @@
 </p>
 
 <p align="center">
-    <img src="https://via.placeholder.com/800x400?text=SWquery+Banner" width="800px" alt="SWquery Banner">
+    <img src=".docs/landing.png" width="800px" alt="SWquery Banner">
 </p>
 
 ---
@@ -69,7 +69,6 @@ These barriers limit adoption and efficiency for both users and developers.
 - **Customized Chatbot**: Assist users with explanations and actions based on their data.
 - **Modular SDK**: Complete tools for developers to use in any application.
 - **Interactive Visualizations**: Graphs and tables to facilitate transaction analysis.
-- **Real-Time Notifications**: Receive instant updates of relevant events.
 
 ---
 
@@ -86,7 +85,7 @@ These barriers limit adoption and efficiency for both users and developers.
 ## **🔧 Architecture Diagram**
 
 <p align="center">
-    <img src="https://via.placeholder.com/800x400?text=SWquery+Architecture" width="800px" alt="Project Architecture">
+    <img src=".docs/swqdiagram.png" width="800px" alt="Project Architecture">
 </p>
 
 ---
