@@ -2,15 +2,7 @@ import { Footer } from "@/components/Molecules/Landing/Footer";
 import { Intro } from "@/components/Molecules/Landing/Intro";
 import { Section } from "@/components/Molecules/Landing/Section";
 import { Navbar } from "@/components/Molecules/Navbar";
-import {
-	// Globe,
-	// Brain,
-	// PieChart,
-	// ShieldCheck,
-	Wallet,
-	Filter,
-	BarChart,
-} from "lucide-react";
+import { Wallet, Filter, BarChart } from "lucide-react";
 
 export const Landing = () => {
 	const itemsHowItWorks = [
@@ -83,7 +75,7 @@ export const Landing = () => {
 	return (
 		<div className="min-h-screen bg-gradient-to-b from-[#0A0A0A] to-[#101010] text-white">
 			<Navbar />
-			<div className="pt-28">
+			<div className="pt-40">
 				<Intro />
 				<Section
 					title="How It Works"
@@ -91,18 +83,7 @@ export const Landing = () => {
 					columns={3}
 					textAlign="center"
 				/>
-				{/* <Section
-				title="Features"
-				items={itemsFeatures}
-				columns={3}
-				textAlign="center"
-			/>
-			<Section
-				title="Technical Benefits"
-				items={itemsTechnicalBenefits}
-				columns={2}
-				textAlign="left"
-			/> */}
+
 				<Footer />
 			</div>
 		</div>

@@ -82,3 +82,18 @@ body {
 		@apply bg-background text-foreground;
 	}
 }
+
+/* Add these styles to remove wallet icons from the modal */
+.wallet-adapter-modal-list {
+	list-style: none;
+}
+
+.wallet-adapter-modal-list li button img,
+.wallet-adapter-modal-list-more-icon-container {
+	display: none !important;
+}
+
+/* Adjust the button padding since we're hiding the end icon */
+.wallet-adapter-button {
+	padding-right: 1rem !important;
+}
