@@ -1,7 +1,7 @@
 import React from "react";
 import { motion } from "framer-motion";
 import { CardItem } from "@/components/Atoms/SectionItem";
-import { TypeIcon as type, LucideIcon } from "lucide-react";
+import { LucideIcon } from "lucide-react";
 
 interface SectionProps extends React.HTMLAttributes<HTMLElement> {
 	title: string;
