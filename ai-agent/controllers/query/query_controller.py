@@ -4,7 +4,8 @@ from fastapi.responses import StreamingResponse
 import json
 
 from services.query.query_service import (
-    query_generator_openai
+    query_generator_openai,
+    generate_visualization
 )
 
 router = APIRouter(
@@ -17,6 +18,8 @@ class QueryBody(BaseModel):
     inputUser: str
     address: str
 
+class VisualizationBody(BaseModel):
+    jsonReturned: str
 
 @router.post("/generate-query")
 async def generate_query_route(
@@ -26,6 +29,17 @@ async def generate_query_route(
     # result = query_generator_openai(body.inputUser, body.address)
     result = {'result': {'response': 'getRecentTransactions', 'params': {
         'address': 'HuMZdNtbaNBPYex53irwAyKvxouLmEyN85MvAon81pXE', 'days': 70}, 'status': 'success'}, 'tokens': 69420}
+    print("Result: ", result)
+
+    return result
+
+
+@router.post("/generate-visualization")
+async def generate_visualization_route(
+    body: VisualizationBody # { "jsonReturned": "{\"abc\":\"abc\"}" }
+):
+    print("Body: ", body)
+    result = generate_visualization(body.jsonReturned)
     print("Result: ", result)
 
     return result

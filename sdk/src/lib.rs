@@ -42,15 +42,12 @@ mod tests {
     #[tokio::test]
     async fn test_get_recent_transactions() {
         let client = SWqueryClient::new(
-            "".to_string(),
-            "".to_string(),
+            "WDAO4Z1Z503DWJH7060GIYGR0TWIIPBM".to_string(),
+            "45af5ec2-c5c5-4da2-9226-550f52e126cd".to_string(),
             None,
             Some(Network::Mainnet),
         );
 
-        // let result = client
-        //     .get_recent_transactions("Vote111111111111111111111111111111111111111", 5)
-        //     .await;
         let result = client
             .query(
                 "I want my transactions on the last 2 days",
