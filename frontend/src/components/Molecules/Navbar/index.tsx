@@ -127,26 +127,26 @@ export const Navbar = () => {
             <WalletMultiButton
               startIcon={!connected ? <Wallet className="mr-2 h-5 w-5" /> : undefined} 
               style={{
-              width: "auto",
-              minWidth: "120px",
-              color: "white",
-              background: "linear-gradient(90deg, rgba(59,130,246,0.1), rgba(168,85,247,0.1))",
-              padding: "0.5rem 1rem",
-              borderRadius: "1rem",
-              boxShadow: "0 0 15px rgba(59,130,246,0.3)",
-              cursor: "pointer",
-              border: "1px solid rgba(255,255,255,0.1)",
-              outline: "none",
-              fontSize: "1rem",
-              fontWeight: "bold",
-              transition: "all 0.3s ease",
-              position: "relative",
-              overflow: "hidden",
-              textAlign: "center"
+                width: "auto",
+                minWidth: "120px",
+                color: "white",
+                background: "linear-gradient(90deg, rgba(59,130,246,0.1), rgba(168,85,247,0.1))",
+                padding: "0.5rem 1rem",
+                borderRadius: "1rem",
+                boxShadow: "0 0 15px rgba(59,130,246,0.3)",
+                cursor: "pointer",
+                border: "1px solid rgba(255,255,255,0.1)",
+                outline: "none",
+                fontSize: "1rem",
+                fontWeight: "bold",
+                transition: "all 0.3s ease",
+                position: "relative",
+                overflow: "hidden",
+                textAlign: "center"
               }}
             >
               <Wallet className="mr-2 h-5 w-5" />
-              Connect Wallet
+              {connected ? 'Connected' : 'Connect Wallet'}
             </WalletMultiButton>
             <span className="absolute inset-0 bg-gradient-to-r from-blue-500/30 to-purple-500/30 rounded-lg opacity-0 group-hover:opacity-100 blur-sm transition-opacity duration-300 pointer-events-none"></span>
           </motion.div>
