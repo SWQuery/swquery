@@ -22,7 +22,7 @@ pub struct Signature {
 }
 
 /// A recent transaction entry used by `getRecentTransactions`.
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct RecentTransaction {
     pub signature: String,
     pub slot: u64,
@@ -373,8 +373,9 @@ pub struct TokenSupplyResult {
 pub type GetTokenSupplyResponse = RpcResponse<TokenSupplyResult>;
 
 /// Represents the metadata of a transaction.
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct TransactionMeta {
+    pub slot: Option<u64>,
     pub err: Option<Value>,
     pub fee: Option<u64>,
     #[serde(default)]
@@ -396,7 +397,7 @@ pub struct TransactionMeta {
 }
 
 /// Represents an encoded transaction.
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct EncodedTransaction {
     #[serde(rename = "signatures")]
     pub signatures: Vec<String>,
@@ -405,16 +406,29 @@ pub struct EncodedTransaction {
 }
 
 /// Represents the result of getTransaction.
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct TransactionResult {
+    pub blockTime: Option<u64>,
+    pub meta: Option<TransactionMeta>,
     pub slot: u64,
     pub transaction: EncodedTransaction,
-    pub meta: Option<TransactionMeta>,
-    pub blockTime: Option<u64>,
 }
 
-/// Type alias for getTransaction.
-pub type GetTransactionResponse = RpcResponse<TransactionResult>;
+#[derive(Debug, Deserialize, Serialize)]
+pub struct GetTransactionResponse {
+    pub jsonrpc: String,
+    pub result: TransactionResult,
+    pub id: u64,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct FullTransaction {
+    pub signature: String,
+    pub slot: u64,
+    pub timestamp: u64,
+    pub status: String,
+    pub details: TransactionResult, // Include the full transaction result
+}
 
 /// Type alias for getTransactionCount.
 pub type GetTransactionCountResponse = RpcResponse<u64>;
