@@ -2,10 +2,14 @@
 import React, { useState } from 'react';
 import { createUser, getUsers } from '../../services/users';
 import { buyCredits, refundCredits } from '../../services/credits';
+import { generateQuery, QueryRequest } from '../../services/agent';
 
 const TestPage = () => {
     const [pubkey, setPubkey] = useState('');
     const [amount, setAmount] = useState<number | ''>('');
+    const [apiKey, setApiKey] = useState('');
+    const [inputUser, setInputUser] = useState('');
+    const [address, setAddress] = useState('');
     const [results, setResults] = useState<any>({});
 
     const handleCreateUser = async () => {
@@ -44,6 +48,19 @@ const TestPage = () => {
         }
     };
 
+    const handleGenerateQuery = async () => {
+        try {
+            const payload = { inputUser, address };
+            console.log('Payload:', payload);
+            const response = await generateQuery(apiKey, payload);
+            setResults((prev) => ({ ...prev, generateQuery: response }));
+        } catch (error: any) {
+            console.error('Error in Generate Query:', error);
+            setResults((prev) => ({ ...prev, generateQueryError: error.message }));
+        }
+    };
+    
+
     return (
         <div style={{ padding: '20px' }}>
             <h1>API Test Page</h1>
@@ -63,6 +80,27 @@ const TestPage = () => {
                     onChange={(e) => setAmount(e.target.value ? Number(e.target.value) : '')}
                     style={{ marginRight: '10px' }}
                 />
+                <input
+                    type="text"
+                    placeholder="Enter API Key"
+                    value={apiKey}
+                    onChange={(e) => setApiKey(e.target.value)}
+                    style={{ marginRight: '10px', marginTop: '10px' }}
+                />
+                <input
+                    type="text"
+                    placeholder="Enter Input User"
+                    value={inputUser}
+                    onChange={(e) => setInputUser(e.target.value)}
+                    style={{ marginRight: '10px', marginTop: '10px' }}
+                />
+                <input
+                    type="text"
+                    placeholder="Enter Address"
+                    value={address}
+                    onChange={(e) => setAddress(e.target.value)}
+                    style={{ marginRight: '10px', marginTop: '10px' }}
+                />
             </div>
 
             <div style={{ marginTop: '20px' }}>
@@ -75,8 +113,11 @@ const TestPage = () => {
                 <button onClick={handleBuyCredits} style={{ marginRight: '10px' }}>
                     Buy Credits
                 </button>
-                <button onClick={handleRefundCredits}>
+                <button onClick={handleRefundCredits} style={{ marginRight: '10px' }}>
                     Refund Credits
+                </button>
+                <button onClick={handleGenerateQuery}>
+                    Generate Query
                 </button>
             </div>
 
