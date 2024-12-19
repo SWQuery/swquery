@@ -18,7 +18,7 @@ export interface QueryResult {
 
 export const generateQuery = async (apiKey: string, payload: QueryRequest) => {
     try {
-        const response = await api.post<QueryResponse>('/query/generate-query', payload, {
+        const response = await api.post<QueryResponse>('/agent/generate-query', payload, {
             headers: {
                 'x-api-key': apiKey,
             },

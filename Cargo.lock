@@ -598,6 +598,7 @@ dependencies = [
  "iana-time-zone",
  "js-sys",
  "num-traits",
+ "serde",
  "wasm-bindgen",
  "windows-targets 0.52.6",
 ]
@@ -2918,6 +2919,7 @@ dependencies = [
  "http-body-util",
  "rand 0.8.5",
  "reqwest",
+ "sdk",
  "serde",
  "serde_json",
  "solana-sdk",

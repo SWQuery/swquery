@@ -10,7 +10,7 @@ const TestPage = () => {
     const [apiKey, setApiKey] = useState('');
     const [inputUser, setInputUser] = useState('');
     const [address, setAddress] = useState('');
-    const [results, setResults] = useState<any>({});
+    const [results, setResults] = useState<unknown>({});
 
     const handleCreateUser = async () => {
         try {
@@ -54,7 +54,7 @@ const TestPage = () => {
             console.log('Payload:', payload);
             const response = await generateQuery(apiKey, payload);
             setResults((prev) => ({ ...prev, generateQuery: response }));
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error('Error in Generate Query:', error);
             setResults((prev) => ({ ...prev, generateQueryError: error.message }));
         }

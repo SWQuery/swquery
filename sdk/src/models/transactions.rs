@@ -1,8 +1,9 @@
 #![allow(non_snake_case)]
-use std::collections::HashMap;
-
-use serde::{Deserialize, Serialize};
-use serde_json::Value;
+use {
+    serde::{Deserialize, Serialize},
+    serde_json::Value,
+    std::collections::HashMap,
+};
 
 /// A representation of a response from the getSignaturesForAddress RPC.
 #[derive(Debug, Deserialize, Serialize)]

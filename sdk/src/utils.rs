@@ -1,10 +1,11 @@
-use std::str::FromStr;
-
-use crate::{errors::SdkError, models::*};
-use reqwest::Client;
-use serde::de::DeserializeOwned;
-use serde_json::{json, Value};
-use solana_sdk::pubkey::Pubkey;
+use {
+    crate::{errors::SdkError, models::*},
+    reqwest::Client,
+    serde::de::DeserializeOwned,
+    serde_json::{json, Value},
+    solana_sdk::pubkey::Pubkey,
+    std::str::FromStr,
+};
 
 const METAPLEX_PROGRAM_ID: &str = "metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s";
 

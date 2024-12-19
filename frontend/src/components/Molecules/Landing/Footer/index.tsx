@@ -1,16 +1,65 @@
-import { motion } from "framer-motion";
+import Image from 'next/image';
+import Link from 'next/link';
+import { Twitter, Github, MessageCircle, Youtube } from 'lucide-react';
+import HorizontalLogo from "../../../../assets/images/logo-horizontal.png";
 
 export const Footer = () => {
-	return (
-		<footer className="container mx-auto px-6 py-8 text-center">
-			<motion.p
-				initial={{ opacity: 0 }}
-				animate={{ opacity: 1 }}
-				transition={{ duration: 0.8 }}
-				className="text-gray-400"
-			>
-				© 2024 SWquery. Powered by Solana. All rights reserved.
-			</motion.p>
-		</footer>
-	);
+    const currentYear = new Date().getFullYear();
+
+    return (
+        <footer className="bg-[#0A0A0A] text-white py-12 px-6">
+            <div className="container mx-auto">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
+                    <div>
+                        <Image src={HorizontalLogo} alt="SWquery Logo" width={150} height={50} />
+                    </div>
+                    <div>
+                        <h3 className="text-lg font-semibold mb-4">Learn</h3>
+                        <ul className="space-y-2">
+                            <li><Link href="/faq" className="text-gray-400 hover:text-[#9945FF]">SWquery FAQ</Link></li>
+                            <li><Link href="/whitepaper" className="text-gray-400 hover:text-[#9945FF]">SWquery Whitepaper</Link></li>
+                            <li><Link href="/blog" className="text-gray-400 hover:text-[#9945FF]">Blog</Link></li>
+                            <li><Link href="/privacy-policy" className="text-gray-400 hover:text-[#9945FF]">Privacy Policy</Link></li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h3 className="text-lg font-semibold mb-4">Developers</h3>
+                        <ul className="space-y-2">
+                            <li><Link href="/documentation" className="text-gray-400 hover:text-[#9945FF]">Documentation</Link></li>
+                            <li><Link href="/apply" className="text-gray-400 hover:text-[#9945FF]">Apply to Build</Link></li>
+                            <li><Link href="https://github.com/swquery" className="text-gray-400 hover:text-[#9945FF]">GitHub</Link></li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h3 className="text-lg font-semibold mb-4">Community</h3>
+                        <ul className="space-y-2">
+                            <li><Link href="/dashboard" className="text-gray-400 hover:text-[#9945FF]">SWquery Dashboard</Link></li>
+                            <li><Link href="/newsletter" className="text-gray-400 hover:text-[#9945FF]">Join the Newsletter</Link></li>
+                            <li><Link href="https://discord.gg/swquery" className="text-gray-400 hover:text-[#9945FF]">Join the Discord</Link></li>
+                        </ul>
+                    </div>
+                </div>
+                <div className="flex flex-col md:flex-row justify-between items-center border-t border-gray-800 pt-8">
+                    <p className="text-gray-400 text-sm mb-4 md:mb-0">
+                        © {currentYear} SWquery. Powered by <span className="text-[#9945FF]">Solana</span>. All rights reserved.
+                    </p>
+                    <div className="flex space-x-6">
+                        <a href="https://twitter.com/swquery" className="text-gray-400 hover:text-[#9945FF]">
+                            <Twitter size={24} />
+                        </a>
+                        <a href="https://discord.gg/swquery" className="text-gray-400 hover:text-[#9945FF]">
+                            <MessageCircle size={24} />
+                        </a>
+                        <a href="https://github.com/swquery" className="text-gray-400 hover:text-[#9945FF]">
+                            <Github size={24} />
+                        </a>
+                        <a href="https://youtube.com/swquery" className="text-gray-400 hover:text-[#9945FF]">
+                            <Youtube size={24} />
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </footer>
+    );
 };
+

@@ -1,4 +1,5 @@
+pub mod chat;
 pub mod credits;
 pub mod user;
 
-pub use {credits::*, user::*};
+pub use {chat::*, credits::*, user::*};

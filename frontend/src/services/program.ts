@@ -1,51 +1,86 @@
-// import { start } from "solana-bankrun";
-// import { Transaction, SystemProgram, LAMPORTS_PER_SOL, Keypair } from "@solana/web3.js";
-// import { BN } from "@coral-xyz/anchor";
+import {
+    Connection,
+    PublicKey,
+    Transaction,
+    SystemProgram,
+    TransactionInstruction,
+} from '@solana/web3.js';
+import { WalletContextState } from '@solana/wallet-adapter-react';
 
-// /**
-//  * Função para comprar créditos enviando uma transferência no blockchain Solana.
-//  * @param transferDescription - Descrição da transferência (opcional, para logging).
-//  */
-// export async function buyCredits(transferDescription: string = "Transferência padrão") {
-//   try {
-//     console.log(`Iniciando: ${transferDescription}`);
+const PROGRAM_ID = new PublicKey("99999999999999999999999999999999999999999999"); // Your program ID
+const TREASURY = new PublicKey("TREASURY_ACCOUNT_PUBLIC_KEY"); // Your treasury account public key
+const USDC_MINT = new PublicKey("USDC_TOKEN_MINT_ADDRESS"); // SPL USDC mint address
+const CREDITS_SEED = "credits"; // Seed used in PDA derivation
 
-//     // Inicializa o contexto usando "solana-bankrun"
-//     const context = await start([], []);
-//     const client = context.banksClient;
-//     const payer = context.payer; // Assumindo que `payer` é um `Keypair`
-//     const blockhash = context.lastBlockhash;
+async function deriveCreditsAccount(
+    buyerPublicKey: PublicKey
+): Promise<[PublicKey, number]> {
+    return await PublicKey.findProgramAddress(
+        [Buffer.from(CREDITS_SEED), buyerPublicKey.toBuffer()],
+        PROGRAM_ID
+    );
+}
 
-//     // Cria o receiver (destinatário) como um Keypair novo
-//     const receiver = Keypair.generate();
-//     const transferLamports = new BN(1 * LAMPORTS_PER_SOL);
+export async function buyCredits(
+    connection: Connection,
+    wallet: WalletContextState,
+    amountUSDC: number
+): Promise<void> {
+    if (!wallet.publicKey) {
+        throw new Error("Wallet not connected");
+    }
 
-//     // Cria a instrução de transferência
-//     const transferInstruction = SystemProgram.transfer({
-//       fromPubkey: payer.publicKey,
-//       toPubkey: receiver.publicKey,
-//       lamports: transferLamports.toNumber(),
-//     });
+    if (!wallet.signTransaction) {
+        throw new Error("Wallet does not support signing transactions. Please use a compatible wallet.");
+    }
 
-//     // Monta a transação
-//     const transaction = new Transaction().add(transferInstruction);
-//     transaction.recentBlockhash = blockhash;
-//     transaction.feePayer = payer.publicKey;
+    const [creditsAccountPDA, bump] = await deriveCreditsAccount(wallet.publicKey);
 
-//     // Assina a transação
-//     transaction.sign(payer);
+    const buyerTokenAccounts = await connection.getTokenAccountsByOwner(wallet.publicKey, {
+        mint: USDC_MINT,
+    });
 
-//     // Processa a transação
-//     const txSignature = await client.processTransaction(transaction);
-//     console.log(`Transação enviada com sucesso: ${txSignature}`);
+    if (buyerTokenAccounts.value.length === 0) {
+        throw new Error("No USDC token account found for the buyer");
+    }
 
-//     // Verifica o saldo do destinatário
-//     const balanceAfter = await client.getBalance(receiver.publicKey);
-//     console.log(`Saldo do destinatário após transferência: ${Number(balanceAfter) / LAMPORTS_PER_SOL} SOL`);
+    const buyerTokenAccount = buyerTokenAccounts.value[0].pubkey;
 
-//     return { txSignature, balanceAfter };
-//   } catch (error) {
-//     console.error("Erro ao executar a compra de créditos:", error);
-//     throw error;
-//   }
-// }
+    const instructionData = Buffer.alloc(9);
+    instructionData.writeBigUInt64LE(BigInt(amountUSDC), 0);
+    instructionData.writeUInt8(bump, 8);
+
+    const instruction = new TransactionInstruction({
+        keys: [
+            { pubkey: wallet.publicKey, isSigner: true, isWritable: false }, // Buyer
+            { pubkey: buyerTokenAccount, isSigner: false, isWritable: true }, // Buyer's USDC account
+            { pubkey: TREASURY, isSigner: false, isWritable: true }, // Treasury
+            { pubkey: creditsAccountPDA, isSigner: false, isWritable: true }, // Credits account
+            { pubkey: SystemProgram.programId, isSigner: false, isWritable: false }, // System program
+        ],
+        programId: PROGRAM_ID,
+        data: instructionData,
+    });
+
+    const transaction = new Transaction().add(instruction);
+
+    try {
+        const { blockhash } = await connection.getRecentBlockhash();
+        transaction.recentBlockhash = blockhash;
+        transaction.feePayer = wallet.publicKey;
+
+        const signedTransaction = await wallet.signTransaction(transaction);
+        const signature = await connection.sendRawTransaction(signedTransaction.serialize(), {
+            skipPreflight: false,
+            preflightCommitment: "processed",
+        });
+
+        console.log("Transaction signature:", signature);
+
+        await connection.confirmTransaction(signature, "processed");
+        console.log("Transaction confirmed!");
+    } catch (error) {
+        console.error("Transaction failed:", error);
+        throw error;
+    }
+}

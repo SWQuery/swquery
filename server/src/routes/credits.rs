@@ -57,35 +57,17 @@ pub async fn buy_credits(
     match user {
         Some(user) => {
             let api_key = generate_api_key();
-            let credit = sqlx::query_as::<_, CreditModel>(
-                "INSERT INTO credits (user_id, balance, api_key) 
-                 VALUES ($1, $2, $3)
-                 ON CONFLICT (user_id) 
-                 DO UPDATE SET balance = credits.balance + EXCLUDED.balance,
-                             api_key = COALESCE(credits.api_key, EXCLUDED.api_key)
-                 RETURNING *",
-            )
-            .bind(user.id)
-            .bind(payload.amount)
-            .bind(&api_key)
-            .fetch_one(&pool)
-            .await
-            .map_err(|e| {
-                eprintln!("Credits operation error: {}", e);
-                (
-                    StatusCode::INTERNAL_SERVER_ERROR,
-                    "Failed to update credits".to_string(),
-                )
-            })?;
-
-            Ok((
-                StatusCode::CREATED,
-                Json(CreditResponse {
-                    user_pubkey: payload.user_pubkey,
-                    new_balance: credit.balance,
-                    api_key: Some(api_key),
-                }),
-            ))
+            match update_or_insert_credits(&pool, user.id, payload.amount, &api_key).await {
+                Ok(credit) => Ok((
+                    StatusCode::CREATED,
+                    Json(CreditResponse {
+                        user_pubkey: payload.user_pubkey,
+                        new_balance: credit.balance,
+                        api_key: Some(api_key),
+                    }),
+                )),
+                Err(e) => Err(e),
+            }
         }
         None => Ok((
             StatusCode::NOT_FOUND,
@@ -96,6 +78,36 @@ pub async fn buy_credits(
             }),
         )),
     }
+}
+
+async fn update_or_insert_credits(
+    pool: &PgPool,
+    user_id: i32,
+    amount: i64,
+    api_key: &str,
+) -> Result<CreditModel, (StatusCode, String)> {
+    let credit = sqlx::query_as::<_, CreditModel>(
+        "INSERT INTO credits (user_id, balance, api_key) 
+         VALUES ($1, $2, $3)
+         ON CONFLICT (user_id) 
+         DO UPDATE SET balance = credits.balance + EXCLUDED.balance,
+                     api_key = COALESCE(credits.api_key, EXCLUDED.api_key)
+         RETURNING *",
+    )
+    .bind(user_id)
+    .bind(amount)
+    .bind(api_key)
+    .fetch_one(pool)
+    .await
+    .map_err(|e| {
+        eprintln!("Credits operation error: {}", e);
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            "Failed to update credits".to_string(),
+        )
+    })?;
+
+    Ok(credit)
 }
 
 #[derive(Deserialize)]
@@ -113,46 +125,53 @@ pub async fn refund_credits(
         .fetch_optional(&pool)
         .await
         .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+
     let mut balance = 0;
 
     if let Some(user) = user {
-        let credit =
-            sqlx::query_as::<_, CreditModel>("SELECT * FROM credits WHERE user_id = $1 FOR UPDATE")
-                .bind(user.id)
-                .fetch_optional(&pool)
-                .await
-                .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
-
-        if let Some(credit) = credit {
-            if credit.balance < payload.amount {
-                return Ok((
-                    StatusCode::BAD_REQUEST,
-                    Json(CreditResponse {
-                        user_pubkey: payload.user_pubkey,
-                        new_balance: credit.balance,
-                        api_key: None,
-                    }),
-                ));
-            }
-
-            let credit = sqlx::query_as::<_, CreditModel>(
-                "UPDATE credits SET balance = balance - $1 WHERE user_id = $2 RETURNING *",
-            )
-            .bind(payload.amount)
-            .bind(user.id)
-            .fetch_one(&pool)
-            .await
-            .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
-            balance = credit.balance;
+        match update_credit_balance(&pool, user.id as i64, payload.amount).await {
+            Ok(new_balance) => balance = new_balance,
+            Err(e) => return Err(e),
         }
     }
 
-    Ok((
-        StatusCode::CREATED,
-        Json(CreditResponse {
-            user_pubkey: payload.user_pubkey,
-            new_balance: balance,
-            api_key: None,
-        }),
-    ))
+    let response = CreditResponse {
+        user_pubkey: payload.user_pubkey,
+        new_balance: balance,
+        api_key: None,
+    };
+
+    Ok((StatusCode::CREATED, Json(response)))
+}
+
+async fn update_credit_balance(
+    pool: &PgPool,
+    user_id: i64,
+    amount: i64,
+) -> Result<i64, (StatusCode, String)> {
+    let credit =
+        sqlx::query_as::<_, CreditModel>("SELECT * FROM credits WHERE user_id = $1 FOR UPDATE")
+            .bind(user_id)
+            .fetch_optional(pool)
+            .await
+            .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+
+    if let Some(credit) = credit {
+        if credit.balance < amount {
+            return Err((StatusCode::BAD_REQUEST, "Insufficient balance".to_string()));
+        }
+
+        let credit = sqlx::query_as::<_, CreditModel>(
+            "UPDATE credits SET balance = balance - $1 WHERE user_id = $2 RETURNING *",
+        )
+        .bind(amount)
+        .bind(user_id)
+        .fetch_one(pool)
+        .await
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+
+        return Ok(credit.balance);
+    }
+
+    Ok(0)
 }
