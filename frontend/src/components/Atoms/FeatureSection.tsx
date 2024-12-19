@@ -1,7 +1,7 @@
 "use client";
 import React from 'react';
 import { motion } from 'framer-motion';
-import { CopyBlock, dracula } from "react-code-blocks";
+import { CopyBlock, obsidian } from "react-code-blocks";
 import { Fira_Code } from 'next/font/google';
 
 const firaCode = Fira_Code({
@@ -33,11 +33,11 @@ export const FeatureSection: React.FC<FeatureSectionProps> = ({
   reversed = false,
 }) => {
   const customTheme = {
-    ...dracula,
-    backgroundColor: "#141414",
-    lineNumberColor: "#666",
-    lineNumberBgColor: "#141414",
-  };
+		...obsidian,
+		backgroundColor: "#0A0A0A",
+		lineNumberColor: "#666",
+		lineNumberBgColor: "#0A0A0A",
+	};
 
   return (
     <section className="py-20">
@@ -85,7 +85,6 @@ export const FeatureSection: React.FC<FeatureSectionProps> = ({
                         text={codeSnippet}
                         language={codeLanguage}
                         theme={customTheme}
-                        wrapLines
                       />
                     </div>
                   </div>
