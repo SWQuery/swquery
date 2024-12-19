@@ -1,0 +1,972 @@
+File: server/database/init.sql
+-- SQLBook: Code
+CREATE TABLE IF NOT EXISTS users (
+    id SERIAL PRIMARY KEY,
+    pubkey VARCHAR NOT NULL UNIQUE
+);
+
+CREATE TABLE IF NOT EXISTS credits (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL REFERENCES users (id) UNIQUE, -- UNIQUE constraint here
+    balance BIGINT NOT NULL DEFAULT 0,
+    api_key VARCHAR,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS chats (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL REFERENCES users (id),
+    input_user TEXT NOT NULL,
+    response TEXT,
+    tokens_used BIGINT NOT NULL DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_user_id ON chats(user_id);
+
+CREATE INDEX idx_users_pubkey ON users(pubkey);
+CREATE INDEX idx_credits_user_id ON credits(user_id);
+CREATE INDEX idx_chats_user_id_created_at ON chats(user_id, created_at);
+
+INSERT INTO
+    users (pubkey)
+VALUES (
+        'GtJHNhKQnnJZQTHq2Vh49HpR4yKKJmUonVYbLeS1RPs8'
+    );
+
+INSERT INTO
+    credits (user_id, balance, api_key)
+VALUES (
+        1,
+        100000000000000,
+        'WDAO4Z1Z503DWJH7060GIYGR0TWIIPBM'
+    );
+
+INSERT INTO
+    chats (user_id, input_user, response, tokens_used)
+VALUES (
+        1,
+        'Hello',
+        'Hi there!',
+        1
+    );
+File: server/src/models/user.rs
+#[derive(sqlx::FromRow)]
+pub struct UserModel {
+    pub id: i32,
+    pub pubkey: String,
+}
+
+File: server/src/models/credits.rs
+#[derive(sqlx::FromRow)]
+#[allow(dead_code)]
+pub struct CreditModel {
+    pub id: i32,
+    pub user_id: i32,
+    pub balance: i64,
+    pub created_at: chrono::NaiveDateTime,
+}
+
+File: server/src/models/mod.rs
+pub mod chat;
+pub mod credits;
+pub mod user;
+
+pub use {chat::*, credits::*, user::*};
+
+File: server/src/models/chat.rs
+use chrono::NaiveDateTime;
+
+#[derive(sqlx::FromRow)]
+pub struct ChatModel {
+    pub id: i32,
+    pub user_id: i32,
+    pub input_user: String,
+    pub response: Option<String>,
+    pub tokens_used: i64,
+    pub created_at: NaiveDateTime,
+}
+
+File: server/src/routes/credits.rs
+use {
+    crate::models::{CreditModel, UserModel},
+    axum::{extract::State, http::StatusCode, Json},
+    serde::{Deserialize, Serialize},
+    sqlx::PgPool,
+};
+
+#[derive(Deserialize)]
+pub struct BuyCredits {
+    pub user_pubkey: String,
+    pub amount: i64, // Amount in credits
+}
+
+#[derive(Serialize)]
+pub struct CreditResponse {
+    pub user_pubkey: String,
+    pub new_balance: i64,
+    pub api_key: Option<String>,
+}
+#[derive(Serialize)]
+pub struct ValidateCreditsResponse {
+    pub success: bool,
+    pub remaining_balance: i64,
+}
+
+// Add function to generate API key
+fn generate_api_key() -> String {
+    use rand::{thread_rng, Rng};
+    const CHARSET: &[u8] = b"ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+    let mut rng = thread_rng();
+    let key: String = (0..32)
+        .map(|_| {
+            let idx = rng.gen_range(0..CHARSET.len());
+            CHARSET[idx] as char
+        })
+        .collect();
+    key
+}
+
+// Modify buy_credits to handle API key
+pub async fn buy_credits(
+    State(pool): State<PgPool>,
+    Json(payload): Json<BuyCredits>,
+) -> Result<(StatusCode, Json<CreditResponse>), (StatusCode, String)> {
+    let user = sqlx::query_as::<_, UserModel>("SELECT id, pubkey FROM users WHERE pubkey = $1")
+        .bind(&payload.user_pubkey)
+        .fetch_optional(&pool)
+        .await
+        .map_err(|e| {
+            eprintln!("Database error: {}", e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Database error".to_string(),
+            )
+        })?;
+
+    match user {
+        Some(user) => {
+            let api_key = generate_api_key();
+            match update_or_insert_credits(&pool, user.id, payload.amount, &api_key).await {
+                Ok(credit) => Ok((
+                    StatusCode::CREATED,
+                    Json(CreditResponse {
+                        user_pubkey: payload.user_pubkey,
+                        new_balance: credit.balance,
+                        api_key: Some(api_key),
+                    }),
+                )),
+                Err(e) => Err(e),
+            }
+        }
+        None => Ok((
+            StatusCode::NOT_FOUND,
+            Json(CreditResponse {
+                user_pubkey: payload.user_pubkey,
+                new_balance: 0,
+                api_key: None,
+            }),
+        )),
+    }
+}
+
+async fn update_or_insert_credits(
+    pool: &PgPool,
+    user_id: i32,
+    amount: i64,
+    api_key: &str,
+) -> Result<CreditModel, (StatusCode, String)> {
+    let credit = sqlx::query_as::<_, CreditModel>(
+        "INSERT INTO credits (user_id, balance, api_key) 
+         VALUES ($1, $2, $3)
+         ON CONFLICT (user_id) 
+         DO UPDATE SET balance = credits.balance + EXCLUDED.balance,
+                     api_key = COALESCE(credits.api_key, EXCLUDED.api_key)
+         RETURNING *",
+    )
+    .bind(user_id)
+    .bind(amount)
+    .bind(api_key)
+    .fetch_one(pool)
+    .await
+    .map_err(|e| {
+        eprintln!("Credits operation error: {}", e);
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            "Failed to update credits".to_string(),
+        )
+    })?;
+
+    Ok(credit)
+}
+
+#[derive(Deserialize)]
+pub struct RefundCredits {
+    pub user_pubkey: String,
+    pub amount: i64, // Amount to refund in credits
+}
+
+pub async fn refund_credits(
+    State(pool): State<PgPool>,
+    Json(payload): Json<RefundCredits>,
+) -> Result<(StatusCode, Json<CreditResponse>), (StatusCode, String)> {
+    let user = sqlx::query_as::<_, UserModel>("SELECT id, pubkey FROM users WHERE pubkey = $1")
+        .bind(&payload.user_pubkey)
+        .fetch_optional(&pool)
+        .await
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+
+    let mut balance = 0;
+
+    if let Some(user) = user {
+        match update_credit_balance(&pool, user.id as i64, payload.amount).await {
+            Ok(new_balance) => balance = new_balance,
+            Err(e) => return Err(e),
+        }
+    }
+
+    let response = CreditResponse {
+        user_pubkey: payload.user_pubkey,
+        new_balance: balance,
+        api_key: None,
+    };
+
+    Ok((StatusCode::CREATED, Json(response)))
+}
+
+async fn update_credit_balance(
+    pool: &PgPool,
+    user_id: i64,
+    amount: i64,
+) -> Result<i64, (StatusCode, String)> {
+    let credit =
+        sqlx::query_as::<_, CreditModel>("SELECT * FROM credits WHERE user_id = $1 FOR UPDATE")
+            .bind(user_id)
+            .fetch_optional(pool)
+            .await
+            .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+
+    if let Some(credit) = credit {
+        if credit.balance < amount {
+            return Err((StatusCode::BAD_REQUEST, "Insufficient balance".to_string()));
+        }
+
+        let credit = sqlx::query_as::<_, CreditModel>(
+            "UPDATE credits SET balance = balance - $1 WHERE user_id = $2 RETURNING *",
+        )
+        .bind(amount)
+        .bind(user_id)
+        .fetch_one(pool)
+        .await
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+
+        return Ok(credit.balance);
+    }
+
+    Ok(0)
+}
+
+File: server/src/routes/users.rs
+use {
+    crate::models::UserModel,
+    axum::{extract::State, http::StatusCode, Json},
+    serde::{Deserialize, Serialize},
+    sqlx::PgPool,
+};
+
+#[derive(Deserialize)]
+pub struct CreateUser {
+    pub pubkey: String,
+}
+
+#[derive(Serialize)]
+pub struct User {
+    pub id: i32,
+    pub pubkey: String,
+}
+
+pub async fn create_user(
+    State(pool): State<PgPool>,
+    Json(payload): Json<CreateUser>,
+) -> Result<(StatusCode, Json<User>), (StatusCode, String)> {
+    // Ensure pubkey respects Solana public key length
+    // if payload.pubkey.len() != 44 {
+    //     return Err((StatusCode::BAD_REQUEST, "Invalid pubkey length".into()));
+    // }
+
+    // Check if user already exists
+    if let Some(existing_user) =
+        sqlx::query_as::<_, UserModel>("SELECT id, pubkey FROM users WHERE pubkey = $1")
+            .bind(&payload.pubkey)
+            .fetch_optional(&pool)
+            .await
+            .expect("Failed to query user")
+    {
+        return Ok((
+            StatusCode::OK,
+            Json(User {
+                id: existing_user.id,
+                pubkey: existing_user.pubkey,
+            }),
+        ));
+    }
+
+    // Insert new user
+    let user = sqlx::query_as::<_, UserModel>(
+        "INSERT INTO users (pubkey) VALUES ($1) RETURNING id, pubkey",
+    )
+    .bind(&payload.pubkey)
+    .fetch_one(&pool)
+    .await
+    .map_err(|e| {
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            format!("Failed to insert user: {}", e),
+        )
+    })?;
+
+    Ok((
+        StatusCode::CREATED,
+        Json(User {
+            id: user.id,
+            pubkey: user.pubkey,
+        }),
+    ))
+}
+
+pub async fn get_users(State(pool): State<PgPool>) -> Json<Vec<User>> {
+    let users = sqlx::query_as::<_, UserModel>("SELECT id, pubkey FROM users")
+        .fetch_all(&pool)
+        .await
+        .expect("Failed to fetch users")
+        .into_iter()
+        .map(|user| User {
+            id: user.id,
+            pubkey: user.pubkey,
+        })
+        .collect();
+
+    Json(users)
+}
+
+File: server/src/routes/agent.rs
+use {
+    axum::{
+        extract::State,
+        http::{HeaderMap, StatusCode},
+        Json,
+    },
+    reqwest::Client,
+    serde::{Deserialize, Serialize},
+    serde_json::Value,
+    sqlx::PgPool,
+};
+
+#[derive(Deserialize, Serialize, Debug)]
+pub struct QueryRequest {
+    #[serde(rename = "inputUser")]
+    pub input_user: String,
+    pub address: String,
+}
+
+#[derive(Deserialize, Serialize, Debug)]
+pub struct QueryRequestReport {
+    #[serde(rename = "jsonReturned")]
+    pub input_user: String,
+    pub address: String,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct QueryResponse {
+    pub result: QueryResult,
+    pub tokens: i64,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct QueryResponseReport {
+    result: String,
+    tokens: i64,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct QueryResult {
+    pub response: String,
+    status: String,
+    params: Value,
+}
+
+pub async fn fetch_credit_info(pool: &PgPool, api_key: &str) -> Result<(i32, String, i64, String), (StatusCode, String)> {
+    sqlx::query_as::<_, (i32, String, i64, String)>(
+        "SELECT c.user_id, u.pubkey, c.balance, c.api_key 
+         FROM credits c 
+         JOIN users u ON u.id = c.user_id 
+         WHERE c.api_key = $1 
+         FOR UPDATE",
+    )
+    .bind(api_key)
+    .fetch_optional(pool)
+    .await
+    .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?
+    .ok_or((StatusCode::UNAUTHORIZED, "Invalid API key".to_string()))
+}
+
+pub async fn send_query_request(payload: &mut QueryRequest) -> Result<QueryResponse, (StatusCode, String)> {
+    let client = Client::new();
+    payload.input_user = payload.input_user.to_lowercase();
+    let response = client
+        .post(format!("{}/query/generate-query", crate::AGENT_API_URL))
+        .json(payload)
+        .send()
+        .await
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+
+    response
+        .json()
+        .await
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))
+}
+
+pub async fn send_query_request_report(payload: &mut QueryRequestReport) -> Result<QueryResponseReport, (StatusCode, String)> {
+    let client = Client::new();
+    payload.input_user = payload.input_user.to_lowercase();
+    let response = client
+        .post(format!(
+            "{}/query/generate-visualization",
+            crate::AGENT_API_URL
+        ))
+        .json(payload)
+        .send()
+        .await
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+
+    response
+        .json()
+        .await
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))
+}
+
+pub async fn generate_query(
+    State(pool): State<PgPool>,
+    headers: HeaderMap,
+    Json(mut payload): Json<QueryRequest>,
+) -> Result<(StatusCode, Json<QueryResponse>), (StatusCode, String)> {
+    let api_key = headers
+        .get("x-api-key")
+        .and_then(|v| v.to_str().ok())
+        .ok_or((StatusCode::UNAUTHORIZED, "Missing API key".to_string()))?;
+
+    println!("Getting user info");
+    let credit = fetch_credit_info(&pool, api_key).await?;
+
+    let query_response = send_query_request(&mut payload).await?;
+
+    if credit.2 < query_response.tokens {
+        return Err((
+            StatusCode::PAYMENT_REQUIRED,
+            "Insufficient credits".to_string(),
+        ));
+    }
+
+    sqlx::query("UPDATE credits SET balance = balance - $1 WHERE user_id = $2")
+        .bind(query_response.tokens)
+        .bind(credit.0)
+        .execute(&pool)
+        .await
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+
+    Ok((StatusCode::OK, Json(query_response)))
+}
+
+pub async fn generate_report(
+    State(pool): State<PgPool>,
+    headers: HeaderMap,
+    Json(mut payload): Json<QueryRequestReport>,
+) -> Result<(StatusCode, Json<QueryResponseReport>), (StatusCode, String)> {
+    let api_key = headers
+        .get("x-api-key")
+        .and_then(|v| v.to_str().ok())
+        .ok_or((StatusCode::UNAUTHORIZED, "Missing API key".to_string()))?;
+
+    println!("Getting user info");
+    let credit = fetch_credit_info(&pool, api_key).await?;
+
+    let query_response = send_query_request_report(&mut payload).await?;
+
+    if credit.2 < query_response.tokens {
+        return Err((
+            StatusCode::PAYMENT_REQUIRED,
+            "Insufficient credits".to_string(),
+        ));
+    }
+
+    sqlx::query("UPDATE credits SET balance = balance - $1 WHERE user_id = $2")
+        .bind(query_response.tokens)
+        .bind(credit.0)
+        .execute(&pool)
+        .await
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+
+    Ok((StatusCode::OK, Json(query_response)))
+}
+File: server/src/routes/chatbot.rs
+use {
+    crate::{
+        models::ChatModel,
+        routes::agent::{fetch_credit_info, send_query_request, QueryRequest},
+    },
+    swquery::{SWqueryClient, client::Network},
+    axum::{
+        extract::{Path, State},
+        http::{HeaderMap, StatusCode},
+        Json,
+    },
+    chrono::NaiveDateTime,
+    serde::{Deserialize, Serialize, Serializer},
+    sqlx::PgPool,
+};
+
+fn serialize_naive_date_time<S>(date: &NaiveDateTime, serializer: S) -> Result<S::Ok, S::Error>
+where
+    S: Serializer,
+{
+    let s = date.format("%Y-%m-%d %H:%M:%S").to_string();
+    serializer.serialize_str(&s)
+}
+
+#[derive(Serialize)]
+pub struct ChatResponse {
+    pub id: i32,
+    pub user_id: i32,
+    pub input_user: String,
+    pub response: Option<String>,
+    pub tokens_used: i64,
+    #[serde(serialize_with = "serialize_naive_date_time")]
+    pub created_at: NaiveDateTime,
+}
+
+/// Retrieve all chats for a specific user
+pub async fn get_chats_for_user(
+    State(pool): State<PgPool>,
+    user_pubkey: String,
+) -> Result<(StatusCode, Json<Vec<ChatResponse>>), (StatusCode, String)> {
+    let chats = sqlx::query_as::<_, ChatModel>(
+        "SELECT c.* 
+         FROM chats c
+         JOIN users u ON u.id = c.user_id
+         WHERE u.pubkey = $1
+         ORDER BY c.created_at DESC",
+    )
+    .bind(user_pubkey)
+    .fetch_all(&pool)
+    .await
+    .map_err(|e| {
+        eprintln!("Database error: {}", e);
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            "Database error".to_string(),
+        )
+    })?;
+
+    let response: Vec<ChatResponse> = chats
+        .into_iter()
+        .map(|chat| ChatResponse {
+            id: chat.id,
+            user_id: chat.user_id,
+            input_user: chat.input_user,
+            response: chat.response,
+            tokens_used: chat.tokens_used,
+            created_at: chat.created_at,
+        })
+        .collect();
+
+    Ok((StatusCode::OK, Json(response)))
+}
+
+#[derive(Serialize)]
+pub struct ChatDetailsResponse {
+    pub id: i32,
+    pub input_user: String,
+    pub response: Option<String>,
+    pub tokens_used: i64,
+    pub created_at: NaiveDateTime,
+}
+
+/// Retrieve details of a specific chat
+pub async fn get_chat_by_id(
+    State(pool): State<PgPool>,
+    Path(chat_id): Path<i32>, // Extracts the chat ID from the path
+) -> Result<(StatusCode, Json<ChatDetailsResponse>), (StatusCode, String)> {
+    let chat = sqlx::query_as::<_, ChatModel>(
+        "SELECT id, input_user, response, tokens_used, created_at 
+         FROM chats 
+         WHERE id = $1",
+    )
+    .bind(chat_id)
+    .fetch_optional(&pool)
+    .await
+    .map_err(|e| {
+        eprintln!("Database error: {}", e);
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            "Database error".to_string(),
+        )
+    })?;
+
+    if let Some(chat) = chat {
+        Ok((
+            StatusCode::OK,
+            Json(ChatDetailsResponse {
+                id: chat.id,
+                input_user: chat.input_user,
+                response: chat.response,
+                tokens_used: chat.tokens_used,
+                created_at: chat.created_at,
+            }),
+        ))
+    } else {
+        Err((StatusCode::NOT_FOUND, "Chat not found".to_string()))
+    }
+}
+
+// #[derive(Deserialize)]
+// pub struct ChatRequest {
+//     pub input_user: String,
+//     pub address: String,
+// }
+
+// #[derive(Serialize, Deserialize)]
+// pub struct SDKChatResponse {
+//     pub response: String,
+//     pub tokens_used: i64,
+// }
+
+// pub async fn chatbot_interact(
+//     State(pool): State<PgPool>,
+//     headers: HeaderMap,
+//     Json(mut payload): Json<QueryRequest>,
+// ) -> Result<(StatusCode, Json<ChatResponse>), (StatusCode, String)> {
+//     let api_key = headers
+//         .get("x-api-key")
+//         .and_then(|v| v.to_str().ok())
+//         .ok_or((StatusCode::UNAUTHORIZED, "Missing API key".to_string()))?;
+
+//     // Fetch user credits
+//     let credit = fetch_credit_info(&pool, api_key).await?;
+//     let query_response = send_query_request(&mut payload).await?;
+//     if credit.2 < query_response.tokens {
+//         return Err((
+//             StatusCode::PAYMENT_REQUIRED,
+//             "Insufficient credits".to_string(),
+//         ));
+//     }
+
+//     // Deduct tokens from user credits
+//     sqlx::query("UPDATE credits SET balance = balance - $1 WHERE user_id = $2")
+//         .bind(query_response.tokens)
+//         .bind(credit.0)
+//         .execute(&pool)
+//         .await
+//         .map_err(|e| {
+//             eprintln!("Failed to update credits: {}", e);
+//             (
+//                 StatusCode::INTERNAL_SERVER_ERROR,
+//                 "Failed to update credits".to_string(),
+//             )
+//         })?;
+
+//     // Log the interaction
+//     sqlx::query(
+//         "INSERT INTO chats (user_id, input_user, response, tokens_used) VALUES ($1, $2, $3, $4)",
+//     )
+//     .bind(credit.0)
+//     .bind(&payload.input_user)
+//     .bind(&query_response.result.response)
+//     .bind(query_response.tokens)
+//     .execute(&pool)
+//     .await
+//     .map_err(|e| {
+//         eprintln!("Failed to log chat: {}", e);
+//         (
+//             StatusCode::INTERNAL_SERVER_ERROR,
+//             "Failed to log chat".to_string(),
+//         )
+//     })?;
+
+//     // Return the response
+//     Ok((
+//         StatusCode::OK,
+//         Json(ChatResponse {
+//             id: 0,
+//             user_id: credit.0,
+//             input_user: payload.input_user,
+//             response: Some(query_response.result.response),
+//             tokens_used: query_response.tokens,
+//             created_at: chrono::Utc::now().naive_utc(),
+//         }),
+//     ))
+// }
+
+#[derive(Deserialize)]
+pub struct ChatRequest {
+    pub input_user: String,
+    pub address: String,
+}
+
+pub async fn chatbot_interact(
+    State(pool): State<PgPool>,
+    headers: HeaderMap,
+    Json(payload): Json<ChatRequest>,
+) -> Result<(StatusCode, Json<ChatResponse>), (StatusCode, String)> {
+    // Extract API key from headers
+    let api_key = headers
+        .get("x-api-key")
+        .and_then(|v| v.to_str().ok())
+        .ok_or((StatusCode::UNAUTHORIZED, "Missing API key".to_string()))?;
+
+    // Fetch user credit information
+    let credit = fetch_credit_info(&pool, api_key).await?;
+
+    // Initialize the SWqueryClient
+    let swquery_client = SWqueryClient::new(
+        api_key.to_string(),
+        "45af5ec2-c5c5-4da2-9226-550f52e126cd".to_string(), // Replace with actual Helius API key
+        None,
+        Some(Network::Mainnet),
+    );
+
+    // Call the query method from the SDK
+    let query_result = swquery_client
+        .query(&payload.input_user, &payload.address)
+        .await
+        .map_err(|e| {
+            eprintln!("SDK query error: {}", e);
+            (StatusCode::INTERNAL_SERVER_ERROR, "Failed to process query".to_string())
+        })?;
+        println!("{:?}", query_result);
+
+    // Extract response and tokens used from the SDK result
+    let response_text = query_result["result"]["response"]
+        .as_str()
+        .unwrap_or_default()
+        .to_string();
+    let tokens_used = query_result["tokens"]
+        .as_i64()
+        .unwrap_or(0);
+
+    // Check if the user has sufficient credits
+    if credit.2 < tokens_used {
+        return Err((
+            StatusCode::PAYMENT_REQUIRED,
+            "Insufficient credits".to_string(),
+        ));
+    }
+
+    // Deduct tokens from the user's credit balance
+    sqlx::query("UPDATE credits SET balance = balance - $1 WHERE user_id = $2")
+        .bind(tokens_used)
+        .bind(credit.0)
+        .execute(&pool)
+        .await
+        .map_err(|e| {
+            eprintln!("Failed to update credits: {}", e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Failed to update credits".to_string(),
+            )
+        })?;
+
+    // Log the interaction in the database
+    sqlx::query(
+        "INSERT INTO chats (user_id, input_user, response, tokens_used) VALUES ($1, $2, $3, $4)",
+    )
+    .bind(credit.0)
+    .bind(&payload.input_user)
+    .bind(&response_text)
+    .bind(tokens_used)
+    .execute(&pool)
+    .await
+    .map_err(|e| {
+        eprintln!("Failed to log chat: {}", e);
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            "Failed to log chat".to_string(),
+        )
+    })?;
+
+    // Return the response to the user
+    Ok((
+        StatusCode::OK,
+        Json(ChatResponse {
+            id: 0, // Placeholder for ID
+            user_id: credit.0,
+            input_user: payload.input_user,
+            response: Some(response_text),
+            tokens_used,
+            created_at: chrono::Utc::now().naive_utc(),
+        }),
+    ))
+}
+File: server/src/routes/mod.rs
+pub mod agent;
+pub mod chatbot;
+pub mod credits;
+pub mod users;
+
+File: server/src/db.rs
+use {
+    sqlx::{postgres::PgPoolOptions, Pool, Postgres},
+    std::env,
+};
+
+pub type DbPool = Pool<Postgres>;
+
+pub async fn connect() -> DbPool {
+    let database_url = env::var("DATABASE_URL").expect("DATABASE_URL must be set");
+    PgPoolOptions::new()
+        .max_connections(5)
+        .connect(&database_url)
+        .await
+        .expect("Failed to connect to the database")
+}
+
+File: server/src/main.rs
+mod db;
+mod models;
+mod routes;
+
+use {
+    axum::{
+        routing::{get, post},
+        Router,
+    },
+    db::connect,
+    dotenvy::dotenv,
+    routes::{
+        agent::{generate_query, generate_report},
+        chatbot::{chatbot_interact, get_chat_by_id, get_chats_for_user},
+        credits::{buy_credits, refund_credits},
+        users::{create_user, get_users},
+    },
+};
+
+pub const AGENT_API_URL: &str = "http://localhost:8000";
+
+#[tokio::main]
+async fn main() {
+    dotenv().ok();
+    tracing_subscriber::fmt::init();
+
+    let pool = connect().await;
+
+    let agent_router = Router::new()
+        .route("/generate-query", post(generate_query))
+        .route("/generate-report", post(generate_report));
+    let chatbot_router = Router::new()
+        .route("/interact", post(chatbot_interact))
+        .route("/chats", get(get_chats_for_user))
+        .route("/chats/:id", get(get_chat_by_id));
+
+    let app = Router::new()
+        .route("/health", get(|| async { "ok" }))
+        .route("/users", get(get_users).post(create_user))
+        .route("/credits/buy", post(buy_credits))
+        .route("/credits/refund", post(refund_credits))
+        .nest("/agent", agent_router)
+        .nest("/chatbot", chatbot_router)
+        .with_state(pool);
+
+    let listener = tokio::net::TcpListener::bind("0.0.0.0:5500").await.unwrap();
+
+    println!("Listening on: http://{}", listener.local_addr().unwrap());
+    axum::serve(listener, app).await.unwrap();
+}
+
+File: server/Cargo.toml
+[package]
+name = "server"
+version = "0.1.0"
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+
+[dependencies]
+axum = { workspace = true }
+tokio = { workspace = true }
+tracing-subscriber.workspace = true
+tracing = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+sqlx = { workspace = true }
+dotenvy = { workspace = true }
+chrono = { workspace = true }
+tower-http = { workspace = true }
+http-body-util = { workspace = true }
+solana-sdk = { workspace = true }
+reqwest.workspace = true
+uuid = { version = "1.11.0", features = ["v4"] }
+rand = "0.8.5"
+sdk = { path = "../sdk", version = "0.0.1" }
+
+[dev-dependencies]
+tower = { workspace = true }
+
+File: server/test.sh
+#!/bin/bash
+
+BASE_URL="http://localhost:5500"
+API_KEY="WDAO4Z1Z503DWJH7060GIYGR0TWIIPBM"
+
+check_response() {
+  local response="$1"
+  local status="$2"
+  local expected="$3"
+  
+  echo "Response: $response"
+  
+  if [[ "$status" -eq "$expected" ]]; then
+    echo "✅ Test passed"
+  else
+    echo "❌ Test failed (Expected: $expected, Got: $status)"
+    exit 1
+  fi
+}
+
+# Test health endpoint
+echo "Testing /health..."
+response=$(curl -s -o /dev/null -w "%{http_code}" -X GET "$BASE_URL/health")
+check_response "" "$response" 200
+
+# Test create user
+echo "Creating user..."
+response=$(curl -s -w "\n%{http_code}" -H "Content-Type: application/json" -X POST -d '{
+  "pubkey": "GtJHNhKQnnJZQTHq2Vh49HpR4yKKJmUonVYbLeS1RPs8"
+}' "$BASE_URL/users")
+status=$(echo "$response" | tail -n1)
+check_response "$response" "$status" 200
+
+# Test get users
+echo "Fetching users..."
+response=$(curl -s -w "\n%{http_code}" -X GET "$BASE_URL/users")
+status=$(echo "$response" | tail -n1)
+check_response "$response" "$status" 200
+
+# Test buy credits
+echo "Buying credits..."
+response=$(curl -s -w "\n%{http_code}" -H "Content-Type: application/json" -H "x-api-key: $API_KEY" -X POST -d '{
+  "user_pubkey": "GtJHNhKQnnJZQTHq2Vh49HpR4yKKJmUonVYbLeS1RPs8",
+  "amount": 5000
+}' "$BASE_URL/credits/buy")
+status=$(echo "$response" | tail -n1)
+check_response "$response" "$status" 201
+
+# Test chatbot interaction
+echo "Chatbot interaction..."
+response=$(curl -s -w "\n%{http_code}" -H "Content-Type: application/json" -H "x-api-key: $API_KEY" -X POST -d '{
+  "input_user": "Hello, how are you?",
+  "address": "GtJHNhKQnnJZQTHq2Vh49HpR4yKKJmUonVYbLeS1RPs8"
+}' "$BASE_URL/chatbot/interact")
+status=$(echo "$response" | tail -n1)
+check_response "$response" "$status" 200
+
+echo "All tests passed 🎉"

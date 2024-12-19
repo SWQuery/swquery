@@ -28,8 +28,8 @@ export const FeatureSection: React.FC<FeatureSectionProps> = ({
   buttonText,
   buttonLink,
   codeSnippet,
-  codeLanguage = 'javascript',
-  codeFileName = 'example.js',
+  codeLanguage = 'rust',
+  codeFileName = 'example.rs',
   reversed = false,
 }) => {
   const customTheme = {
@@ -98,4 +98,3 @@ export const FeatureSection: React.FC<FeatureSectionProps> = ({
     </section>
   );
 };
-

@@ -3,114 +3,120 @@ import { Intro } from "@/components/Molecules/Landing/Intro";
 import { Section } from "@/components/Molecules/Landing/Section";
 import { Navbar } from "@/components/Molecules/Navbar";
 import { FeatureSection } from "@/components/Atoms/FeatureSection";
-import { Wallet, Filter, BarChart } from "lucide-react";
+import { Wallet, Filter, BarChart } from 'lucide-react';
 
 export const Landing = () => {
-    const itemsHowItWorks = [
-        {
-            Icon: Wallet,
-            iconColor: "#9945FF",
-            title: "Connect Your Wallet",
-            description:
-                "Use your Solana wallet to integrate with the SWquery system.",
-        },
-        {
-            Icon: Filter,
-            iconColor: "#9945FF",
-            title: "Select Data",
-            description:
-                "Choose the transactions you want to query and filter.",
-        },
-        {
-            Icon: BarChart,
-            iconColor: "#9945FF",
-            title: "Visualize Results",
-            description:
-                "Access intuitive visualizations and personalized reports.",
-        },
-    ];
+	const itemsHowItWorks = [
+		{
+			Icon: Wallet,
+			iconColor: "#9945FF",
+			title: "Connect Your Wallet",
+			description:
+				"Use your Solana wallet to integrate with the SWquery system.",
+		},
+		{
+			Icon: Filter,
+			iconColor: "#9945FF",
+			title: "Select Data",
+			description:
+				"Choose the transactions you want to query and filter.",
+		},
+		{
+			Icon: BarChart,
+			iconColor: "#9945FF",
+			title: "Visualize Results",
+			description:
+				"Access intuitive visualizations and personalized reports.",
+		},
+	];
 
-    return (
-        <div className="min-h-screen bg-gradient-to-b from-[#0A0A0A] to-[#101010] text-white">
-            <Navbar />
-            <div className="pt-40">
-                <Intro />
-                <Section
-                    title="How It Works"
-                    items={itemsHowItWorks}
-                    columns={3}
-                    textAlign="center"
-                />
-                <FeatureSection
-                    title="Query Wallet Transactions"
-                    subtitle="Real-Time Data Retrieval."
-                    description="Leverage the SWquery SDK to fetch and analyze wallet transactions instantly."
-                    buttonText="View Documentation"
-                    buttonLink="#docs"
-                    codeSnippet={`
-use swquery::SWqueryClient;
+	// const itemsFeatures = [
+	// 	{
+	// 		Icon: Brain,
+	// 		iconColor: "#14F195",
+	// 		title: "Advanced AI",
+	// 		description:
+	// 			"Intelligent solutions for automated analysis of complex data.",
+	// 		className: "hover:scale-105 transition-transform",
+	// 	},
+	// 	{
+	// 		Icon: PieChart,
+	// 		iconColor: "#9945FF",
+	// 		title: "Intuitive Visualizations",
+	// 		description: "Clear charts and reports for instant interpretation.",
+	// 		className: "hover:scale-105 transition-transform",
+	// 	},
+	// 	{
+	// 		Icon: Globe,
+	// 		iconColor: "#00D1FF",
+	// 		title: "Global Connection",
+	// 		description:
+	// 			"Seamless integration with the Solana network anywhere in the world.",
+	// 		className: "hover:scale-105 transition-transform",
+	// 	},
+	// ];
 
-fn main() {
-    let api_key = "your_api_key";
-    let client = SWqueryClient::new(api_key);
-    
-    let wallet_address = "YourWalletAddressHere";
-    let query = "Show all transactions over 10 SOL in the past week";
+	// const itemsTechnicalBenefits = [
+	// 	{
+	// 		Icon: ShieldCheck,
+	// 		iconColor: "#14F195",
+	// 		title: "Cutting-Edge Security",
+	// 		description:
+	// 			"We ensure the security of your data with advanced encryption and blockchain security standards.",
+	// 	},
+	// 	{
+	// 		Icon: PieChart,
+	// 		iconColor: "#9945FF",
+	// 		title: "Scalability",
+	// 		description:
+	// 			"Our solution is optimized to handle large volumes of transactions without performance loss.",
+	// 	},
+	// ];
 
-    match client.query_wallet(wallet_address, query) {
-        Ok(response) => println!("Query Result: {:?}", response),
-        Err(error) => eprintln!("Error: {:?}", error),
-    }
-}
-                    `}
-                />
-                <FeatureSection
-                    title="Filter Data Intelligently"
-                    subtitle="Powerful Query Customization."
-                    description="Easily filter blockchain transactions by type, amount, or date using natural language."
-                    buttonText="Try It Out"
-                    buttonLink="#try-it"
-                    codeSnippet={`
-use swquery::SWqueryClient;
-
-fn main() {
-    let api_key = "your_api_key";
-    let client = SWqueryClient::new(api_key);
-
-    let filter_query = "Find all 'transfer' transactions from last month";
-    
-    match client.query_wallet("YourWalletAddressHere", filter_query) {
-        Ok(response) => println!("Filtered Results: {:?}", response),
-        Err(error) => eprintln!("Error: {:?}", error),
-    }
-}
-                    `}
-                    reversed
-                />
-                <FeatureSection
-                    title="Analyze Total Value Locked"
-                    subtitle="Insights for DeFi Projects."
-                    description="Calculate TVL for any Solana-based project directly through the SWquery SDK."
-                    buttonText="Get Started"
-                    buttonLink="#get-started"
-                    codeSnippet={`
-use swquery::SWqueryClient;
-
-fn main() {
-    let api_key = "your_api_key";
-    let client = SWqueryClient::new(api_key);
-
-    let project_address = "YourProjectAddressHere";
-    
-    match client.calculate_tvl(project_address) {
-        Ok(tvl) => println!("Total Value Locked: ${}", tvl),
-        Err(error) => eprintln!("Error calculating TVL: {:?}", error),
-    }
-}
-                    `}
-                />
-                <Footer />
-            </div>
-        </div>
-    );
+	return (
+		<div className="min-h-screen bg-gradient-to-b from-[#0A0A0A] to-[#101010] text-white">
+			<Navbar />
+			<div className="pt-40">
+				<Intro />
+				<Section
+					title="How It Works"
+					items={itemsHowItWorks}
+					columns={3}
+					textAlign="center"
+				/>
+				<FeatureSection
+					title="If It Requires Bridging, It's Not"
+					subtitle="Solana-Native."
+					description="SWquery is a bridgeless query platform that brings programmability directly to the Solana base layer, unlike L2s and metaprotocols that silo liquidity to side chains and require added trust in their bridging process."
+					buttonText="Learn more"
+					buttonLink="#learn-more"
+					codeSnippet={`
+// Example SWquery code
+const query = new SWquery();
+const result = await query
+  .filter('transaction.type', 'transfer')
+  .execute();
+console.log(result);
+					`}
+				/>
+				<FeatureSection
+					title="The World's Fastest"
+					subtitle="Blockchain, Unlocked."
+					description="SWquery powers the first generation of decentralized applications capable of accessing the full liquidity of the Solana blockchain, enabling new use cases from DeFi to DAOs."
+					buttonText="Start Building"
+					buttonLink="#start-building"
+					codeSnippet={`
+// Another SWquery example
+const analytics = new SWqueryAnalytics();
+const tvl = await analytics
+  .calculateTVL('your-project-address');
+console.log(\`Total Value Locked: $\${tvl}\`);
+					`}
+					reversed
+				/>
+				<Footer />
+			</div>
+		</div>
+	);
 };
+
