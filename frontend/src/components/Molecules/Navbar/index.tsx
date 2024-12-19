@@ -9,6 +9,9 @@ import { CreditCard, Book, Wallet } from 'lucide-react';
 import HorizontalLogo from "../../../assets/images/logo-horizontal.png";
 import { CreditsSidebar } from "@/components/Molecules/CreditSidebar";
 import Link from "next/link";
+import { TokenDisplay } from "@/components/Atoms/TokenDisplay/TokenDisplay"; 
+//tokens mockados
+const userBalance = 12345678;
 
 // Add this CSS to your global styles or a CSS module
 const walletButtonStyles = {
@@ -64,7 +67,7 @@ export const Navbar = () => {
 						/>
 					</motion.div>
 				</Link>
-
+				
 				<div className="space-x-4 flex items-center">
 					{/* Docs Button */}
 					<motion.div
@@ -134,6 +137,32 @@ export const Navbar = () => {
 						</button>
 					</motion.div>
 
+					{/* Token Display (shown if connected) */}
+					{connected && (
+						<motion.div
+							initial={{ opacity: 0, y: -20 }}
+							animate={{ opacity: 1, y: 0 }}
+							transition={{ duration: 0.6, delay: 0.25 }}
+							className="relative"
+							onMouseEnter={(e) => {
+								const div =
+									e.currentTarget.querySelector("div.group");
+								if (div) {
+									div.classList.add("scale-105");
+								}
+							}}
+							onMouseLeave={(e) => {
+								const div =
+									e.currentTarget.querySelector("div.group");
+								if (div) {
+									div.classList.remove("scale-105");
+								}
+							}}
+						>
+							<TokenDisplay balance={userBalance} />
+						</motion.div>
+					)}
+
 					{/* Wallet Button */}
 					<motion.div
 						initial={{ opacity: 0, y: -20 }}
@@ -185,7 +214,7 @@ export const Navbar = () => {
 								display: "flex",
 								alignItems: "center",
 								justifyContent: "center",
-                ...walletButtonStyles // Add the custom styles
+                ...walletButtonStyles
 							}}
 						>
 							{connected ? "Connected" : "Connect Wallet"}
@@ -201,4 +230,3 @@ export const Navbar = () => {
 		</nav>
 	);
 };
-
