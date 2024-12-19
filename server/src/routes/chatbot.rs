@@ -3,6 +3,7 @@ use {
         models::ChatModel,
         routes::agent::{fetch_credit_info, send_query_request, QueryRequest},
     },
+    swquery::{SWqueryClient, client::Network},
     axum::{
         extract::{Path, State},
         http::{HeaderMap, StatusCode},
@@ -26,7 +27,7 @@ pub struct ChatResponse {
     pub id: i32,
     pub user_id: i32,
     pub input_user: String,
-    pub response: Option<String>,
+    pub responseTest: Option<String>,
     pub tokens_used: i64,
     #[serde(serialize_with = "serialize_naive_date_time")]
     pub created_at: NaiveDateTime,
@@ -61,7 +62,7 @@ pub async fn get_chats_for_user(
             id: chat.id,
             user_id: chat.user_id,
             input_user: chat.input_user,
-            response: chat.response,
+            responseTest: chat.response,
             tokens_used: chat.tokens_used,
             created_at: chat.created_at,
         })
@@ -116,45 +117,142 @@ pub async fn get_chat_by_id(
     }
 }
 
+// #[derive(Deserialize)]
+// pub struct ChatRequest {
+//     pub input_user: String,
+//     pub address: String,
+// }
+
+// #[derive(Serialize, Deserialize)]
+// pub struct SDKChatResponse {
+//     pub response: String,
+//     pub tokens_used: i64,
+// }
+
+// pub async fn chatbot_interact(
+//     State(pool): State<PgPool>,
+//     headers: HeaderMap,
+//     Json(mut payload): Json<QueryRequest>,
+// ) -> Result<(StatusCode, Json<ChatResponse>), (StatusCode, String)> {
+//     let api_key = headers
+//         .get("x-api-key")
+//         .and_then(|v| v.to_str().ok())
+//         .ok_or((StatusCode::UNAUTHORIZED, "Missing API key".to_string()))?;
+
+//     // Fetch user credits
+//     let credit = fetch_credit_info(&pool, api_key).await?;
+//     let query_response = send_query_request(&mut payload).await?;
+//     if credit.2 < query_response.tokens {
+//         return Err((
+//             StatusCode::PAYMENT_REQUIRED,
+//             "Insufficient credits".to_string(),
+//         ));
+//     }
+
+//     // Deduct tokens from user credits
+//     sqlx::query("UPDATE credits SET balance = balance - $1 WHERE user_id = $2")
+//         .bind(query_response.tokens)
+//         .bind(credit.0)
+//         .execute(&pool)
+//         .await
+//         .map_err(|e| {
+//             eprintln!("Failed to update credits: {}", e);
+//             (
+//                 StatusCode::INTERNAL_SERVER_ERROR,
+//                 "Failed to update credits".to_string(),
+//             )
+//         })?;
+
+//     // Log the interaction
+//     sqlx::query(
+//         "INSERT INTO chats (user_id, input_user, response, tokens_used) VALUES ($1, $2, $3, $4)",
+//     )
+//     .bind(credit.0)
+//     .bind(&payload.input_user)
+//     .bind(&query_response.result.response)
+//     .bind(query_response.tokens)
+//     .execute(&pool)
+//     .await
+//     .map_err(|e| {
+//         eprintln!("Failed to log chat: {}", e);
+//         (
+//             StatusCode::INTERNAL_SERVER_ERROR,
+//             "Failed to log chat".to_string(),
+//         )
+//     })?;
+
+//     // Return the response
+//     Ok((
+//         StatusCode::OK,
+//         Json(ChatResponse {
+//             id: 0,
+//             user_id: credit.0,
+//             input_user: payload.input_user,
+//             response: Some(query_response.result.response),
+//             tokens_used: query_response.tokens,
+//             created_at: chrono::Utc::now().naive_utc(),
+//         }),
+//     ))
+// }
+
 #[derive(Deserialize)]
 pub struct ChatRequest {
     pub input_user: String,
     pub address: String,
 }
 
-#[derive(Serialize, Deserialize)]
-pub struct SDKChatResponse {
-    pub response: String,
-    pub tokens_used: i64,
-}
-
 pub async fn chatbot_interact(
     State(pool): State<PgPool>,
     headers: HeaderMap,
-    Json(mut payload): Json<QueryRequest>,
+    Json(payload): Json<ChatRequest>,
 ) -> Result<(StatusCode, Json<ChatResponse>), (StatusCode, String)> {
+    // Extract API key from headers
     let api_key = headers
         .get("x-api-key")
         .and_then(|v| v.to_str().ok())
         .ok_or((StatusCode::UNAUTHORIZED, "Missing API key".to_string()))?;
 
-    // Fetch user credits
+    // Fetch user credit information
     let credit = fetch_credit_info(&pool, api_key).await?;
 
-    // Call Agent API through `send_query_request`
-    let query_response = send_query_request(&mut payload).await?;
+    // Initialize the SWqueryClient
+    let swquery_client = SWqueryClient::new(
+        api_key.to_string(),
+        "45af5ec2-c5c5-4da2-9226-550f52e126cd".to_string(), // Replace with actual Helius API key
+        None,
+        Some(Network::Mainnet),
+    );
+
+    // Call the query method from the SDK
+    let query_result = swquery_client
+        .query(&payload.input_user, &payload.address)
+        .await
+        .map_err(|e| {
+            eprintln!("SDK query error: {}", e);
+            (StatusCode::INTERNAL_SERVER_ERROR, "Failed to process query".to_string())
+        })?;
+    println!("Teste{:?}", query_result);
+
+    // Extract response and tokens used from the SDK result
+    let response_text = query_result
+        .as_str()
+        .unwrap_or_default()
+        .to_string();
+    let tokens_used = query_result["tokens"]
+        .as_i64()
+        .unwrap_or(0);
 
     // Check if the user has sufficient credits
-    if credit.2 < query_response.tokens {
+    if credit.2 < tokens_used {
         return Err((
             StatusCode::PAYMENT_REQUIRED,
             "Insufficient credits".to_string(),
         ));
     }
 
-    // Deduct tokens from user credits
+    // Deduct tokens from the user's credit balance
     sqlx::query("UPDATE credits SET balance = balance - $1 WHERE user_id = $2")
-        .bind(query_response.tokens)
+        .bind(tokens_used)
         .bind(credit.0)
         .execute(&pool)
         .await
@@ -166,14 +264,14 @@ pub async fn chatbot_interact(
             )
         })?;
 
-    // Log the interaction
+    // Log the interaction in the database
     sqlx::query(
         "INSERT INTO chats (user_id, input_user, response, tokens_used) VALUES ($1, $2, $3, $4)",
     )
     .bind(credit.0)
     .bind(&payload.input_user)
-    .bind(&query_response.result.response)
-    .bind(query_response.tokens)
+    .bind(&response_text)
+    .bind(tokens_used)
     .execute(&pool)
     .await
     .map_err(|e| {
@@ -184,15 +282,15 @@ pub async fn chatbot_interact(
         )
     })?;
 
-    // Return the response
+    // Return the response to the user
     Ok((
         StatusCode::OK,
         Json(ChatResponse {
-            id: 0,
+            id: 0, // Placeholder for ID
             user_id: credit.0,
             input_user: payload.input_user,
-            response: Some(query_response.result.response),
-            tokens_used: query_response.tokens,
+            responseTest: Some(response_text),
+            tokens_used,
             created_at: chrono::Utc::now().naive_utc(),
         }),
     ))

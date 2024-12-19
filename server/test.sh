@@ -8,11 +8,12 @@ check_response() {
   local status="$2"
   local expected="$3"
   
+  echo "Response: $response"
+  
   if [[ "$status" -eq "$expected" ]]; then
     echo "✅ Test passed"
   else
     echo "❌ Test failed (Expected: $expected, Got: $status)"
-    echo "Response: $response"
     exit 1
   fi
 }
@@ -48,7 +49,7 @@ check_response "$response" "$status" 201
 # Test chatbot interaction
 echo "Chatbot interaction..."
 response=$(curl -s -w "\n%{http_code}" -H "Content-Type: application/json" -H "x-api-key: $API_KEY" -X POST -d '{
-  "inputUser": "Hello, how are you?",
+  "input_user": "Hello, how are you?",
   "address": "GtJHNhKQnnJZQTHq2Vh49HpR4yKKJmUonVYbLeS1RPs8"
 }' "$BASE_URL/chatbot/interact")
 status=$(echo "$response" | tail -n1)
