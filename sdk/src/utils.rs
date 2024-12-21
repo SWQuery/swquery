@@ -4,7 +4,7 @@ use {
     serde::de::DeserializeOwned,
     serde_json::{json, Value},
     solana_sdk::pubkey::Pubkey,
-    std::str::FromStr,
+    std::{collections::{HashMap, HashSet}, str::FromStr},
 };
 
 const METAPLEX_PROGRAM_ID: &str = "metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s";
@@ -149,14 +149,94 @@ pub async fn get_transaction_details(
     make_rpc_call(client, url, "getTransaction", payload).await
 }
 
-/// Helper to get transaction details with additional info
+/// Helper to get transaction details with essential info only
 pub async fn get_transaction_details_with_info(
-    client: &Client,
+    client: &Client, 
     url: &str,
     signature: &str,
 ) -> Result<FullTransaction, SdkError> {
     let response = get_transaction_details(client, url, signature).await?;
     let transaction_result = response.result;
+
+    let mut token_metadata_map = HashMap::new();
+    let mut transfers = Vec::new();
+
+    if let Some(meta) = &transaction_result.meta {
+        let mints: HashSet<String> = meta
+            .postTokenBalances
+            .iter()
+            .chain(meta.preTokenBalances.iter())
+            .filter_map(|balance| balance.get("mint")?.as_str().map(|s| s.to_string()))
+            .collect();
+
+        // Fetch metadata for each mint
+        for mint in mints {
+            if let Ok(metadata) = get_asset_metadata(client, url, &mint).await {
+                token_metadata_map.insert(mint.clone(), metadata);
+            }
+        }
+
+        // Track changes at the account level
+        let mut account_balance_map = HashMap::new();
+        
+        // Map preTokenBalances by account and mint
+        for balance in &meta.preTokenBalances {
+            if let (Some(account), Some(mint)) = (
+                balance.get("owner").and_then(|v| v.as_str()),
+                balance.get("mint").and_then(|v| v.as_str())
+            ) {
+                let amount = balance["uiTokenAmount"]["uiAmount"].as_f64().unwrap_or(0.0);
+                account_balance_map.insert((account.to_string(), mint.to_string()), -amount);
+            }
+        }
+
+        // Map postTokenBalances by account and mint
+        for balance in &meta.postTokenBalances {
+            if let (Some(account), Some(mint)) = (
+                balance.get("owner").and_then(|v| v.as_str()),
+                balance.get("mint").and_then(|v| v.as_str())
+            ) {
+                let amount = balance["uiTokenAmount"]["uiAmount"].as_f64().unwrap_or(0.0);
+                *account_balance_map
+                    .entry((account.to_string(), mint.to_string()))
+                    .or_insert(0.0) += amount;
+            }
+        }
+
+        // Record SPL token transfers at the account level
+        for ((account, mint), delta) in account_balance_map {
+            if delta != 0.0 {
+                transfers.push(json!({
+                    "mint": mint,
+                    "amount": format!("{:.6}", delta.abs()),
+                    "decimals": 6,
+                    "owner": account,
+                    "metadata": token_metadata_map.get(&mint),
+                    "direction": if delta > 0.0 { "in" } else { "out" }
+                }));
+            }
+        }
+
+        // Handle SOL transfers
+        for (pre_sol, post_sol) in meta.preBalances.iter().zip(meta.postBalances.iter()) {
+            let amount_diff = if pre_sol >= post_sol {
+                (pre_sol - post_sol) as f64 / 1_000_000_000.0
+            } else {
+                (post_sol - pre_sol) as f64 / 1_000_000_000.0
+            };
+            
+            if pre_sol != post_sol {
+                transfers.push(json!({
+                    "mint": "SOL",
+                    "amount": format!("{:.9}", amount_diff),
+                    "decimals": 9,
+                    "owner": "N/A",
+                    "metadata": null,
+                    "direction": if pre_sol >= post_sol { "out" } else { "in" }
+                }));
+            }
+        }
+    }
 
     Ok(FullTransaction {
         signature: transaction_result.transaction.signatures[0].clone(),
@@ -168,8 +248,42 @@ pub async fn get_transaction_details_with_info(
             .map_or("unknown".to_string(), |m| {
                 if m.err.is_some() { "failed" } else { "success" }.to_string()
             }),
-        details: transaction_result,
+        details: json!({
+            "fee": transaction_result.meta.as_ref().map_or(0, |m| m.fee.unwrap_or(0)),
+            "transfers": transfers,
+        }),
+        token_metadata: token_metadata_map,
     })
+}
+
+pub async fn get_asset_metadata(
+    client: &Client,
+    url: &str,
+    mint: &str,
+) -> Result<Value, SdkError> {
+    let payload = json!([mint]);
+    let response: Value = make_rpc_call(client, url, "getAsset", payload).await?;
+
+    if let Some(result) = response.get("result") {
+        match result {
+            Value::Array(assets) if !assets.is_empty() => {
+                Ok(assets[0].get("content").cloned().unwrap_or_default())
+            }
+            Value::Object(_) => {
+                // If result is a single object, return it directly
+                Ok(result.get("content").cloned().unwrap_or_default())
+            }
+            _ => Err(SdkError::Unexpected(format!(
+                "Unexpected asset format for mint: {}",
+                mint
+            ))),
+        }
+    } else {
+        Err(SdkError::Unexpected(format!(
+            "No metadata found for mint: {}",
+            mint
+        )))
+    }
 }
 
 fn get_metadata_account(mint: &Pubkey) -> Pubkey {

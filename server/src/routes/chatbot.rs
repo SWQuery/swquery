@@ -122,6 +122,7 @@ pub struct ChatRequest {
 pub struct ChatResponse {
     pub credits: i64,
     pub response: serde_json::Value,
+    pub metadata: Option<serde_json::Value>,
     pub report: String,
 }
 
@@ -142,7 +143,7 @@ pub async fn chatbot_interact(
     // Initialize the SWqueryClient
     let swquery_client = SWqueryClient::new(
         api_key.to_string(),
-        "45af5ec2-c5c5-4da2-9226-550f52e126cd".to_string(), // Replace with actual Helius API key
+        "4953b888-9092-4ba0-b59a-24960cbdc270".to_string(), // Helius API key
         None,
         Some(Network::Mainnet),
     );
@@ -156,6 +157,10 @@ pub async fn chatbot_interact(
             (StatusCode::INTERNAL_SERVER_ERROR, "Failed to process query".to_string())
         })?;
 
+    // Extract metadata (token information) from the response
+    let metadata = query_result.get("metadata").cloned();
+
+    // Generate report based on the query
     let report_input = QueryRequestReport {
         input_user: query_result.clone().to_string(),
         address: payload.address.clone(),
@@ -164,11 +169,13 @@ pub async fn chatbot_interact(
 
     let report = generate_report_service(pool, headers, axum::Json(report_input)).await?;
 
+    // Return the enriched response with metadata
     Ok((
         StatusCode::OK,
         Json(ChatResponse {
             credits: credit.2,
             response: query_result,
+            metadata,
             report: report.1.result.clone(),
         }),
     ))
