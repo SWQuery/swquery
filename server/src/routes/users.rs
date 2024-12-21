@@ -1,6 +1,6 @@
 use {
     crate::models::UserModel,
-    axum::{extract::State, http::StatusCode, Json},
+    axum::{extract::{Path, State}, http::StatusCode, Json},
     serde::{Deserialize, Serialize},
     sqlx::PgPool,
 };
@@ -78,4 +78,29 @@ pub async fn get_users(State(pool): State<PgPool>) -> Json<Vec<User>> {
         .collect();
 
     Json(users)
+}
+
+pub async fn get_user_by_pubkey(
+    State(pool): State<PgPool>,
+    Path(pubkey): Path<String>,
+) -> Result<Json<User>, (StatusCode, String)> {
+    let user = sqlx::query_as::<_, UserModel>("SELECT id, pubkey FROM users WHERE pubkey = $1")
+        .bind(&pubkey)
+        .fetch_optional(&pool)
+        .await
+        .map_err(|e| {
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                format!("Failed to query user: {}", e),
+            )
+        })?;
+
+    if let Some(user) = user {
+        Ok(Json(User {
+            id: user.id,
+            pubkey: user.pubkey,
+        }))
+    } else {
+        Err((StatusCode::NOT_FOUND, "User not found".into()))
+    }
 }

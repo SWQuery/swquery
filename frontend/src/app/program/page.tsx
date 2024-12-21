@@ -1,40 +1,59 @@
-import React from 'react';
-import { useWallet } from '@solana/wallet-adapter-react';
-import { Connection } from '@solana/web3.js';
-import { buyCredits } from '../../services/program';
+"use client";
+import React, { useState } from "react";
+import { Keypair, PublicKey } from "@solana/web3.js";
+import { buyCredits } from "../../services/program";
 
-const BuyCreditsButton: React.FC = () => {
-    const wallet = useWallet(); // Access wallet context
-    const connection = new Connection('https://api.devnet.solana.com'); // Use correct cluster URL
+const BuyCredits = () => {
+  const [status, setStatus] = useState<string | null>(null);
 
-    const handleBuyCredits = async () => {
-        try {
-            const amountUSDC = 100; // Example: 100 USDC
+  const handleBuyCredits = async () => {
+    try {
+      setStatus("Enviando transação...");
+      console.log("Comprando créditos...");
 
-            await buyCredits(connection, wallet, amountUSDC);
-            alert("Credits purchased successfully!");
-        } catch (error) {
-            console.error("Error buying credits:", error);
-            alert("Failed to buy credits. Please try again.");
-        }
-    };
+      const buyerKeypair = Keypair.generate();
+      
+      console.log("Chave do comprador:", buyerKeypair.publicKey.toString());
 
-    return (
-        <button
-            onClick={handleBuyCredits}
-            disabled={!wallet.connected}
-            style={{
-                padding: "10px 20px",
-                backgroundColor: "#0070f3",
-                color: "#fff",
-                border: "none",
-                borderRadius: "5px",
-                cursor: "pointer",
-            }}
-        >
-            Buy Credits
-        </button>
-    );
+      const buyerTokenAccount = new PublicKey(
+        "9Ld2bRLUC7PrP8NSHK3WgBe3khHgtxAnjDr79YJHDxKF"
+      );
+      console.log("Conta token do comprador:", buyerTokenAccount.toString());
+
+      const amountUSDC = 10;
+
+      const signature = await buyCredits(
+        buyerKeypair,
+        buyerTokenAccount,
+        amountUSDC
+      );
+      setStatus(`Sucesso! Transação: ${signature}`);
+    } catch (error) {
+      console.log("Erro ao comprar créditos:", error);
+      setStatus(`Erro: ${error}`);
+    }
+  };
+
+  return (
+    <div style={{ textAlign: "center", marginTop: "50px" }}>
+      <h1>Comprar Créditos</h1>
+      <button
+        onClick={handleBuyCredits}
+        style={{
+          padding: "10px 20px",
+          fontSize: "16px",
+          backgroundColor: "#007BFF",
+          color: "white",
+          border: "none",
+          borderRadius: "5px",
+          cursor: "pointer",
+        }}
+      >
+        Comprar Créditos
+      </button>
+      {status && <p>{status}</p>}
+    </div>
+  );
 };
 
-export default BuyCreditsButton;
+export default BuyCredits;

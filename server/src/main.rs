@@ -13,7 +13,7 @@ use {
         agent::{generate_query, generate_report},
         chatbot::{chatbot_interact, get_chat_by_id, get_chats_for_user},
         credits::{buy_credits, refund_credits},
-        users::{create_user, get_users},
+        users::{create_user, get_user_by_pubkey, get_users},
     },
 };
 
@@ -37,6 +37,7 @@ async fn main() {
     let app = Router::new()
         .route("/health", get(|| async { "ok" }))
         .route("/users", get(get_users).post(create_user))
+        .route("/users/:pubkey", get(get_user_by_pubkey))
         .route("/credits/buy", post(buy_credits))
         .route("/credits/refund", post(refund_credits))
         .nest("/agent", agent_router)
