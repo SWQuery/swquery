@@ -428,7 +428,8 @@ pub struct FullTransaction {
     pub slot: u64,
     pub timestamp: u64,
     pub status: String,
-    pub details: TransactionResult, // Include the full transaction result
+    pub details: Value, // Include the full transaction result
+    pub token_metadata: HashMap<String, Value>,
 }
 
 /// Type alias for getTransactionCount.
