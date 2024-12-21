@@ -1,4 +1,4 @@
-import api from "./api";
+import api from "./config/api";
 
 export const buyCredits = async (user_pubkey: string, amount: number) => {
   try {

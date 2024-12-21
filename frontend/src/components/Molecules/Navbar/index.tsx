@@ -10,6 +10,8 @@ import HorizontalLogo from "../../../assets/images/logo-horizontal.png";
 import { CreditsSidebar } from "@/components/Molecules/CreditSidebar";
 import Link from "next/link";
 import { TokenDisplay } from "@/components/Atoms/TokenDisplay/TokenDisplay"; 
+import { createUser } from "../../../services/users";
+
 //tokens mockados
 const userBalance = 12345678;
 
@@ -32,7 +34,7 @@ const walletButtonStyles = {
 export const Navbar = () => {
 	const [isScrolled, setIsScrolled] = useState(false);
 	const [isCreditsSidebarOpen, setIsCreditsSidebarOpen] = useState(false);
-	const { connected } = useWallet();
+	const { connected, publicKey } = useWallet();
 
 	useEffect(() => {
 		const handleScroll = () => {
@@ -41,6 +43,19 @@ export const Navbar = () => {
 		window.addEventListener("scroll", handleScroll);
 		return () => window.removeEventListener("scroll", handleScroll);
 	}, []);
+
+	useEffect(() => {
+		if (connected && publicKey) {
+			const pubkeyString = publicKey.toBase58();
+			createUser(pubkeyString)
+				.then(() => {
+					console.log("User created successfully:", pubkeyString);
+				})
+				.catch((error) => {
+					console.error("Error creating user:", error);
+				});
+		}
+	}, [connected, publicKey]);
 
 	return (
 		<nav

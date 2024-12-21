@@ -1,4 +1,4 @@
-import apiClient from "./api";
+import apiClient from "./config/api";
 
 export async function createUser(pubkey: string) {
   try {
@@ -16,6 +16,16 @@ export async function getUsers() {
     return response.data;
   } catch (error: unknown) {
     console.error("Error fetching users:", error);
+    throw error;
+  }
+}
+
+export async function getUserByPubkey(pubkey: string) {
+  try {
+    const response = await apiClient.get(`/users/${pubkey}`);
+    return response.data;
+  } catch (error: unknown) {
+    console.error("Error fetching user by pubkey:", error);
     throw error;
   }
 }

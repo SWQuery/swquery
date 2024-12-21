@@ -1,86 +1,63 @@
 import {
     Connection,
+    Keypair,
     PublicKey,
     Transaction,
-    SystemProgram,
     TransactionInstruction,
-} from '@solana/web3.js';
-import { WalletContextState } from '@solana/wallet-adapter-react';
-
-const PROGRAM_ID = new PublicKey("99999999999999999999999999999999999999999999"); // Your program ID
-const TREASURY = new PublicKey("TREASURY_ACCOUNT_PUBLIC_KEY"); // Your treasury account public key
-const USDC_MINT = new PublicKey("USDC_TOKEN_MINT_ADDRESS"); // SPL USDC mint address
-const CREDITS_SEED = "credits"; // Seed used in PDA derivation
-
-async function deriveCreditsAccount(
-    buyerPublicKey: PublicKey
-): Promise<[PublicKey, number]> {
-    return await PublicKey.findProgramAddress(
-        [Buffer.from(CREDITS_SEED), buyerPublicKey.toBuffer()],
-        PROGRAM_ID
-    );
-}
-
-export async function buyCredits(
-    connection: Connection,
-    wallet: WalletContextState,
+  } from "@solana/web3.js";
+  import { TOKEN_PROGRAM_ID } from "@solana/spl-token";
+  
+  // TODO: Transform in global constants
+  const SOLANA_NETWORK = "https://api.devnet.solana.com";
+  const PROGRAM_ID = new PublicKey("CTi1Genj9Ev3rRXGHfaqqMHtjh2uSBEXSyfVxG6dyGBQ");
+  const TREASURY_PUBKEY = new PublicKey("2nuW7MWYsGdLmsSf5mHrjgn6NqyrS5USai6fdisnUQc4");
+  
+  export const buyCredits = async (
+    buyerKeypair: Keypair,
+    buyerTokenAccount: PublicKey,
     amountUSDC: number
-): Promise<void> {
-    if (!wallet.publicKey) {
-        throw new Error("Wallet not connected");
-    }
-
-    if (!wallet.signTransaction) {
-        throw new Error("Wallet does not support signing transactions. Please use a compatible wallet.");
-    }
-
-    const [creditsAccountPDA, bump] = await deriveCreditsAccount(wallet.publicKey);
-
-    const buyerTokenAccounts = await connection.getTokenAccountsByOwner(wallet.publicKey, {
-        mint: USDC_MINT,
-    });
-
-    if (buyerTokenAccounts.value.length === 0) {
-        throw new Error("No USDC token account found for the buyer");
-    }
-
-    const buyerTokenAccount = buyerTokenAccounts.value[0].pubkey;
-
+  ) => {
+    const connection = new Connection(SOLANA_NETWORK, "confirmed");
+  
+    const [creditsAccount, bump] = await PublicKey.findProgramAddress(
+      [Buffer.from("credits_account"), buyerKeypair.publicKey.toBuffer()],
+      PROGRAM_ID
+    );
+  
     const instructionData = Buffer.alloc(9);
-    instructionData.writeBigUInt64LE(BigInt(amountUSDC), 0);
+    const writeBigUInt64LE = (buffer: Buffer, value: bigint, offset: number) => {
+      const low = Number(value & BigInt(0xffffffff));
+      const high = Number(value >> BigInt(32));
+      buffer.writeUInt32LE(low, offset);
+      buffer.writeUInt32LE(high, offset + 4);
+    };
+  
+    writeBigUInt64LE(instructionData, BigInt(amountUSDC), 0);
     instructionData.writeUInt8(bump, 8);
-
+  
     const instruction = new TransactionInstruction({
-        keys: [
-            { pubkey: wallet.publicKey, isSigner: true, isWritable: false }, // Buyer
-            { pubkey: buyerTokenAccount, isSigner: false, isWritable: true }, // Buyer's USDC account
-            { pubkey: TREASURY, isSigner: false, isWritable: true }, // Treasury
-            { pubkey: creditsAccountPDA, isSigner: false, isWritable: true }, // Credits account
-            { pubkey: SystemProgram.programId, isSigner: false, isWritable: false }, // System program
-        ],
-        programId: PROGRAM_ID,
-        data: instructionData,
+      programId: PROGRAM_ID,
+      keys: [
+        { pubkey: buyerKeypair.publicKey, isSigner: true, isWritable: true },
+        { pubkey: buyerTokenAccount, isSigner: false, isWritable: true },
+        { pubkey: TREASURY_PUBKEY, isSigner: false, isWritable: true },
+        { pubkey: creditsAccount, isSigner: false, isWritable: true },
+        { pubkey: PublicKey.default, isSigner: false, isWritable: false },
+        { pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false },
+      ],
+      data: instructionData,
     });
-
+  
     const transaction = new Transaction().add(instruction);
-
-    try {
-        const { blockhash } = await connection.getRecentBlockhash();
-        transaction.recentBlockhash = blockhash;
-        transaction.feePayer = wallet.publicKey;
-
-        const signedTransaction = await wallet.signTransaction(transaction);
-        const signature = await connection.sendRawTransaction(signedTransaction.serialize(), {
-            skipPreflight: false,
-            preflightCommitment: "processed",
-        });
-
-        console.log("Transaction signature:", signature);
-
-        await connection.confirmTransaction(signature, "processed");
-        console.log("Transaction confirmed!");
-    } catch (error) {
-        console.error("Transaction failed:", error);
-        throw error;
-    }
-}
+  
+    transaction.feePayer = buyerKeypair.publicKey;
+    const { blockhash } = await connection.getLatestBlockhash();
+    transaction.recentBlockhash = blockhash;
+    transaction.sign(buyerKeypair);
+  
+    const signature = await connection.sendTransaction(transaction, [buyerKeypair]);
+    await connection.confirmTransaction(signature, "confirmed");
+  
+    return signature;
+  };
+  
