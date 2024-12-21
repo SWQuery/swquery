@@ -86,16 +86,32 @@ async fn update_or_insert_credits(
     amount: i64,
     api_key: &str,
 ) -> Result<CreditModel, (StatusCode, String)> {
+    let current_balance = sqlx::query_scalar::<_, i64>(
+        "SELECT balance FROM credits WHERE user_id = $1 FOR UPDATE",
+    )
+    .bind(user_id)
+    .fetch_one(pool)
+    .await
+    .map_err(|e| {
+        eprintln!("Credits operation error: {}", e);
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            "Failed to fetch credits".to_string(),
+        )
+    })?;
+
+    let new_amount = current_balance + amount;
+
     let credit = sqlx::query_as::<_, CreditModel>(
         "INSERT INTO credits (user_id, balance, api_key) 
          VALUES ($1, $2, $3)
          ON CONFLICT (user_id) 
-         DO UPDATE SET balance = credits.balance + EXCLUDED.balance,
+         DO UPDATE SET balance = EXCLUDED.balance,
                      api_key = COALESCE(credits.api_key, EXCLUDED.api_key)
          RETURNING *",
     )
     .bind(user_id)
-    .bind(amount)
+    .bind(new_amount)
     .bind(api_key)
     .fetch_one(pool)
     .await

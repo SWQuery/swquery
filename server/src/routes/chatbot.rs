@@ -1,17 +1,12 @@
 use {
-    crate::{
+    super::agent::{generate_report, generate_report_service, QueryRequestReport}, crate::{
         models::ChatModel,
-        routes::agent::{fetch_credit_info, send_query_request, QueryRequest},
-    },
-    swquery::{SWqueryClient, client::Network},
-    axum::{
+        routes::agent::fetch_credit_info, // Remove unused imports
+    }, axum::{
         extract::{Path, State},
         http::{HeaderMap, StatusCode},
         Json,
-    },
-    chrono::NaiveDateTime,
-    serde::{Deserialize, Serialize, Serializer},
-    sqlx::PgPool,
+    }, chrono::NaiveDateTime, serde::{Deserialize, Serialize, Serializer}, sqlx::PgPool, swquery::{client::Network, SWqueryClient}
 };
 
 fn serialize_naive_date_time<S>(date: &NaiveDateTime, serializer: S) -> Result<S::Ok, S::Error>
@@ -23,11 +18,11 @@ where
 }
 
 #[derive(Serialize)]
-pub struct ChatResponse {
+pub struct GetChatsResponse {
     pub id: i32,
     pub user_id: i32,
     pub input_user: String,
-    pub responseTest: Option<String>,
+    pub response: Option<String>,
     pub tokens_used: i64,
     #[serde(serialize_with = "serialize_naive_date_time")]
     pub created_at: NaiveDateTime,
@@ -37,7 +32,7 @@ pub struct ChatResponse {
 pub async fn get_chats_for_user(
     State(pool): State<PgPool>,
     user_pubkey: String,
-) -> Result<(StatusCode, Json<Vec<ChatResponse>>), (StatusCode, String)> {
+) -> Result<(StatusCode, Json<Vec<GetChatsResponse>>), (StatusCode, String)> {
     let chats = sqlx::query_as::<_, ChatModel>(
         "SELECT c.* 
          FROM chats c
@@ -56,13 +51,13 @@ pub async fn get_chats_for_user(
         )
     })?;
 
-    let response: Vec<ChatResponse> = chats
+    let response: Vec<GetChatsResponse> = chats
         .into_iter()
-        .map(|chat| ChatResponse {
+        .map(|chat| GetChatsResponse {
             id: chat.id,
             user_id: chat.user_id,
             input_user: chat.input_user,
-            responseTest: chat.response,
+            response: chat.response,
             tokens_used: chat.tokens_used,
             created_at: chat.created_at,
         })
@@ -117,88 +112,17 @@ pub async fn get_chat_by_id(
     }
 }
 
-// #[derive(Deserialize)]
-// pub struct ChatRequest {
-//     pub input_user: String,
-//     pub address: String,
-// }
-
-// #[derive(Serialize, Deserialize)]
-// pub struct SDKChatResponse {
-//     pub response: String,
-//     pub tokens_used: i64,
-// }
-
-// pub async fn chatbot_interact(
-//     State(pool): State<PgPool>,
-//     headers: HeaderMap,
-//     Json(mut payload): Json<QueryRequest>,
-// ) -> Result<(StatusCode, Json<ChatResponse>), (StatusCode, String)> {
-//     let api_key = headers
-//         .get("x-api-key")
-//         .and_then(|v| v.to_str().ok())
-//         .ok_or((StatusCode::UNAUTHORIZED, "Missing API key".to_string()))?;
-
-//     // Fetch user credits
-//     let credit = fetch_credit_info(&pool, api_key).await?;
-//     let query_response = send_query_request(&mut payload).await?;
-//     if credit.2 < query_response.tokens {
-//         return Err((
-//             StatusCode::PAYMENT_REQUIRED,
-//             "Insufficient credits".to_string(),
-//         ));
-//     }
-
-//     // Deduct tokens from user credits
-//     sqlx::query("UPDATE credits SET balance = balance - $1 WHERE user_id = $2")
-//         .bind(query_response.tokens)
-//         .bind(credit.0)
-//         .execute(&pool)
-//         .await
-//         .map_err(|e| {
-//             eprintln!("Failed to update credits: {}", e);
-//             (
-//                 StatusCode::INTERNAL_SERVER_ERROR,
-//                 "Failed to update credits".to_string(),
-//             )
-//         })?;
-
-//     // Log the interaction
-//     sqlx::query(
-//         "INSERT INTO chats (user_id, input_user, response, tokens_used) VALUES ($1, $2, $3, $4)",
-//     )
-//     .bind(credit.0)
-//     .bind(&payload.input_user)
-//     .bind(&query_response.result.response)
-//     .bind(query_response.tokens)
-//     .execute(&pool)
-//     .await
-//     .map_err(|e| {
-//         eprintln!("Failed to log chat: {}", e);
-//         (
-//             StatusCode::INTERNAL_SERVER_ERROR,
-//             "Failed to log chat".to_string(),
-//         )
-//     })?;
-
-//     // Return the response
-//     Ok((
-//         StatusCode::OK,
-//         Json(ChatResponse {
-//             id: 0,
-//             user_id: credit.0,
-//             input_user: payload.input_user,
-//             response: Some(query_response.result.response),
-//             tokens_used: query_response.tokens,
-//             created_at: chrono::Utc::now().naive_utc(),
-//         }),
-//     ))
-// }
-
 #[derive(Deserialize)]
 pub struct ChatRequest {
     pub input_user: String,
     pub address: String,
+}
+
+#[derive(Serialize)]
+pub struct ChatResponse {
+    pub credits: i64,
+    pub response: serde_json::Value,
+    pub report: String,
 }
 
 pub async fn chatbot_interact(
@@ -213,7 +137,7 @@ pub async fn chatbot_interact(
         .ok_or((StatusCode::UNAUTHORIZED, "Missing API key".to_string()))?;
 
     // Fetch user credit information
-    let credit = fetch_credit_info(&pool, api_key).await?;
+    let credit: (i32, String, i64, String) = fetch_credit_info(&pool, api_key).await?;
 
     // Initialize the SWqueryClient
     let swquery_client = SWqueryClient::new(
@@ -231,247 +155,21 @@ pub async fn chatbot_interact(
             eprintln!("SDK query error: {}", e);
             (StatusCode::INTERNAL_SERVER_ERROR, "Failed to process query".to_string())
         })?;
-    println!("Teste{:?}", query_result);
 
-    // Extract response and tokens used from the SDK result
-    let response_text = query_result
-        .as_str()
-        .unwrap_or_default()
-        .to_string();
-    let tokens_used = query_result["tokens"]
-        .as_i64()
-        .unwrap_or(0);
+    let report_input = QueryRequestReport {
+        input_user: query_result.clone().to_string(),
+        address: payload.address.clone(),
+        chatted: payload.input_user.clone(),
+    };
 
-    // Check if the user has sufficient credits
-    if credit.2 < tokens_used {
-        return Err((
-            StatusCode::PAYMENT_REQUIRED,
-            "Insufficient credits".to_string(),
-        ));
-    }
+    let report = generate_report_service(pool, headers, axum::Json(report_input)).await?;
 
-    // Deduct tokens from the user's credit balance
-    sqlx::query("UPDATE credits SET balance = balance - $1 WHERE user_id = $2")
-        .bind(tokens_used)
-        .bind(credit.0)
-        .execute(&pool)
-        .await
-        .map_err(|e| {
-            eprintln!("Failed to update credits: {}", e);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                "Failed to update credits".to_string(),
-            )
-        })?;
-
-    // Log the interaction in the database
-    sqlx::query(
-        "INSERT INTO chats (user_id, input_user, response, tokens_used) VALUES ($1, $2, $3, $4)",
-    )
-    .bind(credit.0)
-    .bind(&payload.input_user)
-    .bind(&response_text)
-    .bind(tokens_used)
-    .execute(&pool)
-    .await
-    .map_err(|e| {
-        eprintln!("Failed to log chat: {}", e);
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            "Failed to log chat".to_string(),
-        )
-    })?;
-
-    // Return the response to the user
     Ok((
         StatusCode::OK,
         Json(ChatResponse {
-            id: 0, // Placeholder for ID
-            user_id: credit.0,
-            input_user: payload.input_user,
-            responseTest: Some(response_text),
-            tokens_used,
-            created_at: chrono::Utc::now().naive_utc(),
+            credits: credit.2,
+            response: query_result,
+            report: report.1.result.clone(),
         }),
     ))
-
-
- // !!!!!!!!!!!! CELIN REVISA ISSO AQUI !!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-
-
-    // use {
-    //     crate::{
-    //         models::ChatModel,
-    //         routes::agent::{fetch_credit_info},
-    //     },
-    //     swquery::{SWqueryClient, client::Network},
-    //     axum::{
-    //         extract::State,
-    //         http::{HeaderMap, StatusCode},
-    //         Json,
-    //     },
-    //     chrono::NaiveDateTime,
-    //     serde::{Deserialize, Serialize, Serializer},
-    //     serde_json::json,
-    //     sqlx::PgPool,
-    // };
-    
-    // fn serialize_naive_date_time<S>(date: &NaiveDateTime, serializer: S) -> Result<S::Ok, S::Error>
-    // where
-    //     S: Serializer,
-    // {
-    //     let s = date.format("%Y-%m-%d %H:%M:%S").to_string();
-    //     serializer.serialize_str(&s)
-    // }
-    
-    // #[derive(Serialize)]
-    // pub struct ChatResponse {
-    //     pub id: i32,use {
-    //         crate::{
-    //             models::ChatModel,
-    //             routes::agent::{fetch_credit_info},
-    //         },
-    //         swquery::{SWqueryClient, client::Network},
-    //         axum::{
-    //             extract::State,
-    //             http::{HeaderMap, StatusCode},
-    //             Json,
-    //         },
-    //         chrono::NaiveDateTime,
-    //         serde::{Deserialize, Serialize, Serializer},
-    //         serde_json::json,
-    //         sqlx::PgPool,
-    //     };
-        
-    //     fn serialize_naive_date_time<S>(date: &NaiveDateTime, serializer: S) -> Result<S::Ok, S::Error>
-    //     where
-    //         S: Serializer,
-    //     {
-    //         let s = date.format("%Y-%m-%d %H:%M:%S").to_string();
-    //         serializer.serialize_str(&s)
-    //     }
-        
-    //     #[derive(Serialize)]
-    //     pub struct ChatResponse {
-    //     pub user_id: i32,
-    //     pub input_user: String,
-    //     pub responseTest: Option<String>,
-    //     pub tokens_used: i64,
-    //     #[serde(serialize_with = "serialize_naive_date_time")]
-    //     pub created_at: NaiveDateTime,
-    // }
-    
-    // #[derive(Deserialize)]
-    // pub struct ChatRequest {
-    //     pub input_user: String,
-    //     pub address: String,
-    // }
-    
-    // pub async fn chatbot_interact(
-    //     State(pool): State<PgPool>,
-    //     headers: HeaderMap,
-    //     Json(payload): Json<ChatRequest>,
-    // ) -> Result<(StatusCode, Json<ChatResponse>), (StatusCode, Json<serde_json::Value>)> {
-    //     // A helper closure for returning JSON errors
-    //     let json_error = |status: StatusCode, msg: &str| -> (StatusCode, Json<serde_json::Value>) {
-    //         (status, Json(json!({ "error": msg })))
-    //     };
-    
-    //     // Extract API key from headers
-    //     let api_key = headers
-    //         .get("x-api-key")
-    //         .and_then(|v| v.to_str().ok())
-    //         .ok_or_else(|| json_error(StatusCode::UNAUTHORIZED, "Missing API key"))?;
-    
-    //     // Fetch user credit information
-    //     let credit = fetch_credit_info(&pool, api_key)
-    //         .await
-    //         .map_err(|e| {
-    //             eprintln!("Failed to fetch credit info: {}", e);
-    //             json_error(StatusCode::INTERNAL_SERVER_ERROR, "Failed to fetch credit info")
-    //         })?;
-    
-    //     // Initialize the SWqueryClient
-    //     let swquery_client = SWqueryClient::new(
-    //         api_key.to_string(),
-    //         "45af5ec2-c5c5-4da2-9226-550f52e126cd".to_string(), // Replace With Helius API key
-    //         None,
-    //         Some(Network::Mainnet),
-    //     );
-    
-    //     // Call the query method from the SDK
-    //     let query_result = swquery_client
-    //         .query(&payload.input_user, &payload.address)
-    //         .await
-    //         .map_err(|e| {
-    //             eprintln!("SDK query error: {}", e);
-    //             json_error(StatusCode::INTERNAL_SERVER_ERROR, "Failed to process query")
-    //         })?;
-        
-    //     println!("Debug query_result: {:?}", query_result);
-    
-    //     // Extract response and tokens used from the SDK result
-    //     // Adjust these based on the actual structure of `query_result`.
-    //     let response_text = query_result["response"]
-    //         .as_str()
-    //         .unwrap_or_default()
-    //         .to_string();
-    
-    //     let tokens_used = query_result["tokens"]
-    //         .as_i64()
-    //         .unwrap_or(0);
-    
-    //     // Check if the user has sufficient credits
-    //     if credit.2 < tokens_used {
-    //         return Err(json_error(StatusCode::PAYMENT_REQUIRED, "Insufficient credits"));
-    //     }
-    
-    //     // Deduct tokens from the user's credit balance
-    //     sqlx::query("UPDATE credits SET balance = balance - $1 WHERE user_id = $2")
-    //         .bind(tokens_used)
-    //         .bind(credit.0)
-    //         .execute(&pool)
-    //         .await
-    //         .map_err(|e| {
-    //             eprintln!("Failed to update credits: {}", e);
-    //             json_error(StatusCode::INTERNAL_SERVER_ERROR, "Failed to update credits")
-    //         })?;
-    
-    //     // Log the interaction in the database
-    //     // Use RETURNING if you want to get the inserted ID directly (Postgres supported)
-    //     let inserted_row = sqlx::query_as::<_, (i32,)>(
-    //         "INSERT INTO chats (user_id, input_user, response, tokens_used) 
-    //          VALUES ($1, $2, $3, $4) 
-    //          RETURNING id"
-    //     )
-    //     .bind(credit.0)
-    //     .bind(&payload.input_user)
-    //     .bind(&response_text)
-    //     .bind(tokens_used)
-    //     .fetch_one(&pool)
-    //     .await
-    //     .map_err(|e| {
-    //         eprintln!("Failed to log chat: {}", e);
-    //         json_error(StatusCode::INTERNAL_SERVER_ERROR, "Failed to log chat")
-    //     })?;
-    
-    //     let inserted_id = inserted_row.0;
-    //     let now = chrono::Utc::now().naive_utc();
-    
-    //     // Return the response to the user
-    //     Ok((
-    //         StatusCode::OK,
-    //         Json(ChatResponse {
-    //             id: inserted_id,
-    //             user_id: credit.0,
-    //             input_user: payload.input_user,
-    //             responseTest: Some(response_text),
-    //             tokens_used,
-    //             created_at: now,
-    //         }),
-    //     ))
-    // }
-    
-    
 }

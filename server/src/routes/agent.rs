@@ -21,6 +21,8 @@ pub struct QueryRequest {
 pub struct QueryRequestReport {
     #[serde(rename = "jsonReturned")]
     pub input_user: String,
+    #[serde(rename = "question")]
+    pub chatted: String,
     pub address: String,
 }
 
@@ -32,8 +34,8 @@ pub struct QueryResponse {
 
 #[derive(Serialize, Deserialize)]
 pub struct QueryResponseReport {
-    result: String,
-    tokens: i64,
+    pub result: String,
+    pub tokens: i64,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -48,8 +50,7 @@ pub async fn fetch_credit_info(pool: &PgPool, api_key: &str) -> Result<(i32, Str
         "SELECT c.user_id, u.pubkey, c.balance, c.api_key 
          FROM credits c 
          JOIN users u ON u.id = c.user_id 
-         WHERE c.api_key = $1 
-         FOR UPDATE",
+         WHERE c.api_key = $1 LIMIT 1",
     )
     .bind(api_key)
     .fetch_optional(pool)
@@ -122,6 +123,16 @@ pub async fn generate_query(
         .await
         .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
 
+    println!("Summary:
+    User ID: {}
+    Public Key: {}
+    Balance: {}
+    API Key: {}
+    API response: {}
+    Tokens used: {}",
+    credit.0, credit.1, credit.2, credit.3, query_response.result.response, query_response.tokens);
+
+
     Ok((StatusCode::OK, Json(query_response)))
 }
 
@@ -154,5 +165,36 @@ pub async fn generate_report(
         .await
         .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
 
+    Ok((StatusCode::OK, Json(query_response)))
+}
+
+pub async fn generate_report_service(
+    pool: PgPool,
+    headers: HeaderMap,
+    Json(mut payload): Json<QueryRequestReport>,
+) -> Result<(StatusCode, Json<QueryResponseReport>), (StatusCode, String)> {
+let api_key = headers
+        .get("x-api-key")
+        .and_then(|v| v.to_str().ok())
+        .ok_or((StatusCode::UNAUTHORIZED, "Missing API key".to_string()))?;
+
+    println!("Getting user info");
+    let credit = fetch_credit_info(&pool, api_key).await?;
+
+    let query_response = send_query_request_report(&mut payload).await?;
+
+    if credit.2 < query_response.tokens {
+        return Err((
+            StatusCode::PAYMENT_REQUIRED,
+            "Insufficient credits".to_string(),
+        ));
+    }
+
+    sqlx::query("UPDATE credits SET balance = balance - $1 WHERE user_id = $2")
+        .bind(query_response.tokens)
+        .bind(credit.0)
+        .execute(&pool)
+        .await
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
     Ok((StatusCode::OK, Json(query_response)))
 }

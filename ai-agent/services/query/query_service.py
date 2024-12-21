@@ -121,7 +121,7 @@ def query_generator_openai(user_input: str, wallet: str):
     }
 
 
-def generate_visualization(input_json: str) -> Dict[str, Any]:
+def generate_visualization(input_json: str, question: str) -> Dict[str, Any]:
     """
     Generate a Markdown visualization from JSON input using OpenAI's GPT-4.
 
@@ -135,27 +135,9 @@ def generate_visualization(input_json: str) -> Dict[str, Any]:
         "You are a Solana blockchain data analyzer that generates clear Markdown summaries. "
         "Analyze the provided JSON data and create a structured summary with these exact sections:"
         "\n\n"
-        "# General Overview\n"
-        "- Transaction count and overall status\n"
-        "- Key characteristics of the data\n"
-        "- Any critical errors or issues\n\n"
-        "# Key Fields\n"
-        "- Transaction signatures\n"
-        "- Block times and slots\n"
-        "- Fees and balance changes\n"
-        "- Format amounts in both lamports and SOL\n\n"
-        "# Involved Entities/Accounts\n"
-        "- List all account addresses with inferred roles\n"
-        "- Identify known programs (e.g. System Program)\n"
-        "- Group by transaction if multiple exist\n\n"
-        "# Events/Logs\n"
-        "- Program invocations and status\n"
-        "- Error messages if present\n"
-        "- Log frequencies (e.g. 'occurred X times')\n\n"
-        "# Additional Information\n"
-        "- Unique transaction aspects\n"
-        "- Missing or unclear data\n"
-        "- Technical implications\n\n"
+        "You need to provide a Markdown visualization of the JSON data, based on the question made by the user before. That was: \n"
+        f"{question}"
+        "\n\n"
         "Guidelines:\n"
         "- Use clean, consistent Markdown formatting\n"
         "- Keep descriptions concise and technical\n"
@@ -163,12 +145,16 @@ def generate_visualization(input_json: str) -> Dict[str, Any]:
         "- Use bullet points for lists\n"
         "- Convert lamports to SOL where relevant (1 SOL = 1,000,000,000 lamports)\n"
         "- Highlight any errors or anomalies\n"
+        "- **Do not ignore or omit any part of the JSON data, even if the structure varies or seems irrelevant.**\n"
+        "- **If certain fields are missing or null, explicitly mention this in the summary.**\n"
+        "- **If the JSON contains nested or unstructured data, attempt to represent it in the most organized and readable format possible.**\n"
     )
+
 
     try:
         print(f"Generating visualization for JSON input...")
         response = openAIClient.chat.completions.create(
-            model="gpt-4",
+            model="gpt-4o",
             messages=[
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": input_json}
