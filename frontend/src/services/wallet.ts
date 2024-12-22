@@ -16,7 +16,7 @@ export class ProgramService {
   async buyCredits(
     wallet: WalletContextState,
     recipient: string,
-    amount: number
+    amount: number | BigInt
   ): Promise<string> {
     if (!wallet.publicKey) {
       throw new Error("Wallet not connected");
