@@ -6,6 +6,7 @@ use {
     axum::{
         routing::{get, post},
         Router,
+        http::Method,
     },
     db::connect,
     dotenvy::dotenv,
@@ -15,6 +16,7 @@ use {
         credits::{buy_credits, refund_credits},
         users::{create_user, get_user_by_pubkey, get_users},
     },
+    tower_http::cors::{Any, CorsLayer},
 };
 
 pub const AGENT_API_URL: &str = "http://localhost:8000";
@@ -25,6 +27,11 @@ async fn main() {
     tracing_subscriber::fmt::init();
 
     let pool = connect().await;
+
+    let cors = CorsLayer::new()
+        .allow_origin(Any)
+        .allow_methods([Method::GET, Method::POST, Method::OPTIONS])
+        .allow_headers(Any);
 
     let agent_router = Router::new()
         .route("/generate-query", post(generate_query))
@@ -42,7 +49,8 @@ async fn main() {
         .route("/credits/refund", post(refund_credits))
         .nest("/agent", agent_router)
         .nest("/chatbot", chatbot_router)
-        .with_state(pool);
+        .with_state(pool)
+        .layer(cors);
 
     let listener = tokio::net::TcpListener::bind("0.0.0.0:5500").await.unwrap();
 
