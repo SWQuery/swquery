@@ -17,14 +17,14 @@ const userBalance = 12345678;
 
 // Add this CSS to your global styles or a CSS module
 const walletButtonStyles = {
-  ".wallet-adapter-button-start-icon": {
+  ".walletAdapterButtonStartIcon": {
     display: "inline-flex !important"
   },
-  ".wallet-adapter-button-end-icon": {
+  ".walletAdapterButtonEndIcon": {
     display: "none !important"
   },
   // Hide the wallet icon that appears next to wallet names
-  ".wallet-adapter-modal-list-more": {
+  ".walletAdapterModalListMore": {
     "& .wallet-adapter-modal-list-more-icon-container": {
       display: "none !important"
     }

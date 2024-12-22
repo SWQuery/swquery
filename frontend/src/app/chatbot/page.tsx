@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import { useState } from "react";
@@ -14,8 +15,8 @@ import { useWallet } from "@solana/wallet-adapter-react";
 import api from "@/services/config/api";
 
 
- /* Faz a chamada à rota chatbot/interact,
- * enviando o prompt (input_user) e address da carteira.
+ /* Calls the chatbot/interact route,
+ * sending the prompt (input_user) and wallet address.
  */
 async function interactChatbot(input_user: string, address: string) {
   try {
@@ -24,9 +25,9 @@ async function interactChatbot(input_user: string, address: string) {
       { input_user, address },
       {
         headers: {
-					"Content-Type": "application/json",
-					"x-api-key": "WDAO4Z1Z503DWJH7060GIYGR0TWIIPBM",
-				},
+          "Content-Type": "application/json",
+          "x-api-key": "WDAO4Z1Z503DWJH7060GIYGR0TWIIPBM",
+        },
       }
     );
     return response.data;
@@ -48,7 +49,7 @@ interface Chat {
 }
 
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// COMPONENTE PRINCIPAL
+// MAIN COMPONENT
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 export default function ChatInterface() {
   const [chats, setChats] = useState<Chat[]>([]);
@@ -56,18 +57,18 @@ export default function ChatInterface() {
   const [prompt, setPrompt] = useState("");
   const [fetchedTransactions, setFetchedTransactions] = useState<any[]>([]);
 
-// Hook para acessar dados da wallet do usuário (publicKey, etc.)
+  // Hook to access user's wallet data (publicKey, etc.)
   const { connected } = useWallet();
-//publicKey real: const { publicKey } = useWallet();
-  // Aqui está fixo como exemplo:
+  // Real publicKey: const { publicKey } = useWallet();
+  // Here it is fixed as an example:
   const publicKey = "2nuW7MWYsGdLmsSf5mHrjgn6NqyrS5USai6fdisnUQc4";
 
-  // Localiza o chat atual (caso exista)
+  // Find the current chat (if it exists)
   const currentChat = chats.find((chat) => chat.id === currentChatId);
 
   /**
-   * Mapeia o array de transações retornado pela rota /chatbot/interact
-   * para o formato compatível com o componente TransactionPreview
+   * Maps the array of transactions returned by the /chatbot/interact route
+   * to the format compatible with the TransactionPreview component
    */
   function mapHeliusResponseToPreviewData(transactions: any[]) {
     return transactions.map((tx) => {
@@ -85,24 +86,24 @@ export default function ChatInterface() {
   }
 
   /**
-   * Envia o prompt do usuário e o endereço (publicKey) para a rota /chatbot/interact.
-   * Após receber a resposta, cria um novo chat e salva as transações retornadas no state.
+   * Sends the user's prompt and address (publicKey) to the /chatbot/interact route.
+   * After receiving the response, creates a new chat and saves the returned transactions in the state.
    */
   async function handleSend() {
-    if (!prompt.trim()) return; // Evita requests vazias
+    if (!prompt.trim()) return; // Avoid empty requests
     if (!connected || !publicKey) {
-      alert("É preciso ter uma carteira conectada!");
+      alert("You need to have a connected wallet!");
       return;
     }
 
     try {
-      // Chama a função que faz POST para /chatbot/interact
+      // Call the function that makes a POST to /chatbot/interact
       const json = await interactChatbot(prompt, publicKey.toString());
 
-      // Extrai a resposta textual (se existir) ou usa um fallback
-      const llmAnswer = json.report || "Aqui estão as transações que encontrei:";
+      // Extract the textual response (if it exists) or use a fallback
+      const llmAnswer = json.report || "Here are the transactions I found:";
 
-      // Cria um novo objeto Chat com duas mensagens (usuário e LLM)
+      // Create a new Chat object with two messages (user and LLM)
       const newChat: Chat = {
         id: Date.now(),
         name: prompt,
@@ -112,26 +113,26 @@ export default function ChatInterface() {
         ],
       };
 
-      // Salva esse chat e define como 'chat atual'
+      // Save this chat and set it as the 'current chat'
       setChats((prev) => [...prev, newChat]);
       setCurrentChatId(newChat.id);
 
-      // Mapeia as transações retornadas e armazena
+      // Map the returned transactions and store them
       const heliusTxs = Array.isArray(json.response) ? json.response : [];
       setFetchedTransactions(heliusTxs);
 
-      // Limpa o prompt
+      // Clear the prompt
       setPrompt("");
     } catch (error) {
-      console.error("Erro ao enviar prompt:", error);
-      alert("Houve um erro ao processar sua solicitação.");
+      console.error("Error sending prompt:", error);
+      alert("There was an error processing your request.");
     }
   }
 
-  // Processa as transações armazenadas para exibir no TransactionPreview
+  // Process the stored transactions to display in TransactionPreview
   const previewData = mapHeliusResponseToPreviewData(fetchedTransactions);
 
-  // Inicia um novo chat em branco
+  // Start a new blank chat
   function startNewChat() {
     setCurrentChatId(null);
     setPrompt("");
@@ -139,7 +140,7 @@ export default function ChatInterface() {
 
   return (
     <div className="relative flex flex-col h-screen overflow-hidden">
-      {/* Fundo animado principal */}
+      {/* Main animated background */}
       <motion.div
         className="absolute inset-0 z-0"
         initial={{ opacity: 0 }}
@@ -151,7 +152,7 @@ export default function ChatInterface() {
         transition={{ duration: 2 }}
       />
 
-      {/* Linha de varredura no fundo */}
+      {/* Scanning line on the background */}
       <motion.div
         className="pointer-events-none absolute inset-0 z-0"
         initial={{ opacity: 0 }}
@@ -173,7 +174,7 @@ export default function ChatInterface() {
         />
       </motion.div>
 
-      {/* Conteúdo principal (blur background) */}
+      {/* Main content (blur background) */}
       <div className="relative z-10 flex flex-col h-screen bg-black/70 backdrop-blur-md">
         <Navbar />
 
@@ -251,7 +252,7 @@ export default function ChatInterface() {
                   transition={{ duration: 0.3 }}
                   className="flex-1 flex"
                 >
-                  {/* Painel esquerdo: Chat */}
+                  {/* Left Panel: Chat */}
                   <div className="w-1/2 p-6 space-y-4 overflow-y-auto">
                     {currentChat.messages.map((message, index) => (
                       <div
@@ -294,7 +295,7 @@ export default function ChatInterface() {
                     ))}
                   </div>
 
-                  {/* Painel direito: Preview de transações */}
+                  {/* Right Panel: Transaction Preview */}
                   <div className="w-1/2 flex flex-col bg-black border-l border-[#141416]">
                     <div className="flex-1 p-6 overflow-y-auto">
                       <h3 className="text-lg font-medium text-gray-200 mb-4">
@@ -313,7 +314,7 @@ export default function ChatInterface() {
                   transition={{ duration: 0.3 }}
                   className="flex-1 p-6 flex items-center justify-center"
                 >
-                  {/* Tela inicial sem chat selecionado */}
+                  {/* Initial screen without selected chat */}
                   <div className="max-w-2xl w-full space-y-8">
                     <div className="text-center space-y-2">
                       <div className="w-8 h-8 rounded-full bg-gradient-to-r from-[#9C88FF]/10 to-[#6C5CE7]/10 flex items-center justify-center mx-auto mb-4">
