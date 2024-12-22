@@ -7,12 +7,14 @@ import { Card } from "@/components/Atoms/card";
 import { Input } from "@/components/Atoms/input";
 import { ScrollArea } from "@/components/Atoms/scroll-area";
 import { cn } from "@/lib/utils";
-import { MessageSquare, Plus, Search } from "lucide-react";
+import { MessageSquare, Plus, Search } from 'lucide-react';
 import { TransactionPreview } from "@/components/Molecules/TransactionPrev/TransactionPreview";
 import { Navbar } from "@/components/Molecules/Navbar";
 import { motion, AnimatePresence } from "framer-motion";
 import { useWallet } from "@solana/wallet-adapter-react";
 import api from "@/services/config/api";
+import { Toaster, toast } from 'react-hot-toast';
+import { Loader2 } from 'lucide-react';
 
 
  /* Calls the chatbot/interact route,
@@ -56,6 +58,7 @@ export default function ChatInterface() {
   const [currentChatId, setCurrentChatId] = useState<number | null>(null);
   const [prompt, setPrompt] = useState("");
   const [fetchedTransactions, setFetchedTransactions] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
 
   // Hook to access user's wallet data (publicKey, etc.)
   const { connected } = useWallet();
@@ -96,6 +99,7 @@ export default function ChatInterface() {
       return;
     }
 
+    setIsLoading(true);
     try {
       // Call the function that makes a POST to /chatbot/interact
       const json = await interactChatbot(prompt, publicKey.toString());
@@ -125,7 +129,9 @@ export default function ChatInterface() {
       setPrompt("");
     } catch (error) {
       console.error("Error sending prompt:", error);
-      alert("There was an error processing your request.");
+      toast.error("There was an error processing your request.");
+    } finally {
+      setIsLoading(false);
     }
   }
 
@@ -140,6 +146,7 @@ export default function ChatInterface() {
 
   return (
     <div className="relative flex flex-col h-screen overflow-hidden">
+      <Toaster position="top-right" reverseOrder={false} />
       {/* Main animated background */}
       <motion.div
         className="absolute inset-0 z-0"
@@ -390,8 +397,13 @@ export default function ChatInterface() {
                     <Button
                       onClick={handleSend}
                       className="bg-gradient-to-r from-[#9C88FF] to-[#6C5CE7] hover:scale-105 text-white px-8 transition-transform"
+                      disabled={isLoading}
                     >
-                      Send
+                      {isLoading ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        "Send"
+                      )}
                     </Button>
                   </div>
                 </div>
@@ -417,3 +429,4 @@ export default function ChatInterface() {
     </div>
   );
 }
+
