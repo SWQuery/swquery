@@ -7,6 +7,8 @@ interface Transaction {
   amount: string;
   recipient: string;
   date: string;
+  url_icon?: string;
+  coin_name?: string;
 }
 
 const containerVariants = {
@@ -96,13 +98,30 @@ export function TransactionPreview({ transactions }: { transactions: Transaction
               <div className="pointer-events-none absolute inset-0 rounded group-hover:shadow-[0_0_15px_#9C88FFcc] transition-shadow duration-300"></div>
 
               <div className="flex items-center gap-3 relative z-10">
-                <div className="w-8 h-8 rounded-lg bg-purple-600/20 flex items-center justify-center border border-[#141416]">
-                  <span className="text-xs font-medium text-[#9C88FF]">SOL</span>
-                </div>
+                {
+                  // Icon
+                  tx.url_icon ? (
+                    <img
+                      src={tx.url_icon}
+                      alt="Icon"
+                      className="w-8 h-8 rounded-lg bg-purple-600/20"
+                    />
+                  ) : (
+                    // <div className="w-8 h-8 rounded-lg bg-purple-600/20 flex items-center justify-center border border-[#141416]">
+                    //   <span className="text-xs font-medium text-[#9C88FF]">SOL</span>
+                    // </div>
+                    <img
+                      src="https://cdn.helius-rpc.com/cdn-cgi/image//https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/So11111111111111111111111111111111111111112/logo.png"
+                      alt="Icon"
+                      className="w-8 h-8 rounded-lg bg-purple-600/20"
+                    />
+                  )
+                }
+                
                 <div className="flex-1">
                   <div className="flex items-center justify-between">
                     <p className="text-sm text-gray-200">
-                      Sent {tx.amount} SOL To {tx.recipient}
+                      Sent {tx.amount} {tx.coin_name ? tx.coin_name : "SOL"} To {tx.recipient}
                     </p>
                     <span className="text-xs text-gray-400">{tx.date}</span>
                   </div>
