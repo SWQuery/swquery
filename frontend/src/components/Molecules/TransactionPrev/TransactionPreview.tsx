@@ -9,6 +9,7 @@ interface Transaction {
   date: string;
   url_icon?: string;
   coin_name?: string;
+  direction: string;
 }
 
 const containerVariants = {
@@ -121,7 +122,7 @@ export function TransactionPreview({ transactions }: { transactions: Transaction
                 <div className="flex-1">
                   <div className="flex items-center justify-between">
                     <p className="text-sm text-gray-200">
-                      Sent {tx.amount} {tx.coin_name ? tx.coin_name : "SOL"} To {tx.recipient}
+                      {tx.direction == "in" ? "Received" : "Sent"} {tx.amount} {tx.coin_name ? tx.coin_name : "SOL"} {tx.direction == "in" ? "From" : "To"} {tx.recipient} 
                     </p>
                     <span className="text-xs text-gray-400">{tx.date}</span>
                   </div>
