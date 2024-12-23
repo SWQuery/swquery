@@ -97,3 +97,15 @@ body {
 .wallet-adapter-button {
 	padding-right: 1rem !important;
 }
+
+::-webkit-scrollbar {
+	width: 0; 
+	height: 0; 
+	background: transparent; 
+}
+
+* {
+	scrollbar-width: none; 
+	-ms-overflow-style: none;
+}
+  
