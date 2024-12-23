@@ -73,7 +73,7 @@ export const Landing: React.FC = () => {
                     subtitle="Powerful Query Customization."
                     description="Easily filter blockchain transactions by type, amount, or date using natural language."
                     buttonText="Try It Out"
-                    buttonLink="/demo"
+                    buttonLink="/chatbot"
                     codeSnippet={`
 	use swquery::SWqueryClient;
 

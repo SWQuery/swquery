@@ -57,7 +57,7 @@ export const Explanation = () => {
 					transition={{ duration: 0.4, delay: 0.3 }}
 					className="bg-gradient-to-r from-[#9C88FF] to-[#6C5CE7] px-6 py-3 rounded-full hover:opacity-80 transition-all shadow-lg w-full sm:w-auto"
 				>
-					<Link href={"/demo"} target="_blank">
+					<Link href={"/chatbot"} target="_blank">
 						Explore Platform
 					</Link>
 				</motion.button>
