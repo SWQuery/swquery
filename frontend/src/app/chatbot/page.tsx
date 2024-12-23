@@ -61,7 +61,7 @@ export default function ChatInterface() {
   const currentChat = chats.find((chat) => chat.id === currentChatId);
 
   function mapHeliusResponseToPreviewData(transactions: any[]) {
-    let fullTransactions: any = [];
+    const fullTransactions: any = [];
     transactions.map((tx: any) => {
       tx.details?.transfers?.map((transfer: any) => {
         fullTransactions.push({
@@ -306,7 +306,7 @@ export default function ChatInterface() {
                                           li: ({ ...props }) => (
                                             <li className="ml-6" {...props} />
                                           ),
-                                          code: ({ inline, children, ...props }) => (
+                                          code: ({children, ...props }) => (
                                             <span
                                               className="text-gray-300 px-1 py-1 rounded-md text-sm bg-[#9C88FF30]"
                                               {...props}
