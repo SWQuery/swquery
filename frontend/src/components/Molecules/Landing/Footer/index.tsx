@@ -1,6 +1,6 @@
 import Image from 'next/image';
 import Link from 'next/link';
-import { Twitter, Github, MessageCircle, Youtube } from 'lucide-react';
+import { Twitter, Github, MessageCircle } from 'lucide-react';
 import HorizontalLogo from "../../../../assets/images/logo-horizontal.png";
 
 export const Footer = () => {
@@ -16,26 +16,26 @@ export const Footer = () => {
                     <div>
                         <h3 className="text-lg font-semibold mb-4">Learn</h3>
                         <ul className="space-y-2">
-                            <li><Link href="/faq" className="text-gray-400 hover:text-[#9945FF]">SWquery FAQ</Link></li>
-                            <li><Link href="/whitepaper" className="text-gray-400 hover:text-[#9945FF]">SWquery Whitepaper</Link></li>
-                            <li><Link href="/blog" className="text-gray-400 hover:text-[#9945FF]">Blog</Link></li>
-                            <li><Link href="/privacy-policy" className="text-gray-400 hover:text-[#9945FF]">Privacy Policy</Link></li>
+                            <li><Link href="/soon" className="text-gray-400 hover:text-[#9945FF]">SWquery FAQ</Link></li>
+                            <li><Link href="/soon" className="text-gray-400 hover:text-[#9945FF]">SWquery Whitepaper</Link></li>
+                            <li><Link href="/soon" className="text-gray-400 hover:text-[#9945FF]">Blog</Link></li>
+                            <li><Link href="/soon" className="text-gray-400 hover:text-[#9945FF]">Privacy Policy</Link></li>
                         </ul>
                     </div>
                     <div>
                         <h3 className="text-lg font-semibold mb-4">Developers</h3>
                         <ul className="space-y-2">
                             <li><Link href="https://bretasarthur1.gitbook.io/swquery/" className="text-gray-400 hover:text-[#9945FF]">Documentation</Link></li>
-                            <li><Link href="/apply" className="text-gray-400 hover:text-[#9945FF]">Apply to Build</Link></li>
+                            <li><Link href="/soon" className="text-gray-400 hover:text-[#9945FF]">Apply to Build</Link></li>
                             <li><Link href="https://github.com/vict0rcarvalh0/swquery" className="text-gray-400 hover:text-[#9945FF]">GitHub</Link></li>
                         </ul>
                     </div>
                     <div>
                         <h3 className="text-lg font-semibold mb-4">Community</h3>
                         <ul className="space-y-2">
-                            <li><Link href="/dashboard" className="text-gray-400 hover:text-[#9945FF]">SWquery Dashboard</Link></li>
-                            <li><Link href="/newsletter" className="text-gray-400 hover:text-[#9945FF]">Join the Newsletter</Link></li>
-                            <li><Link href="https://discord.gg/arthurbretas1" className="text-gray-400 hover:text-[#9945FF]">Join the Discord</Link></li>
+                            <li><Link href="/soon" className="text-gray-400 hover:text-[#9945FF]">SWquery Dashboard</Link></li>
+                            <li><Link href="/soon" className="text-gray-400 hover:text-[#9945FF]">Join the Newsletter</Link></li>
+                            <li><Link href="/soon" className="text-gray-400 hover:text-[#9945FF]">Join the Discord</Link></li>
                         </ul>
                     </div>
                 </div>
@@ -44,17 +44,14 @@ export const Footer = () => {
                         © {currentYear} SWquery. Powered by <span className="text-[#9945FF]">Solana</span>. All rights reserved.
                     </p>
                     <div className="flex space-x-6">
-                        <a href="https://twitter.com/swquery" className="text-gray-400 hover:text-[#9945FF]">
+                        <a href="/soon" className="text-gray-400 hover:text-[#9945FF]">
                             <Twitter size={24} />
                         </a>
-                        <a href="https://discord.gg/swquery" className="text-gray-400 hover:text-[#9945FF]">
+                        <a href="/soon" className="text-gray-400 hover:text-[#9945FF]">
                             <MessageCircle size={24} />
                         </a>
                         <a href="https://github.com/vict0rcarvalh0/swquery" className="text-gray-400 hover:text-[#9945FF]">
                             <Github size={24} />
-                        </a>
-                        <a href="https://youtube.com/swquery" className="text-gray-400 hover:text-[#9945FF]">
-                            <Youtube size={24} />
                         </a>
                     </div>
                 </div>
