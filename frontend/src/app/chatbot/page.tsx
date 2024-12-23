@@ -15,6 +15,8 @@ import { useWallet } from "@solana/wallet-adapter-react";
 import api from "@/services/config/api";
 import { Toaster, toast } from "react-hot-toast";
 import { Loader2 } from "lucide-react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 async function interactChatbot(input_user: string, address: string) {
   try {
@@ -253,9 +255,74 @@ export default function ChatInterface() {
                                     <path d="M12 2a1 1 0 011 1v1h2a4 4 0 014 4v3a1 1 0 01-.293.707l-1.207 1.207a4.984 4.984 0 01-1.574.933V18a2 2 0 11-4 0h-2a2 2 0 11-4 0v-3.153a4.984 4.984 0 01-1.574-.933L3.293 11.707A1 1 0 013 11V8a4 4 0 014-4h2V3a1 1 0 011-1zm5 8a3 3 0 10-6 0 3 3 0 006 0z" />
                                   </svg>
                                 </div>
-                                <p className="text-gray-300">
-                                  {message.content}
-                                </p>
+                                <div>
+                                  {message.content.startsWith("#") ? (
+                                    <article className="text-sm">
+                                      <ReactMarkdown
+                                        remarkPlugins={[remarkGfm]}
+                                        components={{
+                                          h1: ({ ...props }) => (
+                                            <h1
+                                              className="text-xl text-white font-sans font-semibold mb-4"
+                                              {...props}
+                                            />
+                                          ),
+                                          h2: ({ ...props }) => (
+                                            <h2
+                                              className="text-lg text-white font-sans font-semibold mb-3"
+                                              {...props}
+                                            />
+                                          ),
+                                          h3: ({ ...props }) => (
+                                            <h3
+                                              className="text-base text-white font-sans font-medium mb-2"
+                                              {...props}
+                                            />
+                                          ),
+                                          // Make sure h4 is styled so it looks like a proper subtitle:
+                                          h4: ({ ...props }) => (
+                                            <h4
+                                              className="text-white font-sans font-medium mb-2"
+                                              {...props}
+                                            />
+                                          ),
+                                          p: ({ ...props }) => (
+                                            <p
+                                              className="text-gray-300 mb-2 whitespace-pre-wrap"
+                                              {...props}
+                                            />
+                                          ),
+                                          ul: ({ ...props }) => (
+                                            <ul
+                                              className="list-disc list-inside text-gray-300 mb-2"
+                                              {...props}
+                                            />
+                                          ),
+                                          li: ({ ...props }) => (
+                                            <li className="ml-6" {...props} />
+                                          ),
+                                          code: ({ inline, children, ...props }) => (
+                                            <span
+                                              className="text-gray-300 px-1 py-1 rounded-md text-sm bg-[#9C88FF30]"
+                                              {...props}
+                                            >
+                                              {children}
+                                            </span>
+                                          ),
+                                          strong: ({ children }) => (
+                                            <span className="text-gray-300">
+                                              {children}
+                                            </span>
+                                          ),
+                                        }}
+                                      >
+                                        {message.content}
+                                      </ReactMarkdown>
+                                    </article>
+                                  ) : (
+                                    message.content
+                                  )}
+                                </div>
                               </motion.div>
                             )}
                           </div>
