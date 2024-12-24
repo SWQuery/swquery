@@ -72,6 +72,17 @@ export const Explanation = () => {
 					Learn More
 					</Link>
 				</motion.button>
+
+				<motion.button
+					initial={{ scale: 0.9, opacity: 0 }}
+					animate={{ scale: 1, opacity: 1 }}
+					transition={{ duration: 0.4, delay: 0.4 }}
+					className="border border-[#9C88FF] px-6 py-3 rounded-full hover:bg-[#9C88FF] hover:text-black transition-all shadow-lg w-full sm:w-auto"
+				>
+					<Link href={"https://bretasarthur1.gitbook.io/swquery/"} target="_blank">
+					Watch Demo
+					</Link>
+				</motion.button>
 			</div>
 		</motion.div>
 	);
