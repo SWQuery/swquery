@@ -2772,29 +2772,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "sdk"
-version = "0.0.1"
-dependencies = [
- "axum",
- "chrono",
- "dotenvy",
- "futures",
- "http-body-util",
- "hyper-util",
- "reqwest",
- "serde",
- "serde_json",
- "solana-sdk",
- "sqlx",
- "thiserror",
- "tokio",
- "tower",
- "tower-http",
- "tracing",
- "tracing-subscriber",
-]
-
-[[package]]
 name = "security-framework"
 version = "2.11.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2919,11 +2896,11 @@ dependencies = [
  "http-body-util",
  "rand 0.8.5",
  "reqwest",
- "sdk",
  "serde",
  "serde_json",
  "solana-sdk",
  "sqlx",
+ "swquery",
  "tokio",
  "tower",
  "tower-http",
@@ -4164,6 +4141,29 @@ name = "subtle"
 version = "2.6.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "13c2bddecc57b384dee18652358fb23172facb8a2c51ccc10d74c157bdea3292"
+
+[[package]]
+name = "swquery"
+version = "0.0.1"
+dependencies = [
+ "axum",
+ "chrono",
+ "dotenvy",
+ "futures",
+ "http-body-util",
+ "hyper-util",
+ "reqwest",
+ "serde",
+ "serde_json",
+ "solana-sdk",
+ "sqlx",
+ "thiserror",
+ "tokio",
+ "tower",
+ "tower-http",
+ "tracing",
+ "tracing-subscriber",
+]
 
 [[package]]
 name = "syn"

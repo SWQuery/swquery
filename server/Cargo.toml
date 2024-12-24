@@ -22,7 +22,7 @@ solana-sdk = { workspace = true }
 reqwest.workspace = true
 uuid = { version = "1.11.0", features = ["v4"] }
 rand = "0.8.5"
-sdk = { path = "../sdk", version = "0.0.1" }
+swquery = { path = "../swquery", version = "0.0.1" }
 
 [dev-dependencies]
 tower = { workspace = true }
