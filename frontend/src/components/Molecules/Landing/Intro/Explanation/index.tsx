@@ -79,7 +79,7 @@ export const Explanation = () => {
 					transition={{ duration: 0.4, delay: 0.4 }}
 					className="border border-[#9C88FF] px-6 py-3 rounded-full hover:bg-[#9C88FF] hover:text-black transition-all shadow-lg w-full sm:w-auto"
 				>
-					<Link href={"https://bretasarthur1.gitbook.io/swquery/"} target="_blank">
+					<Link href={"/videodemo"} target="_blank">
 					Watch Demo
 					</Link>
 				</motion.button>
