@@ -1,6 +1,6 @@
 [workspace]
 resolver = "2"
-members = ["sdk", "credit-sales", "server"]
+members = ["swquery", "credit-sales", "server"]
 exclude = ["frontend"]
 
 [workspace.package]
@@ -27,7 +27,7 @@ sqlx = { version = "0.8.2", features = [
     "chrono",
 ] }
 dotenvy = "0.15"
-chrono = {version="0.4", features = ["serde"]}
+chrono = { version = "0.4", features = ["serde"] }
 tower = { version = "0.5.1", features = ["util"] }
 http-body-util = "0.1.0"
 hyper-util = { version = "0.1", features = [
