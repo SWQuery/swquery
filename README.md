@@ -43,10 +43,6 @@ These barriers limit adoption and efficiency for both users and developers.
 -   **SDK in Rust**: A toolkit for developers to create customized solutions.
 -   **Real-Time Notifications**: Receive automatic alerts of important transactions directly in the interface.
 
-<p align="center">
-    <img src="https://via.placeholder.com/600x300?text=Our+Solution" width="600px" alt="Our Solution">
-</p>
-
 ---
 
 ## **🎯 Use Cases**
