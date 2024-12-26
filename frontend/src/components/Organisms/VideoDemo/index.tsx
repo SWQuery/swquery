@@ -9,7 +9,7 @@ export const VideoDemoPage = () => {
         <iframe
           width="1400"
           height="787.5"
-          src="https://www.youtube.com/embed/u4smAxDtbGc?si=nsVOn9nZt7bLyE9d"
+          src="https://www.youtube.com/embed/lPINErkE43M?si=oDtayZWvLCQhRQTq"
           title="Video Demo"
           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
           referrerPolicy="strict-origin-when-cross-origin"
