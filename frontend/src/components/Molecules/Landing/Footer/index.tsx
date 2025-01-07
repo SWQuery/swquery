@@ -44,7 +44,7 @@ export const Footer = () => {
                         © {currentYear} SWquery. Powered by <span className="text-[#9945FF]">Solana</span>. All rights reserved.
                     </p>
                     <div className="flex space-x-6">
-                        <a href="/soon" className="text-gray-400 hover:text-[#9945FF]">
+                        <a href="https://x.com/swquery" className="text-gray-400 hover:text-[#9945FF]">
                             <Twitter size={24} />
                         </a>
                         <a href="/soon" className="text-gray-400 hover:text-[#9945FF]">
