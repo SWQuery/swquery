@@ -1,6 +1,6 @@
 import Image from 'next/image';
 import Link from 'next/link';
-import { Twitter, Github, MessageCircle } from 'lucide-react';
+import { Twitter, Github, MessageCircle, Pill } from 'lucide-react';
 import HorizontalLogo from "../../../../assets/images/logo-horizontal.png";
 
 export const Footer = () => {
@@ -52,6 +52,9 @@ export const Footer = () => {
             </a>
             <a href="https://github.com/vict0rcarvalh0/swquery" className="text-gray-400 hover:text-[#9945FF]">
               <Github size={24} />
+            </a>
+            <a href="https://pump.fun/coin/EwdcspW8mEjp4UswrcjmHPV3Y4GdGQPMG6RMTDV2pump" className="text-gray-400 hover:text-[#9945FF]">
+              <Pill size={24} />
             </a>
           </div>
         </div>
