@@ -83,7 +83,7 @@ export function TransactionPreview({ transactions }: { transactions: Transaction
             animate="visible"
             exit="exit"
           >
-            <Card className="p-4 bg-transparent border border-[#9C88FF30] rounded-md transition-colors hover:bg-[#1A1A1A]/30 relative overflow-hidden">
+            <Card className="p-3 md:p-4 bg-transparent border border-[#9C88FF30] rounded-md transition-colors hover:bg-[#1A1A1A]/30 relative overflow-hidden">
               {/* Scan line dentro do Card */}
               <motion.div
                 className="absolute top-0 left-0 h-full w-full pointer-events-none"
@@ -99,7 +99,7 @@ export function TransactionPreview({ transactions }: { transactions: Transaction
               {/* Neon hover outline */}
               <div className="pointer-events-none absolute inset-0 rounded group-hover:shadow-[0_0_15px_#9C88FFcc] transition-shadow duration-300"></div>
 
-              <div className="flex items-center gap-3 relative z-10">
+              <div className="flex items-center gap-2 md:gap-3 relative z-10">
                 {
                   // Icon
                   <Image
@@ -108,18 +108,18 @@ export function TransactionPreview({ transactions }: { transactions: Transaction
                       "https://cdn.helius-rpc.com/cdn-cgi/image//https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/So11111111111111111111111111111111111111112/logo.png"
                     }
                     alt="Icon"
-                    width={32}
-                    height={32}
+                    width={24}
+                    height={24}
                     className="rounded-lg bg-purple-600/20"
                   />
                 }
                 <div className="flex-1">
-                  <div className="flex items-center justify-between">
-                    <p className="text-sm text-gray-200">
+                  <div className="flex flex-col md:flex-row md:items-center md:justify-between">
+                    <p className="text-xs md:text-sm text-gray-200">
                       {tx.direction == "in" ? "Received" : "Sent"} {tx.amount} {tx.coin_name ? tx.coin_name : "SOL"}{" "}
                       {tx.direction == "in" ? "From" : "To"} {tx.recipient}
                     </p>
-                    <span className="text-xs text-gray-400">{tx.date}</span>
+                    <span className="text-xs text-gray-400 mt-1 md:mt-0">{tx.date}</span>
                   </div>
                 </div>
               </div>
@@ -130,3 +130,4 @@ export function TransactionPreview({ transactions }: { transactions: Transaction
     </motion.div>
   );
 }
+

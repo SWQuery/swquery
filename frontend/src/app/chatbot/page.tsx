@@ -3,11 +3,10 @@
 
 import { useState } from "react";
 import { Button } from "@/components/Atoms/Buttons/button";
-import { Card } from "@/components/Atoms/card";
 import { Input } from "@/components/Atoms/input";
 import { ScrollArea } from "@/components/Atoms/scroll-area";
 import { cn } from "@/lib/utils";
-import { MessageSquare, Plus, Search } from "lucide-react";
+import { MessageSquare, Plus, Search, Menu, X } from "lucide-react";
 import { TransactionPreview } from "@/components/Molecules/TransactionPrev/TransactionPreview";
 import { Navbar } from "@/components/Molecules/Navbar";
 import { motion, AnimatePresence } from "framer-motion";
@@ -54,6 +53,7 @@ export default function ChatInterface() {
   const [prompt, setPrompt] = useState("");
   const [fetchedTransactions, setFetchedTransactions] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   const { connected } = useWallet();
   const publicKey = "2nuW7MWYsGdLmsSf5mHrjgn6NqyrS5USai6fdisnUQc4";
@@ -72,8 +72,13 @@ export default function ChatInterface() {
           fee: tx.details?.fee,
           status: tx.status,
           mint: transfer.mint,
-          url_icon: tx.token_metadata && tx.token_metadata[transfer.mint]?.files && tx.token_metadata[transfer.mint].files[0]?.cdn_uri,
-          coin_name: tx.token_metadata && tx.token_metadata[transfer.mint]?.metadata?.symbol,
+          url_icon:
+            tx.token_metadata &&
+            tx.token_metadata[transfer.mint]?.files &&
+            tx.token_metadata[transfer.mint].files[0]?.cdn_uri,
+          coin_name:
+            tx.token_metadata &&
+            tx.token_metadata[transfer.mint]?.metadata?.symbol,
         });
       });
     });
@@ -156,12 +161,28 @@ export default function ChatInterface() {
       <div className="relative z-10 flex flex-col h-screen bg-black/70 backdrop-blur-md">
         <Navbar />
         <div className="flex flex-1 h-[calc(100vh-5rem)] bg-black mt-20">
-          <div className="w-80 border-r border-[#141416] flex flex-col">
+          {/* Mobile backdrop */}
+          {isSidebarOpen && (
+            <div
+              className="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden"
+              onClick={() => setIsSidebarOpen(false)}
+            />
+          )}
+          {/* Sidebar */}
+          <div
+            className={`${
+              isSidebarOpen ? "translate-x-0" : "-translate-x-full"
+            } md:translate-x-0 fixed md:static left-0 top-20 h-[calc(100vh-5rem)] md:h-full w-80 border-r border-[#141416] flex flex-col bg-black z-50 transition-transform duration-300 ease-in-out`}
+          >
             <div className="p-4 flex items-center justify-between border-b border-[#141416]">
               <div className="flex items-center gap-2">
                 <MessageSquare className="w-5 h-5 text-gray-400" />
                 <span className="text-gray-200">My Chats</span>
               </div>
+              <button
+                onClick={() => setIsSidebarOpen(false)}
+                className="md:hidden"
+              ></button>
             </div>
             <div className="p-4">
               <div className="relative">
@@ -213,6 +234,17 @@ export default function ChatInterface() {
             </div>
           </div>
           <div className="flex-1 flex flex-col bg-gradient-to-br from-zinc-900 to-black">
+            {/* Sidebar toggle button for mobile */}
+            <button
+              onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+              className="md:hidden fixed top-24 left-4 z-50 p-2 bg-[#1A1A1A] rounded-full inline-flex items-center justify-center"
+            >
+              {isSidebarOpen ? (
+                <X className="w-6 h-6 text-gray-400 ml-20" />
+              ) : (
+                <Menu className="w-6 h-6 text-gray-400" />
+              )}
+            </button>
             <div className="flex-1 overflow-hidden">
               <AnimatePresence mode="wait">
                 {currentChat ? (
@@ -222,9 +254,9 @@ export default function ChatInterface() {
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -10 }}
                     transition={{ duration: 0.3 }}
-                    className="flex h-full"
+                    className="flex flex-col md:flex-row h-full"
                   >
-                    <div className="w-1/2 h-full overflow-y-auto">
+                    <div className="w-full md:w-1/2 h-1/2 md:h-full overflow-y-auto">
                       <div className="p-6 space-y-4">
                         {currentChat.messages.map((message, index) => (
                           <div
@@ -284,7 +316,6 @@ export default function ChatInterface() {
                                               {...props}
                                             />
                                           ),
-                                          // Make sure h4 is styled so it looks like a proper subtitle:
                                           h4: ({ ...props }) => (
                                             <h4
                                               className="text-white font-sans font-medium mb-2"
@@ -306,7 +337,7 @@ export default function ChatInterface() {
                                           li: ({ ...props }) => (
                                             <li className="ml-6" {...props} />
                                           ),
-                                          code: ({children, ...props }) => (
+                                          code: ({ children, ...props }) => (
                                             <span
                                               className="text-gray-300 px-1 py-1 rounded-md text-sm bg-[#9C88FF30]"
                                               {...props}
@@ -334,7 +365,7 @@ export default function ChatInterface() {
                         ))}
                       </div>
                     </div>
-                    <div className="w-1/2 flex flex-col bg-black border-l border-[#141416] h-full overflow-hidden">
+                    <div className="w-full md:w-1/2 flex flex-col bg-black border-t md:border-l border-[#141416] h-1/2 md:h-full overflow-hidden">
                       <div className="flex-1 p-6 overflow-y-auto">
                         <h3 className="text-lg font-medium text-gray-200 mb-4">
                           Transaction Preview
@@ -350,10 +381,13 @@ export default function ChatInterface() {
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -10 }}
                     transition={{ duration: 0.3 }}
-                    className="flex-1 p-6 flex items-center justify-center"
+                    className="flex-1 p-6 flex flex-col space-y-6 h-full"
                   >
-                    <div className="max-w-2xl w-full space-y-8">
-                      <div className="text-center space-y-2 mt-40">
+                    <div
+                      className="flex-1 overflow-y-auto space-y-8"
+                      style={{ maxHeight: "calc(100vh - 14rem)" }}
+                    >
+                      <div className="text-center space-y-2">
                         <div className="w-8 h-8 rounded-full bg-gradient-to-r from-[#9C88FF]/10 to-[#6C5CE7]/10 flex items-center justify-center mx-auto mb-4">
                           <div className="w-2 h-2 rounded-full bg-gradient-to-r from-[#9C88FF] to-[#6C5CE7]" />
                         </div>
@@ -375,7 +409,9 @@ export default function ChatInterface() {
                           query.
                         </p>
                       </div>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+                      {/* Cards Section */}
+                      <div className="flex flex-wrap gap-4 justify-center">
                         {[
                           {
                             title: "Track Wallet Transactions",
@@ -388,17 +424,19 @@ export default function ChatInterface() {
                               "Simplify the integration of on-chain data into DeFi platforms with intuitive SDK tools that translate complex data into human-readable formats.",
                           },
                         ].map((card) => (
-                          <Card
+                          <div
                             key={card.title}
-                            className="p-4 bg-[#1A1A1A]/50 border-[#141416] hover:bg-[#2b2b2b]/70 transition-colors cursor-pointer"
+                            className="w-full sm:w-1/2 md:w-1/3 lg:w-1/4 xl:w-1/5 p-4 bg-[#1A1A1A]/50 border-[#141416] hover:bg-[#2b2b2b]/70 transition-colors cursor-pointer"
                           >
                             <h3 className="font-medium text-gray-200 mb-2">
                               {card.title}
                             </h3>
-                            <p className="text-sm text-gray-400">
-                              {card.description}
-                            </p>
-                          </Card>
+                            <div className="h-24 overflow-auto">
+                              <p className="text-sm text-gray-400">
+                                {card.description}
+                              </p>
+                            </div>
+                          </div>
                         ))}
                       </div>
                     </div>
@@ -408,7 +446,7 @@ export default function ChatInterface() {
             </div>
             <div className="p-6 border-t border-[#141416]">
               <div className="max-w-2xl mx-auto space-y-4">
-                <div className="flex gap-2">
+                <div className="flex flex-col md:flex-row gap-2">
                   <Input
                     value={prompt}
                     onChange={(e) => setPrompt(e.target.value)}
