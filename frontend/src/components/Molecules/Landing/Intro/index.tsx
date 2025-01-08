@@ -2,15 +2,15 @@ import { CodeExample } from "@/components/Atoms/CodeExample";
 import { Explanation } from "./Explanation";
 
 export const Intro: React.FC = () => {
-	return (
-		<main className={`container mx-auto px-4py-16`}>
-			<div className="flex flex-col md:flex-row gap-8 overflow-x-hidden items-center">
-				<div className="w-full md:w-1/2">
-					<Explanation />
-				</div>
-				<div className="w-full md:w-1/2">
-					<CodeExample
-						code={`use swquery::SWqueryClient;
+  return (
+    <main className="container mx-auto px-4 md:py-16">
+      <div className="flex flex-col md:flex-row gap-8 overflow-x-hidden items-center">
+        <div className="w-full md:w-1/2">
+          <Explanation />
+        </div>
+        <div className="w-full md:w-1/2">
+          <CodeExample
+            code={`use swquery::SWqueryClient;
 
 fn main() {
     let client = SWqueryClient::new();
@@ -24,9 +24,9 @@ fn main() {
         Err(e) => eprintln!("Error: {:?}", e),
     }
 }`}
-					/>
-				</div>
-			</div>
-		</main>
-	);
+          />
+        </div>
+      </div>
+    </main>
+  );
 };

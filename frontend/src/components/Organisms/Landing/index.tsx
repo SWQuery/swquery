@@ -35,7 +35,7 @@ export const Landing: React.FC = () => {
     return (
         <div className="min-h-screen bg-gradient-to-b from-[#0A0A0A] to-[#101010] text-white">
             <Navbar />
-            <div className="pt-40">
+            <div className="pt-28 md:pt-40">
                 <Intro />
                 <Section
                     title="How It Works"
