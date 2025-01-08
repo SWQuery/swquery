@@ -32,7 +32,7 @@ async def generate_query_route(
     # result = query_generator_openai(body.inputUser, body.address)
     result = {'result': {'response': 'getRecentTransactions', 'params': {
         # 'address': 'HuMZdNtbaNBPYex53irwAyKvxouLmEyN85MvAon81pXE', 'days': 70}, 'status': 'success'}, 'tokens': 69420}
-        'address': '9unenHYtwUowNkWdZmSYTwzGxxdzKVJh7npk6W6uqRF3', 'days': 7}, 'status': 'success'}, 'tokens': 69420}
+        'address': '9unenHYtwUowNkWdZmSYTwzGxxdzKVJh7npk6W6uqRF3', 'days': 10}, 'status': 'success'}, 'tokens': 69420}
     print("Result: ", result)
 
     return result

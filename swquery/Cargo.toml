@@ -1,11 +1,8 @@
-[workspace]
-resolver = "2"
-members = ["credit-sales", "server"]
-exclude = ["swquery", "frontend"]
-
-[workspace.package]
+[package]
+name = "swquery"
+description = "A natural language query for solana wallets"
+version = "0.0.2"
 edition = "2021"
-license = "Apache-2.0"
 authors = [
     "Arthur Bretas <arthurbretas1@gmail.com>",
     "Marcelo G Feitoza <feitoza.marcelo7@gmail.com>",
@@ -13,8 +10,14 @@ authors = [
     "Victor Carvalho <victordecarvalho342@gmail.com>",
 ]
 repository = "https://github.com/vict0rcarvalh0/swquery"
+license = "MIT OR Apache-2.0"
+readme = "README.md"
 
-[workspace.dependencies]
+[lib]
+name = "swquery"
+
+[dependencies]
+futures = "0.3.31"
 serde = { version = "1.0", features = ["derive"] }
 tokio = { version = "1.0", features = ["full"] }
 tracing = "0.1"

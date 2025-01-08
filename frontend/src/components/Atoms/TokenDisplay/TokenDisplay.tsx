@@ -13,7 +13,7 @@ export const TokenDisplay = ({ balance }: TokenDisplayProps) => {
       initial={{ opacity: 0, y: -20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6, ease: "easeOut" }}
-      className="relative inline-block"
+      className="relative inline-block w-full md:w-auto"
     >
       <div 
         className="group relative inline-flex items-center justify-center 
@@ -22,7 +22,7 @@ export const TokenDisplay = ({ balance }: TokenDisplayProps) => {
                    text-white font-semibold min-w-[120px]
                    shadow-sm hover:shadow-[0_0_10px_#6C5CE7AA]
                    transition-all duration-300 hover:scale-105 
-                   cursor-pointer select-none"
+                   cursor-pointer select-none w-full"
       >
         <Coins className="mr-2 h-4 w-4 text-white" />
         <span className="relative z-10">{formattedBalance} SWQ</span>
