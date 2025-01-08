@@ -1,7 +1,7 @@
 "use client";
 import React from "react";
 import { motion } from "framer-motion";
-import { CopyBlock, CodeBlock, obsidian } from "react-code-blocks";
+import { CopyBlock, obsidian } from "react-code-blocks";
 import { Fira_Code } from "next/font/google";
 
 const firaCode = Fira_Code({
@@ -99,7 +99,7 @@ export const FeatureSection: React.FC<FeatureSectionProps> = ({
                       </span>
                     </div>
                     <div className="text-sm">
-                      <CodeBlock
+                      <CopyBlock
                         text={codeSnippet}
                         language={codeLanguage}
                         theme={customTheme}
