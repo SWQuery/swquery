@@ -13,7 +13,6 @@ import { createUser } from "../../../services/users";
 
 const userBalance = 12345678;
 
-// Only keep visual styles, remove functional overrides
 const walletButtonStyle = {
   width: "auto",
   color: "white",
@@ -110,7 +109,7 @@ export const Navbar = () => {
             Docs
           </motion.a>
 
-          <motion.button
+          {/* <motion.button
             type="button"
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -122,9 +121,9 @@ export const Navbar = () => {
           >
             <CreditCard className="mr-2 h-4 w-4" />
             Buy Credits
-          </motion.button>
+          </motion.button> */}
 
-          {connected && (
+          {/* {connected && (
             <motion.div
               initial={{ opacity: 0, y: -20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -132,7 +131,7 @@ export const Navbar = () => {
             >
               <TokenDisplay balance={userBalance} />
             </motion.div>
-          )}
+          )} */}
 
           <motion.div
             initial={{ opacity: 0, y: -20 }}
