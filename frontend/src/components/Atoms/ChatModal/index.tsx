@@ -3,8 +3,12 @@ import { Eye, EyeOff, X } from "lucide-react";
 import { setCookie } from 'cookies-next/client';
 import toast from "react-hot-toast";
 
+interface ChatModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+}
 
-export const ChatModal = ({ isOpen, onClose }: any) => {
+export const ChatModal = ({ isOpen, onClose }: ChatModalProps) => {
   const [openAIKey, setOpenAIKey] = useState("");
   const [heliusKey, setHeliusKey] = useState("");
   const [isOpenAIValid, setIsOpenAIValid] = useState(true);
