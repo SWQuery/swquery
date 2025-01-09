@@ -6,14 +6,14 @@ import { Button } from "@/components/Atoms/Buttons/button";
 import { Input } from "@/components/Atoms/input";
 import { ScrollArea } from "@/components/Atoms/scroll-area";
 import { cn } from "@/lib/utils";
-import { MessageSquare, Plus, Search, Menu, X } from "lucide-react";
+import { MessageSquare, Plus, Search, Menu, X } from 'lucide-react';
 import { TransactionPreview } from "@/components/Molecules/TransactionPrev/TransactionPreview";
 import { Navbar } from "@/components/Molecules/Navbar";
 import { motion, AnimatePresence } from "framer-motion";
 import { useWallet } from "@solana/wallet-adapter-react";
 import api from "@/services/config/api";
 import { Toaster, toast } from "react-hot-toast";
-import { Loader2 } from "lucide-react";
+import { Loader2 } from 'lucide-react';
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 
@@ -181,8 +181,10 @@ export default function ChatInterface() {
               </div>
               <button
                 onClick={() => setIsSidebarOpen(false)}
-                className="md:hidden"
-              ></button>
+                className="md:hidden p-2 rounded-full hover:bg-[#2b2b2b] transition-colors"
+              >
+                <X className="w-5 h-5 text-gray-400" />
+              </button>
             </div>
             <div className="p-4">
               <div className="relative">
@@ -239,11 +241,7 @@ export default function ChatInterface() {
               onClick={() => setIsSidebarOpen(!isSidebarOpen)}
               className="md:hidden fixed top-24 left-4 z-50 p-2 bg-transparent rounded-full inline-flex items-center justify-center"
             >
-              {isSidebarOpen ? (
-                <X className="w-6 h-6 text-gray-400 ml-40" />
-              ) : (
-                <Menu className="w-6 h-6 text-gray-400" />
-              )}
+              <Menu className="w-6 h-6 text-gray-400" />
             </button>
             <div className="flex-1 overflow-hidden">
               <AnimatePresence mode="wait">
@@ -486,3 +484,4 @@ export default function ChatInterface() {
     </div>
   );
 }
+
