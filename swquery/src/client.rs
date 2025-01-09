@@ -183,6 +183,13 @@ impl SWqueryClient {
                 let response = self.get_assets_by_owner(owner).await?;
                 to_value_response(response)
             }
+            "getLargestTransaction" => {
+                let address = get_required_str_param(params, "address")?;
+                let days = get_optional_u64_param(params, "days", 30);
+
+                let response = self.get_largest_transaction(address, Some(days)).await?;
+                to_value_response(response)
+            }
             // "getAssetsByCreator" => {
             //     let creator = get_required_str_param(params, "creator")?;
             //     let response = self.get_assets_by_creator(creator).await?;
@@ -331,12 +338,11 @@ impl SWqueryClient {
             //     let response = self.get_supply().await?;
             //     to_value_response(response)
             // }
-            "getTokenAccountBalance" => {
-                // let pubkey = get_required_str_param(params, "pubkey")?;
-                // let response = self.get_token_account_balance(pubkey).await?;
-                // to_value_response(response)
-                todo!()
-            }
+            // "getTokenAccountBalance" => {
+            //     let pubkey = get_required_str_param(params, "pubkey")?;
+            //     let response = self.get_token_account_balance(pubkey).await?;
+            //     to_value_response(response)
+            // }
             // "getTokenLargestAccounts" => {
             //     let mint = get_required_str_param(params, "mint")?;
             //     let response = self.get_token_largest_accounts(mint).await?;
@@ -759,5 +765,45 @@ impl SWqueryClient {
             params,
         )
         .await
+    }
+
+    /// Fetch the largest transaction for a wallet.
+    ///
+    /// # Arguments
+    ///
+    /// * `address` - The public key of the wallet.
+    /// * `days` - Optional number of days to filter recent transactions.
+    ///
+    /// # Returns
+    ///
+    /// The transaction with the largest amount.
+    pub async fn get_largest_transaction(
+        &self,
+        address: &str,
+        days: Option<u64>,
+    ) -> Result<Vec<FullTransaction>, SdkError> {
+        validate_address(address)?;
+
+        // Default to 30 days if not provided
+        let days = days.unwrap_or(30);
+
+        // Fetch transactions
+        let transactions = self.get_recent_transactions(address, days).await?;
+
+        // Find the largest transaction
+        let max_amount = transactions
+            .iter()
+            .map(|tx| extract_total_amount(&tx.details))
+            .max_by(|a, b| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal))
+            .ok_or(SdkError::Unexpected(
+            "No transactions found or all transactions have zero amount.".to_string(),
+            ))?;
+
+        let largest_transactions: Vec<FullTransaction> = transactions
+            .into_iter()
+            .filter(|tx| extract_total_amount(&tx.details) == max_amount)
+            .collect();
+
+        Ok(largest_transactions)
     }
 }

@@ -300,3 +300,27 @@ pub async fn get_token_account_balance(
 
     make_rpc_call(client, url, "getBalance", payload).await
 }
+
+/// Extracts the total amount from a transaction's details.
+///
+/// # Arguments
+///
+/// * `details` - The `Value` containing transaction details.
+///
+/// # Returns
+///
+/// The total amount transferred as a `f64`.
+pub fn extract_total_amount(details: &serde_json::Value) -> f64 {
+    details["transfers"]
+        .as_array()
+        .unwrap_or(&vec![])
+        .iter()
+        .map(|transfer| {
+            transfer["amount"]
+                .as_str()
+                .unwrap_or("0")
+                .parse::<f64>()
+                .unwrap_or(0.0)
+        })
+        .sum()
+}
