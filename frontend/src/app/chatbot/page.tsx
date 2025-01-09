@@ -237,10 +237,10 @@ export default function ChatInterface() {
             {/* Sidebar toggle button for mobile */}
             <button
               onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-              className="md:hidden fixed top-24 left-4 z-50 p-2 bg-[#1A1A1A] rounded-full inline-flex items-center justify-center"
+              className="md:hidden fixed top-24 left-4 z-50 p-2 bg-transparent rounded-full inline-flex items-center justify-center"
             >
               {isSidebarOpen ? (
-                <X className="w-6 h-6 text-gray-400 ml-20" />
+                <X className="w-6 h-6 text-gray-400 ml-40" />
               ) : (
                 <Menu className="w-6 h-6 text-gray-400" />
               )}
