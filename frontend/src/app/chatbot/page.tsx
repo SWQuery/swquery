@@ -172,7 +172,7 @@ export default function ChatInterface() {
           <div
             className={`${
               isSidebarOpen ? "translate-x-0" : "-translate-x-full"
-            } md:translate-x-0 fixed md:static left-0 top-20 h-[calc(100vh-5rem)] md:h-full w-80 border-r border-[#141416] flex flex-col bg-black z-50 transition-transform duration-300 ease-in-out`}
+            } md:translate-x-0 fixed md:static left-0 top-20 h-[calc(100vh-5rem)] md:h-full w-80 border-r border-[#141416] flex flex-col bg-black z-[60] transition-transform duration-300 ease-in-out`}
           >
             <div className="p-4 flex items-center justify-between border-b border-[#141416]">
               <div className="flex items-center gap-2">
@@ -239,7 +239,9 @@ export default function ChatInterface() {
             {/* Sidebar toggle button for mobile */}
             <button
               onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-              className="md:hidden fixed top-24 left-4 z-50 p-2 bg-transparent rounded-full inline-flex items-center justify-center"
+              className={`md:hidden fixed top-24 left-4 z-50 p-2 bg-transparent rounded-full inline-flex items-center justify-center transition-opacity duration-300 ${
+                isSidebarOpen ? 'opacity-0 pointer-events-none' : 'opacity-100'
+              }`}
             >
               <Menu className="w-6 h-6 text-gray-400" />
             </button>
