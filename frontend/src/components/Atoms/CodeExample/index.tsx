@@ -38,7 +38,7 @@ export const CodeExample: React.FC<CodeExampleProps> = ({ code }) => {
             </div>
             <span className="text-sm text-gray-400">main.rs</span>
           </div>
-          <div className="text-[.44rem] md:text-sm md:text-base">
+          <div className="text-[.44rem] md:text-xs md:text-base">
             <CopyBlock
               text={code}
               language="rust"

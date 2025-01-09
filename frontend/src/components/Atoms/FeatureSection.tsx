@@ -98,7 +98,7 @@ export const FeatureSection: React.FC<FeatureSectionProps> = ({
                         {codeFileName}
                       </span>
                     </div>
-                    <div className="text-sm">
+                    <div className="text-xs">
                       <CopyBlock
                         text={codeSnippet}
                         language={codeLanguage}
