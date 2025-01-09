@@ -4,7 +4,10 @@ use {
     serde::de::DeserializeOwned,
     serde_json::{json, Value},
     solana_sdk::pubkey::Pubkey,
-    std::{collections::{HashMap, HashSet}, str::FromStr},
+    std::{
+        collections::{HashMap, HashSet},
+        str::FromStr,
+    },
 };
 
 const METAPLEX_PROGRAM_ID: &str = "metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s";
@@ -151,7 +154,7 @@ pub async fn get_transaction_details(
 
 /// Helper to get transaction details with essential info only
 pub async fn get_transaction_details_with_info(
-    client: &Client, 
+    client: &Client,
     url: &str,
     signature: &str,
 ) -> Result<FullTransaction, SdkError> {
@@ -178,12 +181,12 @@ pub async fn get_transaction_details_with_info(
 
         // Track changes at the account level
         let mut account_balance_map = HashMap::new();
-        
+
         // Map preTokenBalances by account and mint
         for balance in &meta.preTokenBalances {
             if let (Some(account), Some(mint)) = (
                 balance.get("owner").and_then(|v| v.as_str()),
-                balance.get("mint").and_then(|v| v.as_str())
+                balance.get("mint").and_then(|v| v.as_str()),
             ) {
                 let amount = balance["uiTokenAmount"]["uiAmount"].as_f64().unwrap_or(0.0);
                 account_balance_map.insert((account.to_string(), mint.to_string()), -amount);
@@ -194,7 +197,7 @@ pub async fn get_transaction_details_with_info(
         for balance in &meta.postTokenBalances {
             if let (Some(account), Some(mint)) = (
                 balance.get("owner").and_then(|v| v.as_str()),
-                balance.get("mint").and_then(|v| v.as_str())
+                balance.get("mint").and_then(|v| v.as_str()),
             ) {
                 let amount = balance["uiTokenAmount"]["uiAmount"].as_f64().unwrap_or(0.0);
                 *account_balance_map
@@ -224,7 +227,7 @@ pub async fn get_transaction_details_with_info(
             } else {
                 (post_sol - pre_sol) as f64 / 1_000_000_000.0
             };
-            
+
             if pre_sol != post_sol {
                 transfers.push(json!({
                     "mint": "SOL",
@@ -256,11 +259,7 @@ pub async fn get_transaction_details_with_info(
     })
 }
 
-pub async fn get_asset_metadata(
-    client: &Client,
-    url: &str,
-    mint: &str,
-) -> Result<Value, SdkError> {
+pub async fn get_asset_metadata(client: &Client, url: &str, mint: &str) -> Result<Value, SdkError> {
     let payload = json!([mint]);
     let response: Value = make_rpc_call(client, url, "getAsset", payload).await?;
 

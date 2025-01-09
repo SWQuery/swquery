@@ -1,12 +1,18 @@
 use {
-    super::agent::{generate_report, generate_report_service, QueryRequestReport}, crate::{
+    super::agent::{generate_report, generate_report_service, QueryRequestReport},
+    crate::{
         models::ChatModel,
         routes::agent::fetch_credit_info, // Remove unused imports
-    }, axum::{
+    },
+    axum::{
         extract::{Path, State},
         http::{HeaderMap, StatusCode},
         Json,
-    }, chrono::NaiveDateTime, serde::{Deserialize, Serialize, Serializer}, sqlx::PgPool, swquery::{client::Network, SWqueryClient}
+    },
+    chrono::NaiveDateTime,
+    serde::{Deserialize, Serialize, Serializer},
+    sqlx::PgPool,
+    swquery::{client::Network, SWqueryClient},
 };
 
 fn serialize_naive_date_time<S>(date: &NaiveDateTime, serializer: S) -> Result<S::Ok, S::Error>
@@ -116,6 +122,8 @@ pub async fn get_chat_by_id(
 pub struct ChatRequest {
     pub input_user: String,
     pub address: String,
+    pub helius_key: String,
+    pub openai_key: String,
 }
 
 #[derive(Serialize)]
@@ -131,36 +139,48 @@ pub async fn chatbot_interact(
     headers: HeaderMap,
     Json(payload): Json<ChatRequest>,
 ) -> Result<(StatusCode, Json<ChatResponse>), (StatusCode, String)> {
-    // Extract API key from headers
     let api_key = headers
         .get("x-api-key")
         .and_then(|v| v.to_str().ok())
         .ok_or((StatusCode::UNAUTHORIZED, "Missing API key".to_string()))?;
 
-    // Fetch user credit information
+    if payload.helius_key.trim().is_empty() {
+        return Err((
+            StatusCode::BAD_REQUEST,
+            "Missing Helius API key".to_string(),
+        ));
+    }
+
+    if payload.openai_key.trim().is_empty() {
+        return Err((
+            StatusCode::BAD_REQUEST,
+            "Missing OpenAI API key".to_string(),
+        ));
+    }
+
     let credit: (i32, String, i64, String) = fetch_credit_info(&pool, api_key).await?;
 
-    // Initialize the SWqueryClient
     let swquery_client = SWqueryClient::new(
         api_key.to_string(),
-        "4953b888-9092-4ba0-b59a-24960cbdc270".to_string(), // Helius API key
+        payload.helius_key.clone(),
+        payload.openai_key.clone(),
         None,
         Some(Network::Mainnet),
     );
 
-    // Call the query method from the SDK
     let query_result = swquery_client
         .query(&payload.input_user, &payload.address)
         .await
         .map_err(|e| {
             eprintln!("SDK query error: {}", e);
-            (StatusCode::INTERNAL_SERVER_ERROR, "Failed to process query".to_string())
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Failed to process query".to_string(),
+            )
         })?;
 
-    // Extract metadata (token information) from the response
     let metadata = query_result.get("metadata").cloned();
 
-    // Generate report based on the query
     let report_input = QueryRequestReport {
         input_user: query_result.clone().to_string(),
         address: payload.address.clone(),
@@ -169,7 +189,6 @@ pub async fn chatbot_interact(
 
     let report = generate_report_service(pool, headers, axum::Json(report_input)).await?;
 
-    // Return the enriched response with metadata
     Ok((
         StatusCode::OK,
         Json(ChatResponse {

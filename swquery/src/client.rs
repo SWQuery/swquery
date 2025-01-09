@@ -9,7 +9,7 @@ use {
 const AGENT_API_URL: &str = "http://localhost:5500/agent/generate-query";
 
 /// Enum to represent the Solana network.
-#[derive(Debug, Clone, Copy, Default)]
+#[derive(Clone, Copy, Default)]
 pub enum Network {
     #[default]
     Mainnet,
@@ -19,12 +19,13 @@ pub enum Network {
 /// SWqueryClient is the main entry point for using this SDK to interact with
 /// the Solana RPC via the Helius API and a custom Agent API. It provides typed
 /// methods for various RPC calls.
-#[derive(Debug)]
 pub struct SWqueryClient {
     /// The API key for the Agent server.
     pub api_key: String,
     /// The Helius API key for RPC calls.
     pub helius_api_key: String,
+    /// The OpenAI API key.
+    pub openai_api_key: String, // Add this field
     /// The timeout for requests.
     pub timeout: Duration,
     /// The network to use for Helius RPC calls.
@@ -40,6 +41,7 @@ impl SWqueryClient {
     ///
     /// * `api_key` - The API key for the agent.
     /// * `helius_api_key` - The API key for Helius RPC.
+    /// * `openai_api_key` - The API key for OpenAI.
     /// * `timeout` - Optional request timeout, defaults to 5 seconds if None.
     /// * `network` - Optional network, defaults to Mainnet if None.
     ///
@@ -49,12 +51,14 @@ impl SWqueryClient {
     pub fn new(
         api_key: String,
         helius_api_key: String,
+        openai_api_key: String,
         timeout: Option<Duration>,
         network: Option<Network>,
     ) -> Self {
         SWqueryClient {
             api_key,
             helius_api_key,
+            openai_api_key, // Initialize field
             timeout: timeout.unwrap_or(Duration::from_secs(5)),
             network: network.unwrap_or_default(),
             client: Client::builder()
