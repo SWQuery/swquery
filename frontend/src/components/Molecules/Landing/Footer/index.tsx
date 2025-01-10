@@ -47,7 +47,7 @@ export const Footer = () => {
             <a href="https://x.com/swquery" className="text-gray-400 hover:text-[#9945FF]">
               <Twitter size={24} />
             </a>
-            <a href="/soon" className="text-gray-400 hover:text-[#9945FF]">
+            <a href="/t.me/ofcswquery" className="text-gray-400 hover:text-[#9945FF]">
               <MessageCircle size={24} />
             </a>
             <a href="https://github.com/vict0rcarvalh0/swquery" className="text-gray-400 hover:text-[#9945FF]">
