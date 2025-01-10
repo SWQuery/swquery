@@ -66,26 +66,20 @@ export default function ChatInterface() {
 	const currentChat = chats.find((chat) => chat.id === currentChatId);
 
 	function mapHeliusResponseToPreviewData(transactions: any[]) {
-		const fullTransactions: any = [];
-		transactions.map((tx: any) => {
-			tx.details?.transfers?.map((transfer: any) => {
-				fullTransactions.push({
-					amount: transfer.amount,
-					recipient: tx.signature?.slice(0, 6) + "..." || "",
-					date: new Date(tx.timestamp * 1000).toLocaleString(),
-					direction: transfer.direction,
-					fee: tx.details?.fee,
-					status: tx.status,
-					mint: transfer.mint,
-					url_icon:
-						tx.token_metadata &&
-						tx.token_metadata[transfer.mint]?.files &&
-						tx.token_metadata[transfer.mint].files[0]?.cdn_uri,
-					coin_name:
-						tx.token_metadata &&
-						tx.token_metadata[transfer.mint]?.metadata?.symbol,
-				});
-			});
+		const fullTransactions = transactions.flatMap((tx: any) => {
+			return (tx.details?.transfers || []).map((transfer: any) => ({
+				amount: transfer.amount,
+				recipient: tx.signature ? tx.signature.slice(0, 6) + "..." : "",
+				date: new Date(tx.timestamp * 1000).toLocaleString(),
+				direction: transfer.direction,
+				fee: tx.details?.fee,
+				status: tx.status,
+				mint: transfer.mint,
+				url_icon:
+					tx.token_metadata?.[transfer.mint]?.files?.[0]?.cdn_uri,
+				coin_name: tx.token_metadata?.[transfer.mint]?.metadata?.symbol,
+				signature: tx.signature,
+			}));
 		});
 		return fullTransactions;
 	}
