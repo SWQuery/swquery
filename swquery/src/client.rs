@@ -114,7 +114,7 @@ impl SWqueryClient {
                 SdkError::RequestFailed
             })?;
 
-        if !response.status().is_success() {
+        if (!response.status().is_success()) {
             error!("Agent API returned error status: {}", response.status());
             return Err(SdkError::ApiRequestFailed(response.status().to_string()));
         }
@@ -125,7 +125,7 @@ impl SWqueryClient {
         })?;
 
         // Debug log the raw response
-        println!("Raw response: {}", response_text);
+        // println!("Raw response: {}", response_text);
 
         let result: Value = serde_json::from_str(&response_text).map_err(|e| {
             error!("Failed to parse Agent API response: {}", e);
@@ -165,11 +165,15 @@ impl SWqueryClient {
                     ));
                 }
 
-                let from = get_optional_u64_param(params, "from", 0);
-                let to = get_optional_u64_param(params, "to", 0);
+                let initial_timestamp = get_optional_u64_param(params, "from", 0);
+                let end_timestamp = get_optional_u64_param(params, "end_timestamp", 0);
 
                 let response = self
-                    .get_signatures_for_address(address, Some(from), Some(to))
+                    .get_signatures_for_address(
+                        address,
+                        Some(initial_timestamp),
+                        Some(end_timestamp),
+                    )
                     .await?;
                 to_value_response(response)
             }
@@ -422,13 +426,18 @@ impl SWqueryClient {
             };
 
             // Filter by timestamp
-            if !is_within_timerange(block_time, Some(from_timestamp as u64), None) {
+            if (!is_within_timerange(block_time, Some(from_timestamp as u64), None)) {
                 continue;
             }
 
             // Get full transaction details
-            match get_transaction_details_with_info(&self.client, &url, &signature_info.signature)
-                .await
+            match get_transaction_details_with_info(
+                &self.client,
+                &url,
+                &signature_info.signature,
+                address,
+            )
+            .await
             {
                 Ok(transaction) => transactions.push(transaction),
                 Err(e) => eprintln!("Error getting transaction details: {}", e),
@@ -443,10 +452,10 @@ impl SWqueryClient {
     async fn get_signatures_for_address_period(
         &self,
         address: &str,
-        from: u64,
-        to: u64,
+        initial_timestamp: u64,
+        end_timestamp: u64,
     ) -> Result<SignaturesResponse, SdkError> {
-        if address.trim().is_empty() {
+        if (address.trim().is_empty()) {
             return Err(SdkError::InvalidInput(
                 "Address cannot be empty".to_string(),
             ));
@@ -460,8 +469,8 @@ impl SWqueryClient {
             "params": [
                 address,
                 {
-                    "before": to,
-                    "after": from,
+                    "before": initial_timestamp,
+                    "after": end_timestamp,
                     "commitment": "finalized"
                 }
             ]
@@ -475,7 +484,7 @@ impl SWqueryClient {
             .await
             .map_err(|e| SdkError::NetworkError(e.to_string()))?;
 
-        if response.status().is_success() {
+        if (response.status().is_success()) {
             let result: SignaturesResponse = response
                 .json()
                 .await
@@ -490,10 +499,10 @@ impl SWqueryClient {
     async fn get_signatures_for_address(
         &self,
         address: &str,
-        from: Option<u64>,
-        to: Option<u64>,
+        initial_timestamp: Option<u64>,
+        end_timestamp: Option<u64>,
     ) -> Result<SignaturesResponse, SdkError> {
-        if address.trim().is_empty() {
+        if (address.trim().is_empty()) {
             return Err(SdkError::InvalidInput(
                 "Address cannot be empty".to_string(),
             ));
@@ -517,19 +526,19 @@ impl SWqueryClient {
             // Apply timestamp filters
             let mut include_signature = true;
 
-            if let Some(from_timestamp) = from {
-                if block_time < from_timestamp {
+            if let Some(from_timestamp) = initial_timestamp {
+                if (block_time < from_timestamp) {
                     include_signature = false;
                 }
             }
 
-            if let Some(to_timestamp) = to {
-                if block_time > to_timestamp {
+            if let Some(to_timestamp) = end_timestamp {
+                if (block_time > to_timestamp) {
                     include_signature = false;
                 }
             }
 
-            if include_signature {
+            if (include_signature) {
                 filtered_signatures.push(signature_info);
             }
         }
@@ -543,24 +552,41 @@ impl SWqueryClient {
         Ok(signatures_response)
     }
 
-    //make_rpc_call(&self.client,"getAssetsByOwner", "getAssetsByOwner",
-    // params).await
-
-    // /// Fetch assets owned by a given address.
+    /// Fetch assets owned by a given address.
     async fn get_assets_by_owner(&self, owner: &str) -> Result<AssetsResponse, SdkError> {
-        if owner.trim().is_empty() {
+        if (owner.trim().is_empty()) {
             return Err(SdkError::InvalidInput(
                 "Owner address cannot be empty".to_string(),
             ));
         }
 
-        let params = json!([owner, {"page": 1}]);
-        make_rpc_call(&self.client, "getAssetsByOwner", "getAssetsByOwner", params).await
+        let page_value = 1;
+
+        let params = json!({
+            "ownerAddress": owner,
+            "page": page_value
+        });
+
+        let response = make_rpc_call(
+            &self.client,
+            &self.get_helius_rpc_url(),
+            "getAssetsByOwner",
+            params,
+        )
+        .await?;
+
+        println!("Response: {:#?}", response);
+
+        // Deserialize the response into AssetsResponse
+        let assets_response: AssetsResponse =
+            serde_json::from_value(response).map_err(|e| SdkError::ParseError(e.to_string()))?;
+
+        Ok(assets_response)
     }
 
     /// Fetch assets associated with a given creator.
     async fn get_assets_by_creator(&self, creator: &str) -> Result<AssetsResponse, SdkError> {
-        if creator.trim().is_empty() {
+        if (creator.trim().is_empty()) {
             return Err(SdkError::InvalidInput(
                 "Creator cannot be empty".to_string(),
             ));
@@ -568,7 +594,7 @@ impl SWqueryClient {
         let params = json!([creator, { "page": 1 }]);
         make_rpc_call(
             &self.client,
-            "getAssetsByCreator",
+            &self.get_helius_rpc_url(),
             "getAssetsByCreator",
             params,
         )
@@ -577,7 +603,7 @@ impl SWqueryClient {
 
     /// Fetch assets associated with a given authority.
     async fn get_assets_by_authority(&self, authority: &str) -> Result<AssetsResponse, SdkError> {
-        if authority.trim().is_empty() {
+        if (authority.trim().is_empty()) {
             return Err(SdkError::InvalidInput(
                 "Authority cannot be empty".to_string(),
             ));
@@ -594,7 +620,7 @@ impl SWqueryClient {
 
     /// Fetch transaction signatures for a specific asset.
     async fn get_signatures_for_asset(&self, asset: &str) -> Result<SignaturesResponse, SdkError> {
-        if asset.trim().is_empty() {
+        if (asset.trim().is_empty()) {
             return Err(SdkError::InvalidInput("Asset cannot be empty".to_string()));
         }
         let params = json!([asset]);
@@ -610,7 +636,7 @@ impl SWqueryClient {
 
     /// Fetch the balance for a given address.
     async fn get_balance(&self, address: &str) -> Result<GetBalanceResponse, SdkError> {
-        if address.trim().is_empty() {
+        if (address.trim().is_empty()) {
             return Err(SdkError::InvalidInput(
                 "Address cannot be empty".to_string(),
             ));
@@ -670,7 +696,7 @@ impl SWqueryClient {
         start_slot: u64,
         end_slot: u64,
     ) -> Result<GetBlocksResponse, SdkError> {
-        let params = if start_slot == end_slot {
+        let params = if (start_slot == end_slot) {
             json!([start_slot])
         } else {
             json!([start_slot, end_slot])
@@ -737,7 +763,7 @@ impl SWqueryClient {
         &self,
         pubkey: &str,
     ) -> Result<GetTokenAccountBalanceResponse, SdkError> {
-        if pubkey.trim().is_empty() {
+        if (pubkey.trim().is_empty()) {
             return Err(SdkError::InvalidInput("Pubkey cannot be empty".to_string()));
         }
         let params = json!([pubkey]);
@@ -752,7 +778,7 @@ impl SWqueryClient {
 
     /// Fetch the fee for a given message.
     async fn get_transaction(&self, signature: &str) -> Result<GetTransactionResponse, SdkError> {
-        if signature.trim().is_empty() {
+        if (signature.trim().is_empty()) {
             return Err(SdkError::InvalidInput(
                 "Signature cannot be empty".to_string(),
             ));
@@ -796,7 +822,7 @@ impl SWqueryClient {
             .map(|tx| extract_total_amount(&tx.details))
             .max_by(|a, b| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal))
             .ok_or(SdkError::Unexpected(
-            "No transactions found or all transactions have zero amount.".to_string(),
+                "No transactions found or all transactions have zero amount.".to_string(),
             ))?;
 
         let largest_transactions: Vec<FullTransaction> = transactions
@@ -806,4 +832,442 @@ impl SWqueryClient {
 
         Ok(largest_transactions)
     }
+
+    /// Get all tokens held by a wallet.
+    pub async fn get_tokens_held_by_wallet(
+        &self,
+        wallet_address: &str,
+    ) -> Result<Vec<UiTokenAmount>, SdkError> {
+        validate_address(wallet_address)?;
+
+        let params = json!([wallet_address]);
+        let response: GetTokenAccountBalanceResponse = make_rpc_call(
+            &self.client,
+            &self.get_helius_rpc_url(),
+            "getTokenAccountsByOwner",
+            params,
+        )
+        .await?;
+
+        // Extract and return token balances
+        Ok(vec![response.result.value])
+    }
+
+    /// Get token metadata.
+    pub async fn get_token_metadata(&self, mint_address: &str) -> Result<Value, SdkError> {
+        if (mint_address.trim().is_empty()) {
+            return Err(SdkError::InvalidInput(
+                "Mint address cannot be empty".to_string(),
+            ));
+        }
+
+        let _params = json!([mint_address]);
+        let metadata =
+            get_asset_metadata(&self.client, &self.get_helius_rpc_url(), mint_address).await?;
+        Ok(metadata)
+    }
+
+    /// Get all transactions involving a specific token.
+    pub async fn get_transactions_by_token(
+        &self,
+        wallet_address: &str,
+        mint_address: &str,
+        days: Option<u64>,
+    ) -> Result<Vec<FullTransaction>, SdkError> {
+        validate_address(wallet_address)?;
+
+        let transactions = self
+            .get_recent_transactions(wallet_address, days.unwrap_or(30))
+            .await?;
+        let filtered_transactions: Vec<FullTransaction> = transactions
+            .into_iter()
+            .filter(|tx| {
+                tx.details["transfers"]
+                    .as_array()
+                    .unwrap_or(&vec![])
+                    .iter()
+                    .any(|transfer| transfer["mint"] == mint_address)
+            })
+            .collect();
+
+        Ok(filtered_transactions)
+    }
+
+    /// Get the largest SOL transaction.
+    pub async fn get_largest_sol_transaction(
+        &self,
+        wallet_address: &str,
+        days: Option<u64>,
+    ) -> Result<Vec<FullTransaction>, SdkError> {
+        validate_address(wallet_address)?;
+
+        let transactions = self
+            .get_recent_transactions(wallet_address, days.unwrap_or(30))
+            .await?;
+        let largest_transaction = transactions
+            .iter()
+            .filter(|tx| {
+                tx.details["transfers"]
+                    .as_array()
+                    .unwrap_or(&vec![])
+                    .iter()
+                    .any(|transfer| transfer["mint"] == "SOL")
+            })
+            .max_by(|a, b| {
+                let a_amount = extract_total_amount(&a.details);
+                let b_amount = extract_total_amount(&b.details);
+                a_amount
+                    .partial_cmp(&b_amount)
+                    .unwrap_or(std::cmp::Ordering::Equal)
+            })
+            .ok_or(SdkError::Unexpected(
+                "No SOL transactions found.".to_string(),
+            ))?;
+
+        Ok(vec![largest_transaction.clone()])
+    }
+
+    /// Fetch the latest block information.
+    pub async fn get_latest_block(&self) -> Result<u64, SdkError> {
+        let params = json!([]);
+        let response: GetBlockHeightResponse = make_rpc_call(
+            &self.client,
+            &self.get_helius_rpc_url(),
+            "getLatestBlockhash",
+            params,
+        )
+        .await?;
+        Ok(response.result)
+    }
+
+    /// Get current epoch info.
+    pub async fn get_current_epoch(&self) -> Result<EpochInfo, SdkError> {
+        let params = json!([]);
+        let response: GetEpochInfoResponse = make_rpc_call(
+            &self.client,
+            &self.get_helius_rpc_url(),
+            "getEpochInfo",
+            params,
+        )
+        .await?;
+        Ok(response.result)
+    }
+
+    /// Get stake activation for a wallet.
+    pub async fn get_stake_activation(
+        &self,
+        stake_account: &str,
+        epoch: Option<u64>,
+    ) -> Result<StakeActivation, SdkError> {
+        validate_address(stake_account)?;
+
+        let params = if let Some(epoch) = epoch {
+            json!([stake_account, {"epoch": epoch}])
+        } else {
+            json!([stake_account])
+        };
+
+        let response: GetStakeActivationResponse = make_rpc_call(
+            &self.client,
+            &self.get_helius_rpc_url(),
+            "getStakeActivation",
+            params,
+        )
+        .await?;
+        Ok(response.result)
+    }
+
+    /// Validate a blockhash.
+    pub async fn validate_blockhash(&self, blockhash: &str) -> Result<bool, SdkError> {
+        if (blockhash.trim().is_empty()) {
+            return Err(SdkError::InvalidInput(
+                "Blockhash cannot be empty".to_string(),
+            ));
+        }
+
+        let params = json!([blockhash]);
+        let response: IsBlockhashValidResponse = make_rpc_call(
+            &self.client,
+            &self.get_helius_rpc_url(),
+            "isBlockhashValid",
+            params,
+        )
+        .await?;
+        Ok(response.result.value)
+    }
+
+    pub async fn filter_transactions_by_status(
+        &self,
+        address: &str,
+        days: u64,
+        status: &str,
+    ) -> Result<Vec<FullTransaction>, SdkError> {
+        let transactions = self.get_recent_transactions(address, days).await?;
+        let filtered: Vec<FullTransaction> = transactions
+            .into_iter()
+            .filter(|tx| tx.status == status)
+            .collect();
+        Ok(filtered)
+    }
+
+    pub async fn filter_transactions_by_value(
+        &self,
+        address: &str,
+        days: u64,
+        min_value: f64,
+        max_value: f64,
+    ) -> Result<Vec<FullTransaction>, SdkError> {
+        let transactions = self.get_recent_transactions(address, days).await?;
+        let filtered: Vec<FullTransaction> = transactions
+            .into_iter()
+            .filter(|tx| {
+                let total_value = extract_total_amount(&tx.details);
+                total_value >= min_value && total_value <= max_value
+            })
+            .collect();
+        Ok(filtered)
+    }
+
+    pub async fn filter_transactions_by_token(
+        &self,
+        address: &str,
+        days: u64,
+        token: &str,
+    ) -> Result<Vec<FullTransaction>, SdkError> {
+        let transactions = self.get_recent_transactions(address, days).await?;
+        let filtered: Vec<FullTransaction> = transactions
+            .into_iter()
+            .filter(|tx| {
+                tx.details["transfers"]
+                    .as_array()
+                    .unwrap_or(&vec![])
+                    .iter()
+                    .any(|transfer| transfer["mint"] == token)
+            })
+            .collect();
+        Ok(filtered)
+    }
+
+    pub async fn filter_transactions_by_participant(
+        &self,
+        address: &str,
+        days: u64,
+        participant: &str,
+    ) -> Result<Vec<FullTransaction>, SdkError> {
+        let transactions = self.get_recent_transactions(address, days).await?;
+        let filtered: Vec<FullTransaction> = transactions
+            .into_iter()
+            .filter(|tx| {
+                tx.details["transfers"]
+                    .as_array()
+                    .unwrap_or(&vec![])
+                    .iter()
+                    .any(|transfer| transfer["owner"] == participant)
+            })
+            .collect();
+        Ok(filtered)
+    }
+
+    pub async fn filter_transactions_by_period(
+        &self,
+        address: &str,
+        start_time: u64,
+        end_time: u64,
+    ) -> Result<Vec<FullTransaction>, SdkError> {
+        let transactions = self.get_recent_transactions(address, 0).await?;
+        let filtered: Vec<FullTransaction> = transactions
+            .into_iter()
+            .filter(|tx| tx.timestamp >= start_time && tx.timestamp <= end_time)
+            .collect();
+        Ok(filtered)
+    }
+
+    pub async fn filter_transactions_by_action(
+        &self,
+        address: &str,
+        days: u64,
+        action_type: &str,
+    ) -> Result<Vec<FullTransaction>, SdkError> {
+        let transactions = self.get_recent_transactions(address, days).await?;
+        let filtered: Vec<FullTransaction> = transactions
+            .into_iter()
+            .filter(|tx| tx.details["action_type"] == action_type)
+            .collect();
+        Ok(filtered)
+    }
+
+    pub async fn filter_transactions_by_account(
+        &self,
+        address: &str,
+        days: u64,
+        account: &str,
+    ) -> Result<Vec<FullTransaction>, SdkError> {
+        let transactions = self.get_recent_transactions(address, days).await?;
+        let filtered: Vec<FullTransaction> = transactions
+            .into_iter()
+            .filter(|tx| tx.details["account"] == account)
+            .collect();
+        Ok(filtered)
+    }
+
+    pub async fn filter_transactions_by_credits(
+        &self,
+        address: &str,
+        days: u64,
+        min_credits: u64,
+        max_credits: u64,
+    ) -> Result<Vec<FullTransaction>, SdkError> {
+        let transactions = self.get_recent_transactions(address, days).await?;
+        let filtered: Vec<FullTransaction> = transactions
+            .into_iter()
+            .filter(|tx| {
+                let credits = tx.details["credits"].as_u64().unwrap_or(0);
+                credits >= min_credits && credits <= max_credits
+            })
+            .collect();
+        Ok(filtered)
+    }
+
+    pub async fn filter_transactions_by_gas_fee(
+        &self,
+        address: &str,
+        days: u64,
+        min_fee: u64,
+        max_fee: u64,
+    ) -> Result<Vec<FullTransaction>, SdkError> {
+        let transactions = self.get_recent_transactions(address, days).await?;
+        let filtered: Vec<FullTransaction> = transactions
+            .into_iter()
+            .filter(|tx| {
+                let fee = tx.details["fee_amount"].as_u64().unwrap_or(0);
+                fee >= min_fee && fee <= max_fee
+            })
+            .collect();
+        Ok(filtered)
+    }
+
+    pub async fn filter_transactions_by_event(
+        &self,
+        address: &str,
+        days: u64,
+        event: &str,
+    ) -> Result<Vec<FullTransaction>, SdkError> {
+        let transactions = self.get_recent_transactions(address, days).await?;
+        let filtered: Vec<FullTransaction> = transactions
+            .into_iter()
+            .filter(|tx| tx.details["events"].as_array().unwrap_or(&vec![]).contains(&json!(event)))
+            .collect();
+        Ok(filtered)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn create_test_client() -> SWqueryClient {
+        SWqueryClient::new(
+            "WDAO4Z1Z503DWJH7060GIYGR0TWIIPBM".to_string(),
+            "d8c43267-ec7d-4930-8668-5039b78bdf89".to_string(),
+            "openai_api_key".to_string(),
+            Some(Duration::from_secs(5)),
+            Some(Network::Mainnet),
+        )
+    }
+
+    // #[tokio::test]
+    // async fn test_get_recent_transactions() {
+    //     let client = create_test_client();
+
+    //     let result = client
+    //         .get_recent_transactions("HuMZdNtbaNBPYex53irwAyKvxouLmEyN85MvAon81pXE", 30)
+    //         .await;
+
+    //     assert!(
+    //         result.is_ok(),
+    //         "Failed to get recent transactions: {:?}",
+    //         result
+    //     );
+    //     println!("Result: {:#?}", result.unwrap());
+    // }
+
+    // #[tokio::test]
+    // async fn test_get_signatures_for_address() {
+    //     let client = create_test_client();
+
+    //     let result = client
+    //         .get_signatures_for_address("GtJHNhKQnnJZQTHq2Vh49HpR4yKKJmUonVYbLeS1RPs8", None, None)
+    //         .await;
+
+    //     assert!(
+    //         result.is_ok(),
+    //         "Failed to get signatures for address: {:?}",
+    //         result
+    //     );
+    //     // println!("Result: {:#?}", result.unwrap());
+    // }
+
+    // #[tokio::test]
+    // async fn test_get_assets_by_owner() {
+    //     let client = create_test_client();
+
+    //     let result = client
+    //         .get_assets_by_owner("GtJHNhKQnnJZQTHq2Vh49HpR4yKKJmUonVYbLeS1RPs8")
+    //         .await;
+
+    //     assert!(
+    //         result.is_ok(),
+    //         "Failed to get assets by owner: {:?}",
+    //         result
+    //     );
+    //     println!("Result: {:#?}", result.unwrap());
+    // }
+
+    // #[tokio::test]
+    // async fn test_get_largest_sol_transaction() {
+    //     let client = create_test_client();
+
+    //         let result = client
+    //             .get_largest_sol_transaction("GtJHNhKQnnJZQTHq2Vh49HpR4yKKJmUonVYbLeS1RPs8", Some(3))
+    //             .await;
+
+    //         assert!(
+    //             result.is_ok(),
+    //             "Failed to get largest sol transaction: {:?}",
+    //             result
+    //         );
+    //         println!("Result: {:#?}", result.unwrap());
+    // }
+
+    // #[tokio::test]
+    // async fn test_get_transactions_by_token() {
+    //     let client = create_test_client();
+
+    //     let result = client
+    //         .get_transactions_by_token("GtJHNhKQnnJZQTHq2Vh49HpR4yKKJmUonVYbLeS1RPs8", "EwdcspW8mEjp4UswrcjmHPV3Y4GdGQPMG6RMTDV2pump", Some(4))
+    //         .await;
+
+    //     assert!(
+    //         result.is_ok(),
+    //         "Failed to get largest sol transaction: {:?}",
+    //         result
+    //     );
+    //     println!("Result: {:#?}", result.unwrap());
+    // }
+
+    // #[tokio::test]
+    // async fn test_get_largest_sol_transaction() {
+    //     let client = create_test_client();
+
+    //     let result = client
+    //         .get_largest_sol_transaction("GtJHNhKQnnJZQTHq2Vh49HpR4yKKJmUonVYbLeS1RPs8", Some(2))
+    //         .await;
+
+    //     assert!(
+    //         result.is_ok(),
+    //         "Failed to get largest sol transaction: {:?}",
+    //         result
+    //     );
+    //     println!("Result: {:#?}", result.unwrap());
+    // }
 }

@@ -3,7 +3,7 @@ use {
     reqwest::Client,
     serde::de::DeserializeOwned,
     serde_json::{json, Value},
-    solana_sdk::pubkey::Pubkey,
+    solana_sdk::{native_token::LAMPORTS_PER_SOL, pubkey::Pubkey},
     std::{
         collections::{HashMap, HashSet},
         str::FromStr,
@@ -152,19 +152,29 @@ pub async fn get_transaction_details(
     make_rpc_call(client, url, "getTransaction", payload).await
 }
 
-/// Helper to get transaction details with essential info only
 pub async fn get_transaction_details_with_info(
     client: &Client,
     url: &str,
     signature: &str,
+    wallet_address: &str,
 ) -> Result<FullTransaction, SdkError> {
     let response = get_transaction_details(client, url, signature).await?;
     let transaction_result = response.result;
 
     let mut token_metadata_map = HashMap::new();
     let mut transfers = Vec::new();
+    let mut fee_payer = None;
+    let mut fee_amount = 0;
 
     if let Some(meta) = &transaction_result.meta {
+        // Determine fee payer and fees
+        fee_amount = meta.fee.unwrap_or(0);
+        if let Some(inner_instructions) = meta.innerInstructions.get(0) {
+            if let Some(fee_payer_key) = inner_instructions["accountKeys"][0].as_str() {
+                fee_payer = Some(fee_payer_key.to_string());
+            }
+        }
+
         let mints: HashSet<String> = meta
             .postTokenBalances
             .iter()
@@ -179,10 +189,9 @@ pub async fn get_transaction_details_with_info(
             }
         }
 
-        // Track changes at the account level
+        // Track transfers for the user's wallet
         let mut account_balance_map = HashMap::new();
 
-        // Map preTokenBalances by account and mint
         for balance in &meta.preTokenBalances {
             if let (Some(account), Some(mint)) = (
                 balance.get("owner").and_then(|v| v.as_str()),
@@ -193,7 +202,6 @@ pub async fn get_transaction_details_with_info(
             }
         }
 
-        // Map postTokenBalances by account and mint
         for balance in &meta.postTokenBalances {
             if let (Some(account), Some(mint)) = (
                 balance.get("owner").and_then(|v| v.as_str()),
@@ -206,38 +214,40 @@ pub async fn get_transaction_details_with_info(
             }
         }
 
-        // Record SPL token transfers at the account level
+        // Filter transfers for the user's wallet
         for ((account, mint), delta) in account_balance_map {
-            if delta != 0.0 {
+            if account == wallet_address && delta != 0.0 {
                 transfers.push(json!({
                     "mint": mint,
                     "amount": format!("{:.6}", delta.abs()),
                     "decimals": 6,
-                    "owner": account,
                     "metadata": token_metadata_map.get(&mint),
-                    "direction": if delta > 0.0 { "in" } else { "out" }
+                    "direction": if delta > 0.0 { "in" } else { "out" },
                 }));
             }
         }
 
         // Handle SOL transfers
+        let mut total_sol_change = 0.0;
         for (pre_sol, post_sol) in meta.preBalances.iter().zip(meta.postBalances.iter()) {
-            let amount_diff = if pre_sol >= post_sol {
-                (pre_sol - post_sol) as f64 / 1_000_000_000.0
-            } else {
-                (post_sol - pre_sol) as f64 / 1_000_000_000.0
-            };
-
-            if pre_sol != post_sol {
-                transfers.push(json!({
-                    "mint": "SOL",
-                    "amount": format!("{:.9}", amount_diff),
-                    "decimals": 9,
-                    "owner": "N/A",
-                    "metadata": null,
-                    "direction": if pre_sol >= post_sol { "out" } else { "in" }
-                }));
+            let amount_diff = (*post_sol as f64 - *pre_sol as f64) / LAMPORTS_PER_SOL as f64;
+            if amount_diff != 0.0 {
+                if amount_diff > 0.0 {
+                    total_sol_change += amount_diff;
+                } else {
+                    total_sol_change += amount_diff;
+                }
             }
+        }
+
+        if total_sol_change != 0.0 {
+            transfers.push(json!({
+                "mint": "SOL",
+                "amount": format!("{:.9}", total_sol_change.abs()),
+                "decimals": 9,
+                "metadata": null,
+                "direction": if total_sol_change > 0.0 { "in" } else { "out" },
+            }));
         }
     }
 
@@ -252,7 +262,8 @@ pub async fn get_transaction_details_with_info(
                 if m.err.is_some() { "failed" } else { "success" }.to_string()
             }),
         details: json!({
-            "fee": transaction_result.meta.as_ref().map_or(0, |m| m.fee.unwrap_or(0)),
+            "fee_payer": fee_payer,
+            "fee_amount": fee_amount,
             "transfers": transfers,
         }),
         token_metadata: token_metadata_map,
