@@ -118,7 +118,7 @@ pub async fn get_chat_by_id(
     }
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Debug)]
 pub struct ChatRequest {
     pub input_user: String,
     pub address: String,
@@ -139,6 +139,8 @@ pub async fn chatbot_interact(
     headers: HeaderMap,
     Json(payload): Json<ChatRequest>,
 ) -> Result<(StatusCode, Json<ChatResponse>), (StatusCode, String)> {
+    println!("Chat request: {:#?}", payload);
+
     let api_key = headers
         .get("x-api-key")
         .and_then(|v| v.to_str().ok())
@@ -158,12 +160,16 @@ pub async fn chatbot_interact(
         ));
     }
 
-    let credit: (i32, String, i64, String) = fetch_credit_info(&pool, api_key).await?;
+    println!(
+        "API keys: Helius: {}, OpenAI: {}",
+        payload.helius_key, payload.openai_key
+    );
+
+    let credit = fetch_credit_info(&pool, api_key).await?;
 
     let swquery_client = SWqueryClient::new(
-        api_key.to_string(),
-        payload.helius_key.clone(),
         payload.openai_key.clone(),
+        payload.helius_key.clone(),
         None,
         Some(Network::Mainnet),
     );

@@ -49,9 +49,9 @@ check_response "$response" "$status" 201
 # Test chatbot interaction
 echo "Chatbot interaction..."
 response=$(curl -s -w "\n%{http_code}" -H "Content-Type: application/json" -H "x-api-key: $API_KEY" -X POST -d '{
-  "input_user": "Hello, how are you?",
+  "input_user": "What has been my biggest transaction in the last 10 days?",
   "address": "GtJHNhKQnnJZQTHq2Vh49HpR4yKKJmUonVYbLeS1RPs8",
-  "helius_key": "d8c43267-ec7d-4930-8668-5039b78bdf89",
+  "helius_key": "1f3f8151-4e8d-46c7-9555-22d4d8b38294",
   "openai_key": "OPEN_AI"
 }' "$BASE_URL/chatbot/interact")
 status=$(echo "$response" | tail -n1)

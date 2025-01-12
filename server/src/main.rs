@@ -4,9 +4,9 @@ mod routes;
 
 use {
     axum::{
+        http::Method,
         routing::{get, post},
         Router,
-        http::Method,
     },
     db::connect,
     dotenvy::dotenv,

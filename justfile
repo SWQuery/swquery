@@ -114,7 +114,7 @@ clean-all:
 # Check and Format All
 check-fmt:
     @echo "Checking and formatting..."
-    cargo check -p sdk
+    cargo check -p swquery
     cargo check --manifest-path credit-sales/Cargo.toml
     cargo check -p server
     cargo +nightly fmt --all

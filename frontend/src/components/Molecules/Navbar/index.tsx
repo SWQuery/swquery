@@ -1,48 +1,35 @@
 "use client";
 import { useState, useEffect } from "react";
-import Image from "next/image";
-import { motion, AnimatePresence } from "framer-motion";
+import { usePathname } from "next/navigation";
 import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
 import { useWallet } from "@solana/wallet-adapter-react";
-import { CreditCard, Book, Wallet, Menu, X } from "lucide-react";
+import { PublicKey, Connection } from "@solana/web3.js";
+import { getAccount, getAssociatedTokenAddress } from "@solana/spl-token";
+import { Book, Wallet, Menu, X } from "lucide-react";
+import { motion } from "framer-motion";
+import Image from "next/image";
+import Link from "next/link";
 import HorizontalLogo from "../../../assets/images/logo-horizontal.png";
 import { CreditsSidebar } from "@/components/Molecules/CreditSidebar";
-import Link from "next/link";
-import { TokenDisplay } from "@/components/Atoms/TokenDisplay/TokenDisplay";
-import { createUser } from "../../../services/users";
+import { useTokenAccess } from "@/app/chatbot/page";
 
-const userBalance = 12345678;
-
-const walletButtonStyle = {
-  width: "auto",
-  color: "white",
-  background: "linear-gradient(90deg, rgba(59,130,246,0.1), rgba(168,85,247,0.1))",
-  padding: "0.5rem 1rem",
-  borderRadius: "1rem",
-  boxShadow: "0 0 15px rgba(59,130,246,0.3)",
-  cursor: "pointer",
-  border: "1px solid rgba(255,255,255,0.1)",
-  outline: "none",
-  fontSize: "1rem",
-  fontWeight: "bold",
-  transition: "all 0.3s ease",
-  display: "inline-flex",
-  alignItems: "center",
-  justifyContent: "center",
-} as const;
-
-// Mobile specific styles
-const mobileWalletButtonStyle = {
-  ...walletButtonStyle,
-  width: "100%",
-} as const;
+const SWQUERY_MINT_ADDRESS = "EwdcspW8mEjp4UswrcjmHPV3Y4GdGQPMG6RMTDV2pump";
+const RPC_URL = "https://mainnet.helius-rpc.com/?api-key=1f3f8151-4e8d-46c7-9555-22d4d8b38294";
 
 export const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isCreditsSidebarOpen, setIsCreditsSidebarOpen] = useState(false);
+  const [, setShowAccessModal] = useState(false);
+  const [swqueryBalance, setSwqueryBalance] = useState<number | null>(null);
 
   const { connected, publicKey } = useWallet();
+  const pathname = usePathname();
+
+  const { hasAccess, isLoading: isTokenLoading } = useTokenAccess(
+    SWQUERY_MINT_ADDRESS,
+    RPC_URL
+  );
 
   useEffect(() => {
     const handleScroll = () => {
@@ -53,181 +40,140 @@ export const Navbar = () => {
   }, []);
 
   useEffect(() => {
-    if (connected && publicKey) {
-      const pubkeyString = publicKey.toBase58();
-      createUser(pubkeyString).catch((error) => {
-        console.error("Error creating user:", error);
-      });
+    if (!isTokenLoading && hasAccess && pathname !== "/chatbot") {
+      setShowAccessModal(true);
     }
+  }, [hasAccess, isTokenLoading, pathname]);
+
+  useEffect(() => {
+    const fetchBalance = async () => {
+      if (!connected || !publicKey) {
+        setSwqueryBalance(null);
+        return;
+      }
+
+      try {
+        const connection = new Connection(RPC_URL, "confirmed");
+        const mintPublicKey = new PublicKey(SWQUERY_MINT_ADDRESS);
+        const associatedTokenAddress = await getAssociatedTokenAddress(
+          mintPublicKey,
+          publicKey
+        );
+        const accountInfo = await getAccount(connection, associatedTokenAddress);
+        setSwqueryBalance(Number(accountInfo.amount));
+      } catch (error) {
+        console.error("Error fetching SWQUERY balance:", error);
+        setSwqueryBalance(null);
+      }
+    };
+
+    fetchBalance();
   }, [connected, publicKey]);
 
   const buttonBaseClasses =
     "inline-flex items-center px-4 py-2 rounded-lg border border-white/10 " +
     "bg-gradient-to-r from-blue-500/10 to-purple-500/10 text-white font-bold " +
     "hover:opacity-80 transition-transform duration-300 shadow-md";
+    const especialButtonClasses =  
+    "inline-flex items-center px-4 py-2 rounded-lg border border-white0 " +
+    "bg-gradient-to-r from-[#9C88FF] to-[#6C5CE7] text-white font-bold " +
+    "hover:scale-105 transition-transform duration-300 shadow-md";
+
+  const walletButtonStyle = {
+    width: "auto",
+    color: "white",
+    background: "linear-gradient(90deg, rgba(59,130,246,0.1), rgba(168,85,247,0.1))",
+    padding: "0.5rem 1rem",
+    borderRadius: "1rem",
+    boxShadow: "0 0 15px rgba(59,130,246,0.3)",
+    cursor: "pointer",
+    border: "1px solid rgba(255,255,255,0.1)",
+  } as const;
 
   return (
-    <nav
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 
-                  overflow-x-visible
+    <>
+      <nav
+        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 
                   ${isScrolled ? "bg-black bg-opacity-15 backdrop-blur-md" : "bg-transparent"}`}
-    >
-      <div className="container mx-auto px-6 py-4 flex items-center justify-between">
-        {/* Logo */}
-        <Link href={"/"}>
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            className="flex items-center space-x-4"
-            onClick={() => setIsMobileMenuOpen(false)}
-          >
-            <Image
-              src={HorizontalLogo}
-              alt="Logo"
-              width={150}
-              unoptimized
-              className="cursor-pointer"
-            />
-          </motion.div>
-        </Link>
-
-        {/* Desktop Buttons */}
-        <div className="hidden md:flex items-center gap-4">
-          <motion.a
-            href="https://bretasarthur1.gitbook.io/swquery/"
-            target="_blank"
-            rel="noopener noreferrer"
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.1 }}
-            className={buttonBaseClasses}
-            onMouseEnter={(e) => e.currentTarget.classList.add("scale-105", "shadow-lg")}
-            onMouseLeave={(e) => e.currentTarget.classList.remove("scale-105", "shadow-lg")}
-          >
-            <Book className="mr-2 h-4 w-4" />
-            Docs
-          </motion.a>
-
-          {/* <motion.button
-            type="button"
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.2 }}
-            className={buttonBaseClasses}
-            onClick={() => setIsCreditsSidebarOpen(true)}
-            onMouseEnter={(e) => e.currentTarget.classList.add("scale-105", "shadow-lg")}
-            onMouseLeave={(e) => e.currentTarget.classList.remove("scale-105", "shadow-lg")}
-          >
-            <CreditCard className="mr-2 h-4 w-4" />
-            Buy Credits
-          </motion.button> */}
-
-          {/* {connected && (
+      >
+        <div className="container mx-auto px-6 py-4 flex items-center justify-between">
+          <Link href="/">
             <motion.div
               initial={{ opacity: 0, y: -20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.25 }}
+              transition={{ duration: 0.6 }}
+              className="flex items-center space-x-4"
+              onClick={() => setIsMobileMenuOpen(false)}
             >
-              <TokenDisplay balance={userBalance} />
+              <Image src={HorizontalLogo} alt="Logo" width={150} unoptimized />
             </motion.div>
-          )} */}
+          </Link>
 
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.3 }}
-            onMouseEnter={(e) => {
-              const btn = e.currentTarget.querySelector(".wallet-adapter-button");
-              btn?.classList.add("shadow-lg", "scale-105");
-            }}
-            onMouseLeave={(e) => {
-              const btn = e.currentTarget.querySelector(".wallet-adapter-button");
-              btn?.classList.remove("shadow-lg", "scale-105");
-            }}
-          >
-            <WalletMultiButton
-              startIcon={<Wallet className="mr-2 h-5 w-5" />}
-              style={walletButtonStyle}
-            >
-              {connected ? "Connected" : "Connect Wallet"}
-            </WalletMultiButton>
-          </motion.div>
-        </div>
-
-        {/* Hamburger Menu */}
-        <div className="md:hidden">
-          <button 
-            className="text-white p-2" 
-            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-          >
-            {isMobileMenuOpen ? (
-              <X size={28} />
-            ) : (
-              <Menu size={28} />
-            )}
-          </button>
-        </div>
-      </div>
-
-      {/* Mobile Menu */}
-      <AnimatePresence>
-        {isMobileMenuOpen && (
-          <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            transition={{ duration: 0.3 }}
-            className="md:hidden flex flex-col gap-4 bg-[#0A0A0A] bg-opacity-80 
-                       backdrop-blur-md border-t border-white/10
-                       px-6 py-4"
-          >
+          <div className="hidden md:flex items-center gap-4">
             <motion.a
               href="https://bretasarthur1.gitbook.io/swquery/"
               target="_blank"
               rel="noopener noreferrer"
-              className={buttonBaseClasses + " w-full justify-center"}
-              onClick={() => setIsMobileMenuOpen(false)}
+              className={buttonBaseClasses}
             >
               <Book className="mr-2 h-4 w-4" />
               Docs
             </motion.a>
 
-            <motion.button
-              type="button"
-              className={buttonBaseClasses + " w-full justify-center"}
-              onClick={() => {
-                setIsCreditsSidebarOpen(true);
-                setIsMobileMenuOpen(false);
-              }}
-            >
-              <CreditCard className="mr-2 h-4 w-4" />
-              Buy Credits
-            </motion.button>
-
-            {connected && (
-              <motion.div className="w-full">
-                <TokenDisplay balance={userBalance} />
-              </motion.div>
+            {!isTokenLoading && pathname !== "/chatbot" && (
+              <>
+                {hasAccess ? (
+                  <Link href="/chatbot" className={especialButtonClasses}>
+                    Join Chatbot Alpha
+                  </Link>
+                ) : (
+                  <motion.div className="text-sm text-gray-300">
+                    Minimum 50,000 $SWQUERY tokens required for Chatbot Alpha.
+                  </motion.div>
+                )}
+              </>
             )}
 
-            <motion.div className="w-full flex justify-center md:block">
-              <WalletMultiButton
-                startIcon={<Wallet className="mr-2 h-5 w-5" />}
-                style={mobileWalletButtonStyle}
-              >
-                {connected ? "Connected" : "Connect Wallet"}
-              </WalletMultiButton>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+            <WalletMultiButton
+              startIcon={<Wallet className="mr-2 h-5 w-5" />}
+              style={walletButtonStyle}
+            >
+              {connected ? (
+                swqueryBalance !== null ? (
+                  <motion.div
+                    className="text-base text-gray-200 rounded-lg shadow"
+                    initial={{ opacity: 0, y: -20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.6 }}
+                  >
+                    $SWQUERY {swqueryBalance.toLocaleString()}
+                  </motion.div>
+                ) : (
+                  "Connected"
+                )
+              ) : (
+                "Connect Wallet"
+              )}
+            </WalletMultiButton>
 
-      {/* Credits Sidebar */}
+            
+          </div>
+
+          <div className="md:hidden">
+            <button
+              className="text-white p-2"
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            >
+              {isMobileMenuOpen ? <X size={28} /> : <Menu size={28} />}
+            </button>
+          </div>
+        </div>
+      </nav>
+
       <CreditsSidebar
         isOpen={isCreditsSidebarOpen}
         onClose={() => setIsCreditsSidebarOpen(false)}
       />
-    </nav>
+    </>
   );
 };

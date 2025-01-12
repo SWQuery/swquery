@@ -1,6 +1,10 @@
 use {
     crate::models::UserModel,
-    axum::{extract::{Path, State}, http::StatusCode, Json},
+    axum::{
+        extract::{Path, State},
+        http::StatusCode,
+        Json,
+    },
     serde::{Deserialize, Serialize},
     sqlx::PgPool,
 };

@@ -45,7 +45,10 @@ pub struct QueryResult {
     params: Value,
 }
 
-pub async fn fetch_credit_info(pool: &PgPool, api_key: &str) -> Result<(i32, String, i64, String), (StatusCode, String)> {
+pub async fn fetch_credit_info(
+    pool: &PgPool,
+    api_key: &str,
+) -> Result<(i32, String, i64, String), (StatusCode, String)> {
     sqlx::query_as::<_, (i32, String, i64, String)>(
         "SELECT c.user_id, u.pubkey, c.balance, c.api_key 
          FROM credits c 
@@ -59,7 +62,9 @@ pub async fn fetch_credit_info(pool: &PgPool, api_key: &str) -> Result<(i32, Str
     .ok_or((StatusCode::UNAUTHORIZED, "Invalid API key".to_string()))
 }
 
-pub async fn send_query_request(payload: &mut QueryRequest) -> Result<QueryResponse, (StatusCode, String)> {
+pub async fn send_query_request(
+    payload: &mut QueryRequest,
+) -> Result<QueryResponse, (StatusCode, String)> {
     let client = Client::new();
     payload.input_user = payload.input_user.to_lowercase();
     let response = client
@@ -75,7 +80,9 @@ pub async fn send_query_request(payload: &mut QueryRequest) -> Result<QueryRespo
         .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))
 }
 
-pub async fn send_query_request_report(payload: &mut QueryRequestReport) -> Result<QueryResponseReport, (StatusCode, String)> {
+pub async fn send_query_request_report(
+    payload: &mut QueryRequestReport,
+) -> Result<QueryResponseReport, (StatusCode, String)> {
     let client = Client::new();
     payload.input_user = payload.input_user.to_lowercase();
     let response = client
@@ -99,39 +106,40 @@ pub async fn generate_query(
     headers: HeaderMap,
     Json(mut payload): Json<QueryRequest>,
 ) -> Result<(StatusCode, Json<QueryResponse>), (StatusCode, String)> {
+    println!("Generating query");
     let api_key = headers
         .get("x-api-key")
         .and_then(|v| v.to_str().ok())
         .ok_or((StatusCode::UNAUTHORIZED, "Missing API key".to_string()))?;
 
-    println!("Getting user info");
-    let credit = fetch_credit_info(&pool, api_key).await?;
+    // println!("Getting user info");
+    // let credit = fetch_credit_info(&pool, api_key).await?;
 
     let query_response = send_query_request(&mut payload).await?;
 
-    if credit.2 < query_response.tokens {
-        return Err((
-            StatusCode::PAYMENT_REQUIRED,
-            "Insufficient credits".to_string(),
-        ));
-    }
+    // if credit.2 < query_response.tokens {
+    //     return Err((
+    //         StatusCode::PAYMENT_REQUIRED,
+    //         "Insufficient credits".to_string(),
+    //     ));
+    // }
 
-    sqlx::query("UPDATE credits SET balance = balance - $1 WHERE user_id = $2")
-        .bind(query_response.tokens)
-        .bind(credit.0)
-        .execute(&pool)
-        .await
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+    // sqlx::query("UPDATE credits SET balance = balance - $1 WHERE user_id = $2")
+    //     .bind(query_response.tokens)
+    //     .bind(credit.0)
+    //     .execute(&pool)
+    //     .await
+    //     .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
 
-    println!("Summary:
-    User ID: {}
-    Public Key: {}
-    Balance: {}
-    API Key: {}
-    API response: {}
-    Tokens used: {}",
-    credit.0, credit.1, credit.2, credit.3, query_response.result.response, query_response.tokens);
-
+    // println!("Summary:
+    // User ID: {}
+    // Public Key: {}
+    // Balance: {}
+    // API Key: {}
+    // API response: {}
+    // Tokens used: {}",
+    // credit.0, credit.1, credit.2, credit.3, query_response.result.response,
+    // query_response.tokens);
 
     Ok((StatusCode::OK, Json(query_response)))
 }
@@ -147,23 +155,23 @@ pub async fn generate_report(
         .ok_or((StatusCode::UNAUTHORIZED, "Missing API key".to_string()))?;
 
     println!("Getting user info");
-    let credit = fetch_credit_info(&pool, api_key).await?;
+    // let credit = fetch_credit_info(&pool, api_key).await?;
 
     let query_response = send_query_request_report(&mut payload).await?;
 
-    if credit.2 < query_response.tokens {
-        return Err((
-            StatusCode::PAYMENT_REQUIRED,
-            "Insufficient credits".to_string(),
-        ));
-    }
+    // if credit.2 < query_response.tokens {
+    //     return Err((
+    //         StatusCode::PAYMENT_REQUIRED,
+    //         "Insufficient credits".to_string(),
+    //     ));
+    // }
 
-    sqlx::query("UPDATE credits SET balance = balance - $1 WHERE user_id = $2")
-        .bind(query_response.tokens)
-        .bind(credit.0)
-        .execute(&pool)
-        .await
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+    // sqlx::query("UPDATE credits SET balance = balance - $1 WHERE user_id = $2")
+    //     .bind(query_response.tokens)
+    //     .bind(credit.0)
+    //     .execute(&pool)
+    //     .await
+    //     .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
 
     Ok((StatusCode::OK, Json(query_response)))
 }
@@ -173,28 +181,28 @@ pub async fn generate_report_service(
     headers: HeaderMap,
     Json(mut payload): Json<QueryRequestReport>,
 ) -> Result<(StatusCode, Json<QueryResponseReport>), (StatusCode, String)> {
-let api_key = headers
+    let api_key = headers
         .get("x-api-key")
         .and_then(|v| v.to_str().ok())
         .ok_or((StatusCode::UNAUTHORIZED, "Missing API key".to_string()))?;
 
     println!("Getting user info");
-    let credit = fetch_credit_info(&pool, api_key).await?;
+    // let credit = fetch_credit_info(&pool, api_key).await?;
 
     let query_response = send_query_request_report(&mut payload).await?;
 
-    if credit.2 < query_response.tokens {
-        return Err((
-            StatusCode::PAYMENT_REQUIRED,
-            "Insufficient credits".to_string(),
-        ));
-    }
+    // if credit.2 < query_response.tokens {
+    //     return Err((
+    //         StatusCode::PAYMENT_REQUIRED,
+    //         "Insufficient credits".to_string(),
+    //     ));
+    // }
 
-    sqlx::query("UPDATE credits SET balance = balance - $1 WHERE user_id = $2")
-        .bind(query_response.tokens)
-        .bind(credit.0)
-        .execute(&pool)
-        .await
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+    // sqlx::query("UPDATE credits SET balance = balance - $1 WHERE user_id = $2")
+    //     .bind(query_response.tokens)
+    //     .bind(credit.0)
+    //     .execute(&pool)
+    //     .await
+    //     .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
     Ok((StatusCode::OK, Json(query_response)))
 }
