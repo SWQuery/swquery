@@ -8,7 +8,7 @@ export const buyCredits = async (user_pubkey: string, amount: number) => {
 			{
 				headers: {
 					"Content-Type": "application/json",
-					"x-api-key": "WDAO4Z1Z503DWJH7060GIYGR0TWIIPBM",
+					"x-api-key": "WDAO4Z1Z503DWJH7060GIYGR0TWIIPBM", // TODO: Not needed anymore
 				},
 			}
 		);
@@ -27,7 +27,7 @@ export const refundCredits = async (user_pubkey: string, amount: number) => {
 			{
 				headers: {
 					"Content-Type": "application/json",
-					"x-api-key": "WDAO4Z1Z503DWJH7060GIYGR0TWIIPBM",
+					"x-api-key": "WDAO4Z1Z503DWJH7060GIYGR0TWIIPBM", // TODO: Not needed anymore
 				},
 			}
 		);

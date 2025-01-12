@@ -1,6 +1,7 @@
 mod db;
 mod models;
 mod routes;
+mod middlewares;
 
 use {
     axum::{
@@ -16,7 +17,13 @@ use {
         credits::{buy_credits, refund_credits},
         users::{create_user, get_user_by_pubkey, get_users},
     },
+    // middlewares::rate_limiter::{RateLimiter, rate_limit},
+    // std::{
+    //     sync::{Arc, Mutex},
+    //     time::Duration,
+    // },
     tower_http::cors::{Any, CorsLayer},
+    // tower::ServiceBuilder,
 };
 
 pub const AGENT_API_URL: &str = "http://localhost:8000";
@@ -32,6 +39,8 @@ async fn main() {
         .allow_origin(Any)
         .allow_methods([Method::GET, Method::POST, Method::OPTIONS])
         .allow_headers(Any);
+
+    // let rate_limiter = Arc::new(Mutex::new(RateLimiter::new(5, Duration::from_secs(10))));
 
     let agent_router = Router::new()
         .route("/generate-query", post(generate_query))
@@ -51,6 +60,10 @@ async fn main() {
         .nest("/chatbot", chatbot_router)
         .with_state(pool)
         .layer(cors);
+        // .layer(
+        //     ServiceBuilder::new()
+        //         .layer(axum::middleware::from_fn_with_state(rate_limiter.clone(), rate_limit))
+        // );
 
     let listener = tokio::net::TcpListener::bind("0.0.0.0:5500").await.unwrap();
 

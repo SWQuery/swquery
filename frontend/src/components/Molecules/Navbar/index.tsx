@@ -14,7 +14,8 @@ import { CreditsSidebar } from "@/components/Molecules/CreditSidebar";
 import { useTokenAccess } from "@/app/chatbot/page";
 
 const SWQUERY_MINT_ADDRESS = "EwdcspW8mEjp4UswrcjmHPV3Y4GdGQPMG6RMTDV2pump";
-const RPC_URL = "https://mainnet.helius-rpc.com/?api-key=1f3f8151-4e8d-46c7-9555-22d4d8b38294";
+const RPC_URL =
+  "https://mainnet.helius-rpc.com/?api-key=1f3f8151-4e8d-46c7-9555-22d4d8b38294";
 
 export const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -59,7 +60,10 @@ export const Navbar = () => {
           mintPublicKey,
           publicKey
         );
-        const accountInfo = await getAccount(connection, associatedTokenAddress);
+        const accountInfo = await getAccount(
+          connection,
+          associatedTokenAddress
+        );
         setSwqueryBalance(Number(accountInfo.amount));
       } catch (error) {
         console.error("Error fetching SWQUERY balance:", error);
@@ -74,7 +78,7 @@ export const Navbar = () => {
     "inline-flex items-center px-4 py-2 rounded-lg border border-white/10 " +
     "bg-gradient-to-r from-blue-500/10 to-purple-500/10 text-white font-bold " +
     "hover:opacity-80 transition-transform duration-300 shadow-md";
-    const especialButtonClasses =  
+  const especialButtonClasses =
     "inline-flex items-center px-4 py-2 rounded-lg border border-white0 " +
     "bg-gradient-to-r from-[#9C88FF] to-[#6C5CE7] text-white font-bold " +
     "hover:scale-105 transition-transform duration-300 shadow-md";
@@ -82,7 +86,8 @@ export const Navbar = () => {
   const walletButtonStyle = {
     width: "auto",
     color: "white",
-    background: "linear-gradient(90deg, rgba(59,130,246,0.1), rgba(168,85,247,0.1))",
+    background:
+      "linear-gradient(90deg, rgba(59,130,246,0.1), rgba(168,85,247,0.1))",
     padding: "0.5rem 1rem",
     borderRadius: "1rem",
     boxShadow: "0 0 15px rgba(59,130,246,0.3)",
@@ -94,7 +99,11 @@ export const Navbar = () => {
     <>
       <nav
         className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 
-                  ${isScrolled ? "bg-black bg-opacity-15 backdrop-blur-md" : "bg-transparent"}`}
+                  ${
+                    isScrolled
+                      ? "bg-black bg-opacity-15 backdrop-blur-md"
+                      : "bg-transparent"
+                  }`}
       >
         <div className="container mx-auto px-6 py-4 flex items-center justify-between">
           <Link href="/">
@@ -155,8 +164,6 @@ export const Navbar = () => {
                 "Connect Wallet"
               )}
             </WalletMultiButton>
-
-            
           </div>
 
           <div className="md:hidden">

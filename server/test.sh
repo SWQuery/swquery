@@ -49,7 +49,7 @@ check_response "$response" "$status" 201
 # Test chatbot interaction
 echo "Chatbot interaction..."
 response=$(curl -s -w "\n%{http_code}" -H "Content-Type: application/json" -H "x-api-key: $API_KEY" -X POST -d '{
-  "input_user": "What was my biggest transaction on last 10 days?",
+  "input_user": "Any transaction on my wallet for the token 2zMMhcVQEXDtdE6vsFS7S7D5oUodfJHE8vd1gnBouauv in the last 30 days?",
   "address": "9unenHYtwUowNkWdZmSYTwzGxxdzKVJh7npk6W6uqRF3",
   "helius_key": "1f3f8151-4e8d-46c7-9555-22d4d8b38294",
   "openai_key": "OPEN_AI"
