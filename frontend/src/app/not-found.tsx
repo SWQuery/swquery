@@ -1,8 +1,13 @@
-'use client'
+"use client";
 
-import { motion, AnimatePresence } from "framer-motion"
+import { motion, AnimatePresence } from "framer-motion";
+import { useRouter } from "next/navigation";
+import { ArrowLeft } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
-export default function ComingSoonPage() {
+export default function NotFound() {
+  const router = useRouter();
+
   return (
     <div className="relative flex flex-col h-screen overflow-hidden">
       <motion.div
@@ -68,7 +73,8 @@ export default function ComingSoonPage() {
                 <h1
                   className="text-4xl font-bold text-gray-200 relative inline-block"
                   style={{
-                    background: "linear-gradient(to right, #9C88FF, #6C5CE7, #9C88FF)",
+                    background:
+                      "linear-gradient(to right, #9C88FF, #6C5CE7, #9C88FF)",
                     backgroundSize: "200% auto",
                     WebkitBackgroundClip: "text",
                     WebkitTextFillColor: "transparent",
@@ -80,6 +86,21 @@ export default function ComingSoonPage() {
                 <p className="text-xl text-gray-400 mt-4">
                   We are working on something exciting. Stay tuned!
                 </p>
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.5, duration: 0.5 }}
+                  className="mt-8"
+                >
+                  <Button
+                    onClick={() => router.back()}
+                    variant="outline"
+                    className="bg-transparent border-[#9C88FF] text-[#9C88FF] hover:bg-[#9C88FF] hover:text-white transition-colors duration-300"
+                  >
+                    <ArrowLeft className="mr-2 h-4 w-4" />
+                    Go Back
+                  </Button>
+                </motion.div>
               </div>
             </motion.div>
           </AnimatePresence>
@@ -87,12 +108,17 @@ export default function ComingSoonPage() {
       </div>
       <style jsx>{`
         @keyframes shimmer {
-          0% { background-position: 0% center; }
-          50% { background-position: 100% center; }
-          100% { background-position: 0% center; }
+          0% {
+            background-position: 0% center;
+          }
+          50% {
+            background-position: 100% center;
+          }
+          100% {
+            background-position: 0% center;
+          }
         }
       `}</style>
     </div>
-  )
+  );
 }
-

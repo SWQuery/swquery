@@ -51,14 +51,13 @@ export const FeatureSection: React.FC<FeatureSectionProps> = ({
         >
           {/* Text Content */}
           <motion.div
-            className="flex-1 min-w-0" 
+            className="flex-1 min-w-0"
             initial={{ opacity: 0, x: reversed ? 50 : -50 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.5 }}
           >
             <h2 className="text-4xl font-bold mb-2">
-              {title}{" "}
-              <span className="text-[#9945FF]">{subtitle}</span>
+              {title} <span className="text-[#9945FF]">{subtitle}</span>
             </h2>
             <p className="text-gray-300 mb-6">{description}</p>
             <motion.a

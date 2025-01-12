@@ -4,7 +4,7 @@ import { useWallet } from "@solana/wallet-adapter-react";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 
-const MOCK_TRANSACTIONS = [
+const MOCK_TRANSACTIONS = [ // TODO: Remove that
 	{
 		date: "Dec 15, 2024",
 		to: "2nu...UQc4",

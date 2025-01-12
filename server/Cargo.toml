@@ -1,28 +1,42 @@
 [package]
 name = "server"
 version = "0.1.0"
-edition.workspace = true
-license.workspace = true
-authors.workspace = true
-repository.workspace = true
+edition = "2021"
+
+license = "Apache-2.0"
+authors = [
+  "Arthur Bretas <arthurbretas1@gmail.com>",
+  "Marcelo G Feitoza <feitoza.marcelo7@gmail.com>",
+  "Pedro Hagge Baptista <pedro.baptista@sou.inteli.edu.br>",
+  "Victor Carvalho <victordecarvalho342@gmail.com>",
+]
+repository = "https://github.com/vict0rcarvalh0/swquery"
 
 [dependencies]
-axum = { workspace = true }
-tokio = { workspace = true }
-tracing-subscriber.workspace = true
-tracing = { workspace = true }
-serde = { workspace = true }
-serde_json = { workspace = true }
-sqlx = { workspace = true }
-dotenvy = { workspace = true }
-chrono = { workspace = true }
-tower-http = { workspace = true, features = ["cors"] }
-http-body-util = { workspace = true }
-solana-sdk = { workspace = true }
-reqwest.workspace = true
+reqwest = { version = "0.11", features = ["json"] }
 uuid = { version = "1.11.0", features = ["v4"] }
+serde = { version = "1.0", features = ["derive"] }
+tokio = { version = "1.0", features = ["full"] }
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+axum = { version = "0.7.9" }
+serde_json = "1.0"
+sqlx = { version = "0.8.2", features = [
+  "runtime-tokio-native-tls",
+  "postgres",
+  "chrono",
+] }
+dotenvy = "0.15"
+chrono = { version = "0.4", features = ["serde"] }
+tower = { version = "0.5.1", features = ["util"] }
+http-body-util = "0.1.0"
+hyper-util = { version = "0.1", features = [
+  "client",
+  "http1",
+  "client-legacy",
+] }
+tower-http = { version = "0.6.2", features = ["full"] }
+solana-sdk = "2.0.8"
+thiserror = "1.0"
 rand = "0.8.5"
 swquery = { path = "../swquery" }
-
-[dev-dependencies]
-tower = { workspace = true }

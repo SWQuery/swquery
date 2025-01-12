@@ -12,7 +12,7 @@ const BuyCredits = () => {
       console.log("Comprando créditos...");
 
       const buyerKeypair = Keypair.generate();
-      
+
       console.log("Chave do comprador:", buyerKeypair.publicKey.toString());
 
       const buyerTokenAccount = new PublicKey(

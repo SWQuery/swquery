@@ -36,9 +36,9 @@ export const CoreFeaturesSection = () => {
           Why SWQuery Stands Out
         </h2>
         <p className="mb-16 text-base sm:text-lg text-gray-400 leading-relaxed">
-          SWQuery isn&apos;t just an SDK; it&apos;s a performance-driven platform
-          designed for developers and enterprises to harness blockchain data with
-          unmatched speed and reliability.
+          SWQuery isn&apos;t just an SDK; it&apos;s a performance-driven
+          platform designed for developers and enterprises to harness blockchain
+          data with unmatched speed and reliability.
         </p>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-12 px-2 sm:px-8 relative z-10">

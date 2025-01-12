@@ -335,3 +335,156 @@ pub fn extract_total_amount(details: &serde_json::Value) -> f64 {
         })
         .sum()
 }
+
+// In the SWqueryClient impl block, replace the existing apply_filters with:
+pub fn apply_filters(
+    transactions: Vec<FullTransaction>,
+    filters: &Value,
+) -> Result<Vec<FullTransaction>, SdkError> {
+    if let Some(filter_list) = filters.as_array() {
+        let mut filtered = transactions;
+
+        for filter in filter_list.iter() {
+            // Extract filter components with validation
+            let field = filter["field"].as_str().ok_or_else(|| {
+                SdkError::InvalidInput("Filter must have a 'field' key".to_string())
+            })?;
+
+            let operator = filter["operator"].as_str().ok_or_else(|| {
+                SdkError::InvalidInput("Filter must have an 'operator' key".to_string())
+            })?;
+
+            let value = &filter["value"];
+
+            // Apply the filter based on operator
+            filtered = match operator {
+                "equals" => filtered
+                    .into_iter()
+                    .filter(|tx| tx.details[field] == *value)
+                    .collect(),
+
+                "greater_than" => {
+                    let threshold = value.as_f64().ok_or_else(|| {
+                        SdkError::InvalidInput("Value must be a number for 'greater_than'".to_string())
+                    })?;
+                    filtered
+                        .into_iter()
+                        .filter(|tx| tx.details[field].as_f64().map_or(false, |v| v > threshold))
+                        .collect()
+                }
+
+                "less_than" => {
+                    let threshold = value.as_f64().ok_or_else(|| {
+                        SdkError::InvalidInput("Value must be a number for 'less_than'".to_string())
+                    })?;
+                    filtered
+                        .into_iter()
+                        .filter(|tx| tx.details[field].as_f64().map_or(false, |v| v < threshold))
+                        .collect()
+                }
+
+                "between" => {
+                    let range = value.as_array().ok_or_else(|| {
+                        SdkError::InvalidInput("Value must be an array for 'between'".to_string())
+                    })?;
+
+                    let start = range[0].as_f64().ok_or_else(|| {
+                        SdkError::InvalidInput("Start value must be a number".to_string())
+                    })?;
+
+                    let end = range[1].as_f64().ok_or_else(|| {
+                        SdkError::InvalidInput("End value must be a number".to_string())
+                    })?;
+
+                    filtered
+                        .into_iter()
+                        .filter(|tx| {
+                            tx.details[field]
+                                .as_f64()
+                                .map_or(false, |v| v >= start && v <= end)
+                        })
+                        .collect()
+                }
+
+                "biggest" => {
+                    let max = filtered
+                        .iter()
+                        .filter_map(|tx| tx.details[field].as_f64())
+                        .max_by(|a, b| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal))
+                        .ok_or_else(|| SdkError::InvalidInput("No numeric values found".to_string()))?;
+                    filtered
+                        .into_iter()
+                        .filter(|tx| tx.details[field].as_f64().map_or(false, |v| v == max))
+                        .collect()
+                }
+
+                "smallest" => {
+                    let min = filtered
+                        .iter()
+                        .filter_map(|tx| tx.details[field].as_f64())
+                        .min_by(|a, b| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal))
+                        .ok_or_else(|| SdkError::InvalidInput("No numeric values found".to_string()))?;
+                    filtered
+                        .into_iter()
+                        .filter(|tx| tx.details[field].as_f64().map_or(false, |v| v == min))
+                        .collect()
+                }
+
+                "contains" => {
+                    let search = value.as_str().ok_or_else(|| {
+                        SdkError::InvalidInput("Value must be a string for 'contains'".to_string())
+                    })?;
+                    filtered
+                        .into_iter()
+                        .filter(|tx| {
+                            tx.details[field]
+                                .as_str()
+                                .map_or(false, |v| v.contains(search))
+                        })
+                        .collect()
+                }
+
+                "starts_with" => {
+                    let prefix = value.as_str().ok_or_else(|| {
+                        SdkError::InvalidInput("Value must be a string for 'starts_with'".to_string())
+                    })?;
+                    filtered
+                        .into_iter()
+                        .filter(|tx| {
+                            tx.details[field]
+                                .as_str()
+                                .map_or(false, |v| v.starts_with(prefix))
+                        })
+                        .collect()
+                }
+
+                "ends_with" => {
+                    let suffix = value.as_str().ok_or_else(|| {
+                        SdkError::InvalidInput("Value must be a string for 'ends_with'".to_string())
+                    })?;
+                    filtered
+                        .into_iter()
+                        .filter(|tx| {
+                            tx.details[field]
+                                .as_str()
+                                .map_or(false, |v| v.ends_with(suffix))
+                        })
+                        .collect()
+                }
+
+                _ => {
+                    return Err(SdkError::InvalidInput(format!(
+                        "Unsupported operator: {}",
+                        operator
+                    )))
+                }
+            };
+        }
+
+        Ok(filtered)
+    } else {
+        Err(SdkError::InvalidInput(
+            "Filters must be an array".to_string(),
+        ))
+    }
+}

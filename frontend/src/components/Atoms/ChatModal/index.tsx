@@ -54,10 +54,8 @@ export const ChatModal = ({ isOpen, onClose }: ChatModalProps) => {
 };
 
   const formatHeliusKey = (value: string) => {
-    // Remove all non-alphanumeric characters
     const cleaned = value.replace(/[^0-9a-f]/gi, '');
     
-    // Add hyphens at appropriate positions
     let formatted = '';
     for (let i = 0; i < cleaned.length && i < 32; i++) {
       if (i === 8 || i === 12 || i === 16 || i === 20) {

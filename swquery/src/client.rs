@@ -185,6 +185,10 @@ impl SWqueryClient {
         })?;
         println!("Parsed result: {:#?}", result);
 
+        // Extract filters early
+        let filters = result["result"]["params"]["filters"].clone();
+        println!("Extracted filters: {:#?}", filters);
+
         let response_type = result["result"]["response"]
             .as_str()
             .ok_or_else(|| SdkError::Unexpected("Missing response field".to_string()))?;
@@ -432,33 +436,34 @@ impl SWqueryClient {
             //     to_value_response(response)
             // }
             _ => {
-                return Err(SdkError::Unexpected(format!(
-                    "Unsupported method: {}",
-                    response_type
-                )))
+                // // Check if it's a Solana RPC query with filters
+                // if result["result"].get("filters").is_some() {
+                //     let filters = result["result"]["filters"].clone();
+                //     let days = get_optional_u64_param(&result["result"], "days", 30);
+                //     let transactions = self.get_recent_transactions(pubkey, days).await?;
+                //     let filtered_transactions = apply_filters(transactions, &filters)?;
+                //     response = to_value_response(filtered_transactions).unwrap();
+                // } else {
+                    // Format error response according to template
+                    response = json!({
+                        "response": "We recognized your request as a Solana RPC query, but no implemented method is available.",
+                        "status": "error"
+                    });
+                // }
             }
         };
 
-        // if let Some(filter_function) = params.get("filter_function") {
-        //     let filter_function = filter_function.as_str().ok_or_else(|| {
-        //         SdkError::Unexpected("Filter function is not a string".to_string())
-        //     })?;
-
-        //     println!("Filter function: {:#?}", filter_function);
-
-        //     let transactions = response
-        //         .as_array()
-        //         .ok_or_else(|| SdkError::Unexpected("Response is not an
-        // array".to_string()))?         .iter()
-        //         .map(|t| serde_json::from_value(t.clone()).unwrap())
-        //         .collect::<Vec<FullTransaction>>();
-
-        //     let filtered_transactions =
-        // self.execute_generated_function(filter_function, transactions)
-        //         .await?;
-
-        //     println!("Filtered transactions: {:#?}", filtered_transactions);
-        // }
+        // Apply filters if they exist and response contains transactions
+        if let Some(filters) = filters.as_array() {
+            if !filters.is_empty() {
+                if let Ok(transactions) = serde_json::from_value::<Vec<FullTransaction>>(response.clone()) {
+                    println!("Applying filters to {} transactions", transactions.len());
+                    let filtered_transactions = apply_filters(transactions, &Value::Array(filters.to_vec()))?;
+                    response = serde_json::to_value(filtered_transactions)
+                        .map_err(|e| SdkError::ParseError(e.to_string()))?;
+                }
+            }
+        }
 
         Ok(response)
     }

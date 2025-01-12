@@ -42,7 +42,7 @@ build-all:
 # Run Server
 run-server:
     @echo "Running Server..."
-    cargo run -p server
+    cd server && cargo run --release
 
 # Run Frontend
 run-frontend:

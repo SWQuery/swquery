@@ -25,7 +25,6 @@ export const CodeExample: React.FC<CodeExampleProps> = ({ code }) => {
       initial={{ opacity: 0, x: 50 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ duration: 0.8 }}
-      // Allow horizontal scrolling on small screens:
       className={`relative w-full overflow-x-auto ${firaCode.className}`}
     >
       <div className="min-w-[320px] bg-[#1A1A1A] rounded-2xl p-2 md:p-3 shadow-lg">
