@@ -1,65 +1,72 @@
-// use axum::{
-//     middleware::Next,
-//     response::{IntoResponse, Response},
-//     http::{Request, StatusCode},
-//     body::Body,
-// };
-// use std::{
-//     collections::HashMap,
-//     sync::{Arc, Mutex},
-//     time::{Duration, Instant},
-// };
+use {
+    axum::{
+        body::Body,
+        extract::State,
+        http::{Request, StatusCode},
+        middleware::Next,
+        response::Response,
+    },
+    std::{
+        collections::HashMap,
+        sync::Arc,
+        time::{Duration, Instant},
+    },
+    tokio::sync::Mutex,
+};
 
-// pub struct RateLimiter {
-//     requests: HashMap<String, (u32, Instant)>,
-//     max_requests: u32,
-//     window: Duration,
-// }
+#[derive(Clone)]
+pub struct RateLimiter {
+    requests: Arc<Mutex<HashMap<String, (Instant, u32)>>>,
+    max_requests: u32,
+    window_size: Duration,
+}
 
-// impl RateLimiter {
-//     pub fn new(max_requests: u32, window: Duration) -> Self {
-//         Self {
-//             requests: HashMap::new(),
-//             max_requests,
-//             window,
-//         }
-//     }
+impl RateLimiter {
+    pub fn new(max_requests: u32, window_size: Duration) -> Self {
+        Self {
+            requests: Arc::new(Mutex::new(HashMap::new())),
+            max_requests,
+            window_size,
+        }
+    }
 
-//     pub fn check_rate_limit(&mut self, client_ip: &str) -> bool {
-//         let now = Instant::now();
-//         let entry = self.requests.entry(client_ip.to_string()).or_insert((0, now));
+    pub async fn check_rate_limit(&self, key: &str) -> bool {
+        let mut requests = self.requests.lock().await;
+        let now = Instant::now();
 
-//         if now.duration_since(entry.1) > self.window {
-//             entry.0 = 0;
-//             entry.1 = now;
-//         }
+        if let Some((window_start, count)) = requests.get_mut(key) {
+            if now.duration_since(*window_start) > self.window_size {
+                *window_start = now;
+                *count = 1;
+                true
+            } else if *count >= self.max_requests {
+                false
+            } else {
+                *count += 1;
+                true
+            }
+        } else {
+            requests.insert(key.to_string(), (now, 1));
+            true
+        }
+    }
+}
 
-//         if entry.0 < self.max_requests {
-//             entry.0 += 1;
-//             true
-//         } else {
-//             false
-//         }
-//     }
-// }
+pub async fn rate_limit_middleware(
+    State(rate_limiter): State<RateLimiter>,
+    req: Request<Body>,
+    next: Next,
+) -> Result<Response, StatusCode> {
+    let key = req
+        .headers()
+        .get("x-forwarded-for")
+        .and_then(|hv| hv.to_str().ok())
+        .unwrap_or("unknown")
+        .to_string();
 
-// pub async fn rate_limit<B>(
-//     req: Request<B>,
-//     state: Arc<Mutex<RateLimiter>>,
-//     next: Next,
-// ) -> Response where axum::body::Body: From<B> {
-//     let client_ip = req
-//         .headers()
-//         .get("x-forwarded-for")
-//         .and_then(|value| value.to_str().ok())
-//         .unwrap_or("unknown");
-
-//     let mut rate_limiter = state.lock().unwrap();
-
-//     if rate_limiter.check_rate_limit(client_ip) {
-//         let req = req.map(Body::from); 
-//         next.run(req).await
-//     } else {
-//         (StatusCode::TOO_MANY_REQUESTS, "Too Many Requests").into_response()
-//     }
-// }
+    if rate_limiter.check_rate_limit(&key).await {
+        Ok(next.run(req).await)
+    } else {
+        Err(StatusCode::TOO_MANY_REQUESTS)
+    }
+}
