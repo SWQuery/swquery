@@ -336,7 +336,6 @@ pub fn extract_total_amount(details: &serde_json::Value) -> f64 {
         .sum()
 }
 
-// In the SWqueryClient impl block, replace the existing apply_filters with:
 pub fn apply_filters(
     transactions: Vec<FullTransaction>,
     filters: &Value,
@@ -360,16 +359,24 @@ pub fn apply_filters(
             filtered = match operator {
                 "equals" => filtered
                     .into_iter()
-                    .filter(|tx| tx.details[field] == *value)
+                    .filter(|tx| tx.details.get(field) == Some(value))
                     .collect(),
 
                 "greater_than" => {
                     let threshold = value.as_f64().ok_or_else(|| {
-                        SdkError::InvalidInput("Value must be a number for 'greater_than'".to_string())
+                        SdkError::InvalidInput(
+                            "Value must be a number for 'greater_than'".to_string(),
+                        )
                     })?;
                     filtered
                         .into_iter()
-                        .filter(|tx| tx.details[field].as_f64().map_or(false, |v| v > threshold))
+                        .filter(|tx| {
+                            tx.details
+                                .get(field)
+                                .and_then(|v| v.as_f64())
+                                .unwrap_or(0.0)
+                                > threshold
+                        })
                         .collect()
                 }
 
@@ -379,7 +386,13 @@ pub fn apply_filters(
                     })?;
                     filtered
                         .into_iter()
-                        .filter(|tx| tx.details[field].as_f64().map_or(false, |v| v < threshold))
+                        .filter(|tx| {
+                            tx.details
+                                .get(field)
+                                .and_then(|v| v.as_f64())
+                                .unwrap_or(0.0)
+                                < threshold
+                        })
                         .collect()
                 }
 
@@ -399,34 +412,62 @@ pub fn apply_filters(
                     filtered
                         .into_iter()
                         .filter(|tx| {
-                            tx.details[field]
-                                .as_f64()
-                                .map_or(false, |v| v >= start && v <= end)
+                            let amount = tx
+                                .details
+                                .get(field)
+                                .and_then(|v| v.as_f64())
+                                .unwrap_or(0.0);
+                            amount >= start && amount <= end
                         })
                         .collect()
                 }
 
                 "biggest" => {
-                    let max = filtered
+                    // Filter out transactions without numeric values for the field
+                    let numeric_transactions: Vec<&FullTransaction> = filtered
                         .iter()
-                        .filter_map(|tx| tx.details[field].as_f64())
+                        .filter(|tx| extract_total_amount(&tx.details) > 0.0)
+                        .collect();
+
+                    // Ensure there are valid numeric values to compare
+                    if numeric_transactions.is_empty() {
+                        return Err(SdkError::InvalidInput(format!(
+                            "No numeric values found for field '{}'",
+                            field
+                        )));
+                    }
+
+                    // Find the maximum value
+                    let max = numeric_transactions
+                        .iter()
+                        .map(|tx| extract_total_amount(&tx.details))
                         .max_by(|a, b| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal))
-                        .ok_or_else(|| SdkError::InvalidInput("No numeric values found".to_string()))?;
+                        .unwrap(); // Safe unwrap as numeric_transactions is not empty
+
+                    // Filter transactions with the max value
                     filtered
                         .into_iter()
-                        .filter(|tx| tx.details[field].as_f64().map_or(false, |v| v == max))
+                        .filter(|tx| extract_total_amount(&tx.details) == max)
                         .collect()
                 }
 
                 "smallest" => {
                     let min = filtered
                         .iter()
-                        .filter_map(|tx| tx.details[field].as_f64())
+                        .map(|tx| extract_total_amount(&tx.details))
                         .min_by(|a, b| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal))
-                        .ok_or_else(|| SdkError::InvalidInput("No numeric values found".to_string()))?;
+                        .ok_or_else(|| {
+                            SdkError::InvalidInput("No numeric values found".to_string())
+                        })?;
                     filtered
                         .into_iter()
-                        .filter(|tx| tx.details[field].as_f64().map_or(false, |v| v == min))
+                        .filter(|tx| {
+                            tx.details
+                                .get(field)
+                                .and_then(|v| v.as_f64())
+                                .unwrap_or(0.0)
+                                == min
+                        })
                         .collect()
                 }
 
@@ -437,8 +478,9 @@ pub fn apply_filters(
                     filtered
                         .into_iter()
                         .filter(|tx| {
-                            tx.details[field]
-                                .as_str()
+                            tx.details
+                                .get(field)
+                                .and_then(|v| v.as_str())
                                 .map_or(false, |v| v.contains(search))
                         })
                         .collect()
@@ -446,13 +488,16 @@ pub fn apply_filters(
 
                 "starts_with" => {
                     let prefix = value.as_str().ok_or_else(|| {
-                        SdkError::InvalidInput("Value must be a string for 'starts_with'".to_string())
+                        SdkError::InvalidInput(
+                            "Value must be a string for 'starts_with'".to_string(),
+                        )
                     })?;
                     filtered
                         .into_iter()
                         .filter(|tx| {
-                            tx.details[field]
-                                .as_str()
+                            tx.details
+                                .get(field)
+                                .and_then(|v| v.as_str())
                                 .map_or(false, |v| v.starts_with(prefix))
                         })
                         .collect()
@@ -465,8 +510,9 @@ pub fn apply_filters(
                     filtered
                         .into_iter()
                         .filter(|tx| {
-                            tx.details[field]
-                                .as_str()
+                            tx.details
+                                .get(field)
+                                .and_then(|v| v.as_str())
                                 .map_or(false, |v| v.ends_with(suffix))
                         })
                         .collect()
@@ -488,3 +534,4 @@ pub fn apply_filters(
         ))
     }
 }
+

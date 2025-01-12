@@ -444,11 +444,11 @@ impl SWqueryClient {
                 //     let filtered_transactions = apply_filters(transactions, &filters)?;
                 //     response = to_value_response(filtered_transactions).unwrap();
                 // } else {
-                    // Format error response according to template
-                    response = json!({
-                        "response": "We recognized your request as a Solana RPC query, but no implemented method is available.",
-                        "status": "error"
-                    });
+                // Format error response according to template
+                response = json!({
+                    "response": "We recognized your request as a Solana RPC query, but no implemented method is available.",
+                    "status": "error"
+                });
                 // }
             }
         };
@@ -456,9 +456,12 @@ impl SWqueryClient {
         // Apply filters if they exist and response contains transactions
         if let Some(filters) = filters.as_array() {
             if !filters.is_empty() {
-                if let Ok(transactions) = serde_json::from_value::<Vec<FullTransaction>>(response.clone()) {
+                if let Ok(transactions) =
+                    serde_json::from_value::<Vec<FullTransaction>>(response.clone())
+                {
                     println!("Applying filters to {} transactions", transactions.len());
-                    let filtered_transactions = apply_filters(transactions, &Value::Array(filters.to_vec()))?;
+                    let filtered_transactions =
+                        apply_filters(transactions, &Value::Array(filters.to_vec()))?;
                     response = serde_json::to_value(filtered_transactions)
                         .map_err(|e| SdkError::ParseError(e.to_string()))?;
                 }
@@ -518,6 +521,8 @@ impl SWqueryClient {
         }
 
         println!("Total transactions fetched: {}", transactions.len());
+        // println!("Transactions: {:#?}", transactions);
+
         Ok(transactions)
     }
 
