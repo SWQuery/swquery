@@ -6,6 +6,7 @@ const nextConfig: NextConfig = {
 			"via.placeholder.com",
 			"assets.coingecko.com",
 			"cdn.helius-rpc.com",
+			"ipfs.io",
 		],
 	},
 };

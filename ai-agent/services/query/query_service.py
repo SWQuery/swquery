@@ -48,12 +48,11 @@ def query_generator_openai(user_input: str, wallet: str):
         "   The `details` object in the `FullTransaction` model includes the following fields:\n"
         "   - `fee_payer`: The public key of the fee payer (type: `String` or `null`).\n"
         "   - `fee_amount`: The fee paid for the transaction (type: `Number`, representing lamports).\n"
-        "   - `transfers`: An array of objects describing asset transfers. Each transfer object contains:\n"
-        "       - `mint`: The asset mint address (type: `String`).\n"
-        "       - `amount`: The amount transferred (type: `String`, representing a decimal number).\n"
-        "       - `decimals`: The number of decimal places for the asset (type: `Number`).\n"
-        "       - `metadata`: Additional metadata for the asset (type: `Object` or `null`).\n"
-        "       - `direction`: The direction of the transfer (type: `String`, values: `\"in\"`, `\"out\"`).\n\n"
+        "   - `mint`: The asset mint address (type: `String`).\n"
+        "   - `amount`: The amount transferred (type: `String`, representing a decimal number).\n"
+        "   - `decimals`: The number of decimal places for the asset (type: `Number`).\n"
+        "   - `metadata`: Additional metadata for the asset (type: `Object` or `null`).\n"
+        "   - `direction`: The direction of the transfer (type: `String`, values: `\"in\"`, `\"out\"`).\n\n"
         "   Additional fields in the `FullTransaction` model:\n"
         "   - `status`: The transaction status (type: `String`, e.g., `\"success\"`, `\"failed\"`).\n"
         "   - `timestamp`: The transaction timestamp (type: `Number`, representing seconds since epoch).\n"
@@ -132,8 +131,6 @@ def query_generator_openai(user_input: str, wallet: str):
         "         \"status\": \"error\"\n"
         "     }\n"
     )
-
-
 
     response = openAIClient.chat.completions.create(
         model="gpt-4o",

@@ -93,10 +93,10 @@ async def generate_query_route(
 async def generate_visualization_route(
     body: VisualizationBody  # { "jsonReturned": "{\"abc\":\"abc\"}" }
 ):
-    # result = generate_visualization(body.jsonReturned, body.question)
-    result = {
-        "result": "",
-        "tokens": 10765
-    }
+    result = generate_visualization(body.jsonReturned, body.question)
+    # result = {
+    # "result": "",
+    # "tokens": 10765
+    # }
 
     return result

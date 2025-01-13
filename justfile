@@ -44,6 +44,11 @@ run-server:
     @echo "Running Server..."
     cd server && cargo run --release
 
+# Run-watch
+run-watch:
+    @echo "Running Server with watch..."
+    cd server && cargo watch -x 'run --release'
+
 # Run Frontend
 run-frontend:
     @echo "Running Frontend..."

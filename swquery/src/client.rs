@@ -455,15 +455,18 @@ impl SWqueryClient {
 
         // Apply filters if they exist and response contains transactions
         if let Some(filters) = filters.as_array() {
-            if !filters.is_empty() {
+            println!("Filters: {:#?}", filters);
+            if !filters.is_empty() && !response.is_null() {
                 if let Ok(transactions) =
                     serde_json::from_value::<Vec<FullTransaction>>(response.clone())
                 {
-                    println!("Applying filters to {} transactions", transactions.len());
-                    let filtered_transactions =
-                        apply_filters(transactions, &Value::Array(filters.to_vec()))?;
-                    response = serde_json::to_value(filtered_transactions)
-                        .map_err(|e| SdkError::ParseError(e.to_string()))?;
+                    if !transactions.is_empty() {
+                        println!("Applying filters to {} transactions", transactions.len());
+                        let filtered_transactions =
+                            apply_filters(transactions, &Value::Array(filters.to_vec()))?;
+                        response = serde_json::to_value(filtered_transactions)
+                            .map_err(|e| SdkError::ParseError(e.to_string()))?;
+                    }
                 }
             }
         }
