@@ -15,6 +15,7 @@ pub struct QueryRequest {
     #[serde(rename = "inputUser")]
     pub input_user: String,
     pub address: String,
+    pub openai_key: String,
 }
 
 #[derive(Deserialize, Serialize, Debug)]
@@ -108,14 +109,15 @@ pub async fn generate_query(
     Json(mut payload): Json<QueryRequest>,
 ) -> Result<(StatusCode, Json<QueryResponse>), (StatusCode, String)> {
     println!("Generating query");
-    let api_key = headers
-        .get("x-api-key")
-        .and_then(|v| v.to_str().ok())
-        .ok_or((StatusCode::UNAUTHORIZED, "Missing API key".to_string()))?;
+    // let api_key = headers
+    //     .get("x-api-key")
+        // .and_then(|v| v.to_str().ok())
+        // .ok_or((StatusCode::UNAUTHORIZED, "Missing API key".to_string()))?;
 
     // println!("Getting user info");
     // let credit = fetch_credit_info(&pool, api_key).await?;
 
+    println!("Sending query request");
     let query_response = send_query_request(&mut payload).await?;
 
     // if credit.2 < query_response.tokens {

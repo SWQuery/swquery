@@ -30,8 +30,11 @@ class VisualizationBody(BaseModel):
 async def generate_query_route(
     body: QueryBody
 ):
-    result = query_generator_openai(body.inputUser, body.address, body.openai_key)
-    
+    print("Incoming request: ", body)
+
+    result = query_generator_openai(
+        body.inputUser, body.address, body.openai_key)
+
     print("Result: ", result)
 
     return result
@@ -41,6 +44,7 @@ async def generate_query_route(
 async def generate_visualization_route(
     body: VisualizationBody
 ):
-    result = generate_visualization(body.jsonReturned, body.question, body.openai_key)
+    result = generate_visualization(
+        body.jsonReturned, body.question, body.openai_key)
 
     return result

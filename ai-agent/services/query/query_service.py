@@ -6,9 +6,7 @@ import json
 def query_generator(input: str):
     return input + " generated"
 
-
 def query_generator_openai(user_input: str, wallet: str, key_openai: str):
-
     openAIClient = OpenAI(
         api_key=key_openai,
     )
@@ -156,7 +154,6 @@ def generate_visualization(input_json: str, question: str, key_openai: str) -> D
     openAIClient = OpenAI(
         api_key=key_openai,
     )
-
     """
     Generate a Markdown visualization from JSON input using OpenAI's GPT-4.
 

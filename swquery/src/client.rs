@@ -6,7 +6,7 @@ use {
     tracing::error,
 };
 
-const AGENT_API_URL: &str = "http://localhost:5500/agent/generate-query";
+const AGENT_API_URL: &str = "http://0.0.0.0:5500/agent/generate-query";
 
 /// Enum to represent the Solana network.
 #[derive(Debug, Clone, Copy, Default)]
@@ -146,6 +146,8 @@ impl SWqueryClient {
     /// A JSON value representing the RPC response, or an error if something
     /// went wrong.
     pub async fn query(&self, input: &str, pubkey: &str) -> Result<Value, SdkError> {
+        println!("Querying...\nInput: {}\nPubkey: {}\nHelius Key: {}\nOpenAI Key: {}", input, pubkey, self.helius_key, self.openai_key);
+
         // Send the request to the Agent API
         let payload = json!({
             "inputUser": input,

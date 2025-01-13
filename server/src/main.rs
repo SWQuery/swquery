@@ -55,11 +55,11 @@ async fn main() {
         .nest("/agent", agent_router)
         .nest("/chatbot", chatbot_router)
         .with_state(pool)
-        .layer(cors);
-//     .layer(from_fn_with_state(
-//     rate_limiter.clone(),
-//     middlewares::rate_limiter::rate_limit_middleware,
-// ));
+        .layer(cors)
+        .layer(from_fn_with_state(
+        rate_limiter.clone(),
+        middlewares::rate_limiter::rate_limit_middleware,
+    ));
 
     let listener = tokio::net::TcpListener::bind("0.0.0.0:5500").await.unwrap();
 
