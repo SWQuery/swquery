@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
 import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
@@ -21,9 +22,8 @@ import { useForm } from "react-hook-form";
 
 const SWQUERY_MINT_ADDRESS = "EwdcspW8mEjp4UswrcjmHPV3Y4GdGQPMG6RMTDV2pump";
 const RPC_URL =
-	"https://mainnet.helius-rpc.com/?api-key=1d75bc40-7ebe-49bf-9cdd-6ecf3a209a11";
+	"https://mainnet.helius-rpc.com/?api-key=421c3f90-610f-4118-85cf-5e8f6f9caad1";
 
-// Funções de validação e formatação das keys
 const validateOpenAIKey = (value: string) => {
 	const pattern = /^sk-proj-/;
 	return pattern.test(value);
@@ -56,7 +56,6 @@ export const Navbar = () => {
 	const [, setShowAccessModal] = useState(false);
 	const [swqueryBalance, setSwqueryBalance] = useState<number | null>(null);
 
-	// Estados e lógica para configurações
 	const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 	const [openAIKey, setOpenAIKey] = useState("");
 	const [heliusKey, setHeliusKey] = useState("");
@@ -107,7 +106,6 @@ export const Navbar = () => {
 				);
 				setSwqueryBalance(Number(accountInfo.amount));
 			} catch (error) {
-				console.error("Error fetching SWQUERY balance:", error);
 				setSwqueryBalance(null);
 			}
 		};
@@ -115,7 +113,6 @@ export const Navbar = () => {
 		fetchBalance();
 	}, [connected, publicKey]);
 
-	// Carregando as API Keys dos cookies ao montar o componente
 	useEffect(() => {
 		const openai_key = getCookie("openai_key") as string;
 		const helius_key = getCookie("helius_key") as string;
@@ -125,7 +122,6 @@ export const Navbar = () => {
 		}
 	}, []);
 
-	// Handlers para as alterações das keys
 	const handleOpenAIChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 		const value = e.target.value;
 		setOpenAIKey(value);
@@ -167,7 +163,6 @@ export const Navbar = () => {
 			});
 			setIsSettingsOpen(false);
 		} catch (error) {
-			console.error(error);
 			toast.error("Failed to save settings");
 		}
 	};
@@ -226,76 +221,74 @@ export const Navbar = () => {
 						</motion.div>
 					</Link>
 
-						<div className="hidden md:flex items-center gap-3">
-							<Button asChild className={buttonBaseClasses}>
-								<a
-									href="https://bretasarthur1.gitbook.io/swquery/"
-									target="_blank"
-									rel="noopener noreferrer"
-								>
-									<Book className="mr-2 h-4 w-4" />
-									Docs
-								</a>
-							</Button>
-
-							<WalletMultiButton
-								startIcon={<Wallet className="mr-2 h-5 w-5" />}
-								style={walletButtonStyle}
+					<div className="hidden md:flex items-center gap-3">
+						<Button asChild className={buttonBaseClasses}>
+							<a
+								href="https://bretasarthur1.gitbook.io/swquery/"
+								target="_blank"
+								rel="noopener noreferrer"
 							>
-								{connected ? (
-									swqueryBalance !== null ? (
-										<motion.div
-											className="text-base text-white rounded-lg shadow"
-											initial={{ opacity: 0, y: -20 }}
-											animate={{ opacity: 1, y: 0 }}
-											transition={{ duration: 0.6 }}
-										>
-											$SWQUERY{" "}
-											{swqueryBalance.toLocaleString()}
-										</motion.div>
-									) : (
-										"Connected"
-									)
+								<Book className="mr-2 h-4 w-4" />
+								Docs
+							</a>
+						</Button>
+
+						<WalletMultiButton
+							startIcon={<Wallet className="mr-2 h-5 w-5" />}
+							style={walletButtonStyle}
+						>
+							{connected ? (
+								swqueryBalance !== null ? (
+									<motion.div
+										className="text-base text-white rounded-lg shadow"
+										initial={{ opacity: 0, y: -20 }}
+										animate={{ opacity: 1, y: 0 }}
+										transition={{ duration: 0.6 }}
+									>
+										$SWQUERY{" "}
+										{swqueryBalance.toLocaleString()}
+									</motion.div>
 								) : (
-									"Connect Wallet"
-								)}
-							</WalletMultiButton>
-							{!isTokenLoading && pathname !== "/chatbot" && (
-								<>
-									{hasAccess && (
-										<Button
-											onClick={() => setIsModalOpen(true)}
-											className={buttonBaseClasses}
-										>
-											Join Chatbot Alpha
-										</Button>
-									)}
-								</>
+									"Connected"
+								)
+							) : (
+								"Connect Wallet"
 							)}
-							<Button
-								onClick={() =>
-									setIsSettingsOpen(!isSettingsOpen)
-								}
-								className={buttonBaseClasses}
-								aria-label="Configurações"
-							>
-								<Cog size={16} />
-							</Button>
-						</div>
-
-						<div className="md:hidden">
-							<Button
-								className={buttonBaseClasses}
-								onClick={() =>
-									setIsMobileMenuOpen(!isMobileMenuOpen)
-								}
-							>
-								{isMobileMenuOpen ? (
-									<X size={28} />
-								) : (
-									<Menu size={28} />
+						</WalletMultiButton>
+						{!isTokenLoading && pathname !== "/chatbot" && (
+							<>
+								{hasAccess && (
+									<Button
+										onClick={() => setIsModalOpen(true)}
+										className={buttonBaseClasses}
+									>
+										Join Chatbot Alpha
+									</Button>
 								)}
-							</Button>
+							</>
+						)}
+						<Button
+							onClick={() => setIsSettingsOpen(!isSettingsOpen)}
+							className={buttonBaseClasses}
+							aria-label="Configurações"
+						>
+							<Cog size={16} />
+						</Button>
+					</div>
+
+					<div className="md:hidden">
+						<Button
+							className={buttonBaseClasses}
+							onClick={() =>
+								setIsMobileMenuOpen(!isMobileMenuOpen)
+							}
+						>
+							{isMobileMenuOpen ? (
+								<X size={28} />
+							) : (
+								<Menu size={28} />
+							)}
+						</Button>
 					</div>
 				</div>
 			</nav>
@@ -310,21 +303,19 @@ export const Navbar = () => {
 				onClose={() => setIsModalOpen(false)}
 			/>
 
-			{/* Interface de Configurações */}
 			{isSettingsOpen && (
 				<div className="fixed top-0 left-0 right-0 bottom-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
 					<div className="relative bg-gradient-to-br from-zinc-800 to-black rounded-lg shadow-lg p-8 w-11/12 max-w-md">
-						{/* Botão de fechar no topo direito */}
 						<button
 							onClick={() => setIsSettingsOpen(false)}
 							className="absolute top-4 right-4 text-gray-400 hover:text-white"
-							aria-label="Fechar Configurações"
+							aria-label="Close Settings"
 						>
 							<X size={20} />
 						</button>
 
 						<h2 className="text-2xl text-white mb-6">
-							Configurações de API Keys
+							API Key Settings
 						</h2>
 						<form
 							onSubmit={handleSubmit(() => {
@@ -353,12 +344,10 @@ export const Navbar = () => {
 								/>
 								<button
 									type="button"
-									className="absolute right-4 top-8"
+									className="absolute right-4 top-10"
 									onClick={() => changeVisibility("openai")}
 									aria-label={
-										openaiVisible
-											? "Ocultar Key"
-											: "Mostrar Key"
+										openaiVisible ? "Hide Key" : "Show Key"
 									}
 								>
 									{openaiVisible ? (
@@ -399,9 +388,7 @@ export const Navbar = () => {
 									className="absolute right-4 top-8"
 									onClick={() => changeVisibility("helius")}
 									aria-label={
-										heliusVisible
-											? "Ocultar Key"
-											: "Mostrar Key"
+										heliusVisible ? "Hide Key" : "Show Key"
 									}
 								>
 									{heliusVisible ? (
@@ -422,7 +409,7 @@ export const Navbar = () => {
 								className="w-full bg-gradient-to-r from-[#9C88FF] to-[#6C5CE7] hover:opacity-90 text-white"
 								disabled={!isOpenAIValid || !isHeliusValid}
 							>
-								Salvar Configurações
+								Save Settings
 							</Button>
 						</form>
 					</div>

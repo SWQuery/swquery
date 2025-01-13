@@ -9,16 +9,13 @@ const BuyCredits = () => {
   const handleBuyCredits = async () => {
     try {
       setStatus("Enviando transação...");
-      console.log("Comprando créditos...");
 
       const buyerKeypair = Keypair.generate();
 
-      console.log("Chave do comprador:", buyerKeypair.publicKey.toString());
 
       const buyerTokenAccount = new PublicKey(
         "9Ld2bRLUC7PrP8NSHK3WgBe3khHgtxAnjDr79YJHDxKF"
       );
-      console.log("Conta token do comprador:", buyerTokenAccount.toString());
 
       const amountUSDC = 10;
 
@@ -29,7 +26,6 @@ const BuyCredits = () => {
       );
       setStatus(`Sucesso! Transação: ${signature}`);
     } catch (error) {
-      console.log("Erro ao comprar créditos:", error);
       setStatus(`Erro: ${error}`);
     }
   };

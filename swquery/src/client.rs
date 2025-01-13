@@ -6,7 +6,9 @@ use {
     tracing::error,
 };
 
-const AGENT_API_URL: &str = "http://0.0.0.0:5500/agent/generate-query";
+const AGENT_API_URL: &str = 
+    // "http://0.0.0.0:5500/agent/generate-query";
+    "https://api.swquery.xyz/agent/generate-query";
 
 /// Enum to represent the Solana network.
 #[derive(Debug, Clone, Copy, Default)]

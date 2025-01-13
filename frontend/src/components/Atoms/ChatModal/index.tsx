@@ -77,7 +77,7 @@ export const ChatModal = ({ isOpen, onClose }: ChatModalProps) => {
 				router.push("/chatbot");
 			}
 		} catch (error) {
-			console.error(error);
+			// console.logerror(error);
 			toast.error("An error occurred while setting up the keys.");
 		}
 	};

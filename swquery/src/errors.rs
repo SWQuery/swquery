@@ -14,9 +14,6 @@ pub enum SdkError {
     #[error("HTTP error: {0}")]
     HttpError(#[from] reqwest::Error),
 
-    #[error("Transformer error: {0}")]
-    TransformerError(#[from] crate::llm::TransformerError),
-
     #[error("Network error occurred: {0}")]
     NetworkError(String),
 

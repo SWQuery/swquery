@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const api = axios.create({
-  baseURL: "http://localhost:5500",
+  baseURL: "https://api.swquery.xyz",
   headers: {
     "Content-Type": "application/json",
   },

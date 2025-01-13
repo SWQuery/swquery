@@ -14,7 +14,7 @@ export const buyCredits = async (user_pubkey: string, amount: number) => {
 		);
 		return response.data;
 	} catch (error: unknown) {
-		console.error("Error buying credits:", error);
+		// console.logerror("Error buying credits:", error);
 		throw error;
 	}
 };
@@ -33,7 +33,7 @@ export const refundCredits = async (user_pubkey: string, amount: number) => {
 		);
 		return response.data;
 	} catch (error) {
-		console.error("Error refunding credits:", error);
+		// console.logerror("Error refunding credits:", error);
 		throw error;
 	}
 };

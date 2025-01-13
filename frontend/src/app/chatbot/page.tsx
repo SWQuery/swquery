@@ -4,7 +4,7 @@
 import { useEffect, useState, useMemo } from "react";
 import { Button } from "@/components/Atoms/Buttons/button";
 import { cn } from "@/lib/utils";
-import { ArrowRight, Loader2, X } from "lucide-react"; // Importação do ícone 'X'
+import { ArrowRight, Loader2, MessageSquarePlus, X } from "lucide-react";
 import { TransactionPreview } from "@/components/Molecules/TransactionPrev/TransactionPreview";
 import { Navbar } from "@/components/Molecules/Navbar";
 import { motion, AnimatePresence } from "framer-motion";
@@ -17,7 +17,6 @@ import { Connection, PublicKey } from "@solana/web3.js";
 import { getAccount, getAssociatedTokenAddress } from "@solana/spl-token";
 import { useRouter } from "next/navigation";
 import { getCookie } from "cookies-next/client";
-import TutorialModal from "@/components/Atoms/TutorialModal";
 import { useForm } from "react-hook-form";
 
 async function interactChatbot(input_user: string, address: string) {
@@ -30,7 +29,7 @@ async function interactChatbot(input_user: string, address: string) {
 		}
 
 		const response = await api.post(
-			"http://0.0.0.0:5500/chatbot/interact", // Use the service name 'agent'
+			"https://api.swquery.xyz/chatbot/interact",
 			{
 				input_user,
 				address,
@@ -40,13 +39,12 @@ async function interactChatbot(input_user: string, address: string) {
 			{
 				headers: {
 					"Content-Type": "application/json",
-					"x-api-key": "WDAO4Z1Z503DWJH7060GIYGR0TWIIPBM", // Ensure this matches the curl command
+					"x-api-key": "WDAO4Z1Z503DWJH7060GIYGR0TWIIPBM",
 				},
 			}
 		);
 		return response.data;
 	} catch (error: unknown) {
-		console.error("Error interacting with chatbot:", error);
 		throw error;
 	}
 }
@@ -69,10 +67,8 @@ export default function ChatInterface() {
 	const [fetchedTransactions, setFetchedTransactions] = useState<any[]>([]);
 	const [isLoading, setIsLoading] = useState(false);
 	const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-	const [showTutorial, setShowTutorial] = useState(false);
 
 	const { connected, publicKey } = useWallet();
-	const router = useRouter(); // Mova o useRouter para o início do componente
 
 	const currentChat = chats.find((chat) => chat.id === currentChatId);
 
@@ -102,7 +98,6 @@ export default function ChatInterface() {
 	}
 
 	async function handleSend() {
-		console.log("handleSend");
 		if (!prompt.trim()) return;
 		if (!connected || !publicKey) {
 			toast.error("You need to have a connected wallet!");
@@ -127,8 +122,8 @@ export default function ChatInterface() {
 			const heliusTxs = Array.isArray(json.response) ? json.response : [];
 			setFetchedTransactions(heliusTxs);
 			setPrompt("");
-		} catch (error) {
-			console.error("Error sending prompt:", error);
+			// eslint-disable-next-line @typescript-eslint/no-unused-vars
+		} catch (err) {
 			toast.error("There was an error processing your request.");
 		} finally {
 			setIsLoading(false);
@@ -139,7 +134,7 @@ export default function ChatInterface() {
 
 	const { hasAccess, isLoading: isAccessLoading } = useTokenAccess(
 		"EwdcspW8mEjp4UswrcjmHPV3Y4GdGQPMG6RMTDV2pump",
-		"https://mainnet.helius-rpc.com/?api-key=1d75bc40-7ebe-49bf-9cdd-6ecf3a209a11"
+		"https://mainnet.helius-rpc.com/?api-key=421c3f90-610f-4118-85cf-5e8f6f9caad1"
 	);
 
 	const LoadingState = () => (
@@ -153,9 +148,10 @@ export default function ChatInterface() {
 
 	const { register, handleSubmit } = useForm();
 
-	// Função para redirecionar para a página inicial
 	const handleCloseChat = () => {
-		router.push("/"); // Altere para a rota da página inicial do chatbot se for diferente
+		setCurrentChatId(null);
+		setFetchedTransactions([]);
+		setPrompt("");
 	};
 
 	return (
@@ -212,21 +208,27 @@ export default function ChatInterface() {
 									{currentChat ? (
 										// Chat view content
 										<motion.div
-											key="chat-view" 
+											key="chat-view"
 											initial={{ opacity: 0, y: 10 }}
 											animate={{ opacity: 1, y: 0 }}
 											exit={{ opacity: 0, y: -10 }}
 											transition={{ duration: 0.3 }}
-											className="flex flex-col md:flex-row h-full relative"
+											className="flex flex-col md:flex-row h-full relative" // Adicionado 'relative' para posicionamento absoluto do botão
 										>
-											{/* Chat view content... */}
 											{/* Botão de fechar chat */}
 											<Button
 												onClick={handleCloseChat}
-												className="absolute top-4 right-4 bg-transparent p-2 rounded-full hover:bg-gray-800 transition-colors z-50" // Ajustes de estilo
+												className="absolute top-4 right-4 bg-transparent p-3 rounded-full hover:bg-gray-800 transition-colors z-50" // Aumentado o padding
 												aria-label="Close Chat"
 											>
-												<X className="w-6 h-6 text-gray-400 hover:text-white" />
+												<X className="w-8 h-8 text-gray-400 hover:text-white" />
+											</Button>
+											<Button
+												onClick={handleCloseChat}
+												className="fixed left-1/2 transform -translate-x-1/2 px-4 py-2 bottom-4 bg-gradient-to-r from-[#9C88FF] to-[#6C5CE7] hover:scale-110 text-white transition-transform z-50"
+											>
+												<MessageSquarePlus size={16} />
+												New Chat
 											</Button>
 
 											<div className="w-full md:w-1/2 h-1/2 md:h-full overflow-y-auto">
@@ -474,7 +476,8 @@ export default function ChatInterface() {
 																		"message"
 																	)}
 																	placeholder="Start a new conversation..."
-																	className="rounded-lg w-full h-44 text-md bg-[#1A1A1A] border-[#1A1A1A] focus:outline-none focus:ring-0 transition-shadow p-4 resize-none focus:shadow-[0_0_15px_#9C88FF55]"
+																	className="rounded-lg w-full h-64 text-md bg-[#1A1A1A] border-[#1A1A1A] focus:outline-none focus:ring-0 transition-shadow p-4 resize-none focus:shadow-[0_0_15px_#9C88FF55]"
+																	rows={8}
 																	onChange={(
 																		e
 																	) =>
@@ -491,19 +494,21 @@ export default function ChatInterface() {
 																	}
 																	/2000
 																</div>
-																<Button
-																	type="submit"
-																	className="absolute right-3 bottom-3 bg-gradient-to-r from-[#9C88FF] to-[#6C5CE7] hover:scale-105 text-white transition-transform"
-																	disabled={
-																		isLoading
-																	}
-																>
-																	{isLoading ? (
-																		<Loader2 className="w-5 h-5 animate-spin" />
-																	) : (
-																		<ArrowRight className="w-5 h-5" />
-																	)}
-																</Button>
+																<div className="flex justify-end mt-2">
+																	<Button
+																		type="submit"
+																		className="bg-gradient-to-r from-[#9C88FF] to-[#6C5CE7] hover:scale-105 text-white transition-transform"
+																		disabled={
+																			isLoading
+																		}
+																	>
+																		{isLoading ? (
+																			<Loader2 className="w-5 h-5 animate-spin" />
+																		) : (
+																			<ArrowRight className="w-5 h-5" />
+																		)}
+																	</Button>
+																</div>
 															</form>
 														</div>
 													</div>
@@ -593,11 +598,6 @@ export default function ChatInterface() {
 					}
 				}
 			`}</style>
-
-			<TutorialModal
-				isOpen={showTutorial}
-				onClose={() => setShowTutorial(false)}
-			/>
 		</div>
 	);
 }
