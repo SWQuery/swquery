@@ -1,12 +1,14 @@
 mod db;
+mod middlewares;
 mod models;
 mod routes;
 
 use {
     axum::{
+        http::Method,
+        middleware::from_fn_with_state,
         routing::{get, post},
         Router,
-        http::Method,
     },
     db::connect,
     dotenvy::dotenv,
@@ -16,10 +18,11 @@ use {
         credits::{buy_credits, refund_credits},
         users::{create_user, get_user_by_pubkey, get_users},
     },
+    std::time::Duration,
     tower_http::cors::{Any, CorsLayer},
 };
 
-pub const AGENT_API_URL: &str = "http://localhost:8000";
+pub const AGENT_API_URL: &str = "http://agent:8000";
 
 #[tokio::main]
 async fn main() {
@@ -32,6 +35,8 @@ async fn main() {
         .allow_origin(Any)
         .allow_methods([Method::GET, Method::POST, Method::OPTIONS])
         .allow_headers(Any);
+
+    let rate_limiter = middlewares::rate_limiter::RateLimiter::new(100, Duration::from_secs(60));
 
     let agent_router = Router::new()
         .route("/generate-query", post(generate_query))
@@ -50,7 +55,11 @@ async fn main() {
         .nest("/agent", agent_router)
         .nest("/chatbot", chatbot_router)
         .with_state(pool)
-        .layer(cors);
+        .layer(cors)
+        .layer(from_fn_with_state(
+        rate_limiter.clone(),
+        middlewares::rate_limiter::rate_limit_middleware,
+    ));
 
     let listener = tokio::net::TcpListener::bind("0.0.0.0:5500").await.unwrap();
 

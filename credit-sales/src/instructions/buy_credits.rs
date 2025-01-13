@@ -5,7 +5,8 @@ use {
     },
     pinocchio::{
         account_info::AccountInfo, program_error::ProgramError, pubkey::Pubkey, ProgramResult,
-    }, pinocchio_token::instructions::Transfer,
+    },
+    pinocchio_token::instructions::Transfer,
 };
 
 pub fn process_buy_credits_instruction(accounts: &[AccountInfo], data: &[u8]) -> ProgramResult {

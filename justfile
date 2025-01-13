@@ -42,7 +42,12 @@ build-all:
 # Run Server
 run-server:
     @echo "Running Server..."
-    cargo run -p server
+    cd server && cargo run --release
+
+# Run-watch
+run-watch:
+    @echo "Running Server with watch..."
+    cd server && cargo watch -x 'run --release'
 
 # Run Frontend
 run-frontend:
@@ -114,7 +119,7 @@ clean-all:
 # Check and Format All
 check-fmt:
     @echo "Checking and formatting..."
-    cargo check -p sdk
+    cargo check -p swquery
     cargo check --manifest-path credit-sales/Cargo.toml
     cargo check -p server
     cargo +nightly fmt --all

@@ -1,7 +1,7 @@
 [workspace]
 resolver = "2"
-members = ["credit-sales", "server"]
-exclude = ["swquery", "frontend"]
+members = ["credit-sales"]
+exclude = ["swquery", "frontend","server"]
 
 [workspace.package]
 edition = "2021"

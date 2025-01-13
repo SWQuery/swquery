@@ -8,13 +8,13 @@ export const buyCredits = async (user_pubkey: string, amount: number) => {
 			{
 				headers: {
 					"Content-Type": "application/json",
-					"x-api-key": "WDAO4Z1Z503DWJH7060GIYGR0TWIIPBM",
+					"x-api-key": "WDAO4Z1Z503DWJH7060GIYGR0TWIIPBM", // TODO: Not needed anymore
 				},
 			}
 		);
 		return response.data;
 	} catch (error: unknown) {
-		console.error("Error buying credits:", error);
+		// console.logerror("Error buying credits:", error);
 		throw error;
 	}
 };
@@ -27,13 +27,13 @@ export const refundCredits = async (user_pubkey: string, amount: number) => {
 			{
 				headers: {
 					"Content-Type": "application/json",
-					"x-api-key": "WDAO4Z1Z503DWJH7060GIYGR0TWIIPBM",
+					"x-api-key": "WDAO4Z1Z503DWJH7060GIYGR0TWIIPBM", // TODO: Not needed anymore
 				},
 			}
 		);
 		return response.data;
 	} catch (error) {
-		console.error("Error refunding credits:", error);
+		// console.logerror("Error refunding credits:", error);
 		throw error;
 	}
 };

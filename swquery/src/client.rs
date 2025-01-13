@@ -1,12 +1,14 @@
 use {
     crate::{errors::SdkError, models::*, utils::*},
     reqwest::Client,
-    serde_json::{json, Value},
+    serde_json::{self, json, Value},
     std::time::Duration,
     tracing::error,
 };
 
-const AGENT_API_URL: &str = "http://localhost:5500/agent/generate-query";
+const AGENT_API_URL: &str = 
+    // "http://0.0.0.0:5500/agent/generate-query";
+    "https://api.swquery.xyz/agent/generate-query";
 
 /// Enum to represent the Solana network.
 #[derive(Debug, Clone, Copy, Default)]
@@ -22,9 +24,9 @@ pub enum Network {
 #[derive(Debug)]
 pub struct SWqueryClient {
     /// The API key for the Agent server.
-    pub api_key: String,
+    pub openai_key: String,
     /// The Helius API key for RPC calls.
-    pub helius_api_key: String,
+    pub helius_key: String,
     /// The timeout for requests.
     pub timeout: Duration,
     /// The network to use for Helius RPC calls.
@@ -38,7 +40,7 @@ impl SWqueryClient {
     ///
     /// # Arguments
     ///
-    /// * `api_key` - The API key for the agent.
+    /// * `openai_api_key` - The API key for the agent.
     /// * `helius_api_key` - The API key for Helius RPC.
     /// * `timeout` - Optional request timeout, defaults to 5 seconds if None.
     /// * `network` - Optional network, defaults to Mainnet if None.
@@ -47,14 +49,14 @@ impl SWqueryClient {
     ///
     /// A new instance of SWqueryClient.
     pub fn new(
-        api_key: String,
-        helius_api_key: String,
+        openai_key: String,
+        helius_key: String,
         timeout: Option<Duration>,
         network: Option<Network>,
     ) -> Self {
         SWqueryClient {
-            api_key,
-            helius_api_key,
+            openai_key,
+            helius_key,
             timeout: timeout.unwrap_or(Duration::from_secs(5)),
             network: network.unwrap_or_default(),
             client: Client::builder()
@@ -69,18 +71,72 @@ impl SWqueryClient {
         match self.network {
             Network::Mainnet => format!(
                 "https://mainnet.helius-rpc.com/?api-key={}",
-                self.helius_api_key
+                self.helius_key
             ),
-            Network::Devnet => format!(
-                "https://devnet.helius-rpc.com/?api-key={}",
-                self.helius_api_key
-            ),
+            Network::Devnet => {
+                format!("https://devnet.helius-rpc.com/?api-key={}", self.helius_key)
+            }
         }
     }
 
-    /// Sends a query to the SWQuery Agent API, receives a response type and
-    /// parameters, and then invokes the appropriate RPC method based on the
-    /// response_type.
+    // /// Sends a query to the SWQuery Agent API, receives a response type and
+    // /// parameters, and then invokes the appropriate RPC method based on the
+    // pub async fn execute_generated_function(
+    //     &self,
+    //     filter_function: &str,
+    //     transactions: Vec<FullTransaction>,
+    // ) -> Result<Vec<FullTransaction>, SdkError> {
+    //     // Prepare the WASM engine
+    //     let engine = Engine::default();
+
+    //     // Compile the filter function as a module
+    //     let wasm_code = format!(
+    //         r#"
+    //         use serde_json::{{Value, json}};
+    //         use crate::FullTransaction;
+    //         pub fn filter(transactions: Vec<FullTransaction>) ->
+    // Vec<FullTransaction> {{             {}
+    //         }}
+    //         "#,
+    //         filter_function
+    //     );
+
+    //     let module = Module::new(&engine, wasm_code).map_err(|e| {
+    //         SdkError::Unexpected(format!("Failed to compile WASM module: {}", e))
+    //     })?;
+
+    //     // Create a new store
+    //     let mut store = Store::new(&engine, ());
+
+    //     // Serialize the transactions into JSON
+    //     let transactions_json = serde_json::to_string(&transactions).map_err(|e|
+    // {         SdkError::Unexpected(format!("Failed to serialize transactions:
+    // {}", e))     })?;
+
+    //     // Define the function in WASM
+    //     let instance = wasmtime::Instance::new(&mut store, &module,
+    // &[]).map_err(|e| {         SdkError::Unexpected(format!("Failed to create
+    // WASM instance: {}", e))     })?;
+
+    //     // Call the function
+    //     let filter_fn = instance.get_typed_func::<(String,), String>(&mut store,
+    // "filter")         .map_err(|e| SdkError::Unexpected(format!("Failed to
+    // retrieve 'filter' function: {}", e)))?;
+
+    //     // Execute the filter function
+    //     let filtered_transactions_json = filter_fn.call(&mut store,
+    // transactions_json).map_err(|e| {         SdkError::Unexpected(format!("
+    // Failed to execute 'filter': {}", e))     })?;
+
+    //     // Deserialize the JSON result back into `Vec<FullTransaction>`
+    //     let filtered_transactions: Vec<FullTransaction> =
+    // serde_json::from_str(&filtered_transactions_json).map_err(|e| {
+    //         SdkError::Unexpected(format!("Failed to deserialize filtered
+    // transactions: {}", e))     })?;
+
+    //     Ok(filtered_transactions)
+    // }
+
     ///
     /// # Arguments
     ///
@@ -92,21 +148,26 @@ impl SWqueryClient {
     /// A JSON value representing the RPC response, or an error if something
     /// went wrong.
     pub async fn query(&self, input: &str, pubkey: &str) -> Result<Value, SdkError> {
+        println!("Querying...\nInput: {}\nPubkey: {}\nHelius Key: {}\nOpenAI Key: {}", input, pubkey, self.helius_key, self.openai_key);
+
         // Send the request to the Agent API
         let payload = json!({
             "inputUser": input,
-            "address": pubkey
+            "address": pubkey,
+            "openai_key": self.openai_key
         });
 
+        println!("Sending request to Agent API: {:#?}", payload);
         let response = self
             .client
             .post(AGENT_API_URL)
-            .header("x-api-key", &self.api_key)
+            // .header("x-api-key", &self.openai_key)
             .json(&payload)
             .send()
             .await
             .map_err(|e| {
                 error!("Failed to send request to Agent: {:?}", e);
+                println!("Failed to send request to Agent: {:?}", e);
                 SdkError::RequestFailed
             })?;
 
@@ -129,6 +190,10 @@ impl SWqueryClient {
         })?;
         println!("Parsed result: {:#?}", result);
 
+        // Extract filters early
+        let filters = result["result"]["params"]["filters"].clone();
+        println!("Extracted filters: {:#?}", filters);
+
         let response_type = result["result"]["response"]
             .as_str()
             .ok_or_else(|| SdkError::Unexpected("Missing response field".to_string()))?;
@@ -140,6 +205,7 @@ impl SWqueryClient {
         println!("Params: {:#?}", params);
 
         // Handle all the supported RPC calls based on response_type
+        let mut response: serde_json::Value = serde_json::Value::Null;
         match response_type {
             "getRecentTransactions" => {
                 let address = get_optional_str_param(params, "address").unwrap_or_default();
@@ -150,8 +216,8 @@ impl SWqueryClient {
                 }
                 let days: u64 = get_optional_u64_param(params, "days", 1);
 
-                let response = self.get_recent_transactions(address, days).await?;
-                to_value_response(response)
+                let response_unparsed = self.get_recent_transactions(address, days).await?;
+                response = to_value_response(response_unparsed).unwrap();
             }
             "getSignaturesForAddressPeriod" => {
                 let address = get_optional_str_param(params, "address").unwrap_or_default();
@@ -164,21 +230,22 @@ impl SWqueryClient {
                 let from = get_optional_u64_param(params, "from", 0);
                 let to = get_optional_u64_param(params, "to", 0);
 
-                let response = self
+                let response_unparsed = self
                     .get_signatures_for_address(address, Some(from), Some(to))
                     .await?;
-                to_value_response(response)
+                response = to_value_response(response_unparsed).unwrap();
             }
             "getSignaturesForAddress" => {
                 let address = get_required_str_param(params, "address")?;
-                let response = self.get_signatures_for_address(address, None, None).await?;
-                to_value_response(response)
+                let response_unparsed =
+                    self.get_signatures_for_address(address, None, None).await?;
+                response = to_value_response(response_unparsed).unwrap();
             }
-            "getAssetsByOwner" => {
-                let owner = get_required_str_param(params, "owner")?;
-                let response = self.get_assets_by_owner(owner).await?;
-                to_value_response(response)
-            }
+            // "getAssetsByOwner" => {
+            //     let owner = get_required_str_param(params, "owner")?;
+            //     let response = self.get_assets_by_owner(owner).await?;
+            //     to_value_response(response)
+            // }
             // "getAssetsByCreator" => {
             //     let creator = get_required_str_param(params, "creator")?;
             //     let response = self.get_assets_by_creator(creator).await?;
@@ -327,12 +394,11 @@ impl SWqueryClient {
             //     let response = self.get_supply().await?;
             //     to_value_response(response)
             // }
-            "getTokenAccountBalance" => {
-                // let pubkey = get_required_str_param(params, "pubkey")?;
-                // let response = self.get_token_account_balance(pubkey).await?;
-                // to_value_response(response)
-                todo!()
-            }
+            // "getTokenAccountBalance" => {
+            //     let pubkey = get_required_str_param(params, "pubkey")?;
+            //     let response = self.get_token_account_balance(pubkey).await?;
+            //     to_value_response(response)
+            // }
             // "getTokenLargestAccounts" => {
             //     let mint = get_required_str_param(params, "mint")?;
             //     let response = self.get_token_largest_accounts(mint).await?;
@@ -374,11 +440,43 @@ impl SWqueryClient {
             //     let response = self.get_account_info(address).await?;
             //     to_value_response(response)
             // }
-            _ => Err(SdkError::Unexpected(format!(
-                "Unsupported method: {}",
-                response_type
-            ))),
+            _ => {
+                // // Check if it's a Solana RPC query with filters
+                // if result["result"].get("filters").is_some() {
+                //     let filters = result["result"]["filters"].clone();
+                //     let days = get_optional_u64_param(&result["result"], "days", 30);
+                //     let transactions = self.get_recent_transactions(pubkey, days).await?;
+                //     let filtered_transactions = apply_filters(transactions, &filters)?;
+                //     response = to_value_response(filtered_transactions).unwrap();
+                // } else {
+                // Format error response according to template
+                response = json!({
+                    "response": "We recognized your request as a Solana RPC query, but no implemented method is available.",
+                    "status": "error"
+                });
+                // }
+            }
+        };
+
+        // Apply filters if they exist and response contains transactions
+        if let Some(filters) = filters.as_array() {
+            println!("Filters: {:#?}", filters);
+            if !filters.is_empty() && !response.is_null() {
+                if let Ok(transactions) =
+                    serde_json::from_value::<Vec<FullTransaction>>(response.clone())
+                {
+                    if !transactions.is_empty() {
+                        println!("Applying filters to {} transactions", transactions.len());
+                        let filtered_transactions =
+                            apply_filters(transactions, &Value::Array(filters.to_vec()))?;
+                        response = serde_json::to_value(filtered_transactions)
+                            .map_err(|e| SdkError::ParseError(e.to_string()))?;
+                    }
+                }
+            }
         }
+
+        Ok(response)
     }
 
     /// Fetch recent transactions for the last 'n' days using Helius RPC.
@@ -417,8 +515,13 @@ impl SWqueryClient {
             }
 
             // Get full transaction details
-            match get_transaction_details_with_info(&self.client, &url, &signature_info.signature)
-                .await
+            match get_transaction_details_with_info(
+                &self.client,
+                &url,
+                &signature_info.signature,
+                &address,
+            )
+            .await
             {
                 Ok(transaction) => transactions.push(transaction),
                 Err(e) => eprintln!("Error getting transaction details: {}", e),
@@ -426,6 +529,8 @@ impl SWqueryClient {
         }
 
         println!("Total transactions fetched: {}", transactions.len());
+        // println!("Transactions: {:#?}", transactions);
+
         Ok(transactions)
     }
 

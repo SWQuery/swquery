@@ -15,7 +15,6 @@ export const CardItem: React.FC<CardItemProps> = ({
 	title,
 	description,
 	className = "",
-	// ...props
 }) => {
 	return (
 		<motion.div

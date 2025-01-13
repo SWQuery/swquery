@@ -3,55 +3,53 @@ import { Intro } from "@/components/Molecules/Landing/Intro";
 import { Section } from "@/components/Molecules/Landing/Section";
 import { Navbar } from "@/components/Molecules/Navbar";
 import { FeatureSection } from "@/components/Atoms/FeatureSection";
-import { SDKArchitectureSection  } from "@/components/Atoms/SDKArchitectureSection";
+import { SDKArchitectureSection } from "@/components/Atoms/SDKArchitectureSection";
 import { Wallet, Filter, BarChart } from "lucide-react";
 import { CoreFeaturesSection } from "@/components/Atoms/CoreFeaturesSection";
 
 export const Landing: React.FC = () => {
-    const itemsHowItWorks = [
-        {
-            Icon: Wallet,
-            iconColor: "#9945FF",
-            title: "Connect Your Wallet",
-            description:
-                "Use your Solana wallet to integrate with the SWquery system.",
-        },
-        {
-            Icon: Filter,
-            iconColor: "#9945FF",
-            title: "Select Data",
-            description:
-                "Choose the transactions you want to query and filter.",
-        },
-        {
-            Icon: BarChart,
-            iconColor: "#9945FF",
-            title: "Visualize Results",
-            description:
-                "Access intuitive visualizations and personalized reports.",
-        },
-    ];
+  const itemsHowItWorks = [
+    {
+      Icon: Wallet,
+      iconColor: "#9945FF",
+      title: "Connect Your Wallet",
+      description:
+        "Use your Solana wallet to integrate with the SWquery system.",
+    },
+    {
+      Icon: Filter,
+      iconColor: "#9945FF",
+      title: "Select Data",
+      description: "Choose the transactions you want to query and filter.",
+    },
+    {
+      Icon: BarChart,
+      iconColor: "#9945FF",
+      title: "Visualize Results",
+      description: "Access intuitive visualizations and personalized reports.",
+    },
+  ];
 
-    return (
-        <div className="min-h-screen bg-gradient-to-b from-[#0A0A0A] to-[#101010] text-white">
-            <Navbar />
-            <div className="pt-28 md:pt-40">
-                <Intro />
-                <Section
-                    title="How It Works"
-                    items={itemsHowItWorks}
-                    columns={3}
-                    textAlign="center"
-                />
-								<SDKArchitectureSection/>
-								<CoreFeaturesSection /> {/* Nova seção adicionada aqui */}
-                <FeatureSection
-                    title="Query Wallet Transactions"
-                    subtitle="Real-Time Data Retrieval."
-                    description="Leverage the SWquery SDK to fetch and analyze wallet transactions instantly."
-                    buttonText="View Documentation"
-                    buttonLink="https://bretasarthur1.gitbook.io/swquery/"
-                    codeSnippet={`
+  return (
+    <div className="min-h-screen bg-gradient-to-b from-[#0A0A0A] to-[#101010] text-white">
+      <Navbar />
+      <div className="pt-28 md:pt-40">
+        <Intro />
+        <Section
+          title="How It Works"
+          items={itemsHowItWorks}
+          columns={3}
+          textAlign="center"
+        />
+        <SDKArchitectureSection />
+        <CoreFeaturesSection />
+        <FeatureSection
+          title="Query Wallet Transactions"
+          subtitle="Real-Time Data Retrieval."
+          description="Leverage the SWquery SDK to fetch and analyze wallet transactions instantly."
+          buttonText="View Documentation"
+          buttonLink="https://bretasarthur1.gitbook.io/swquery/"
+          codeSnippet={`
 	use swquery::SWqueryClient;
 
 	fn main() {
@@ -67,14 +65,14 @@ export const Landing: React.FC = () => {
 			}
 	}
                     `}
-                />
-                <FeatureSection
-                    title="Filter Data Intelligently"
-                    subtitle="Powerful Query Customization."
-                    description="Easily filter blockchain transactions by type, amount, or date using natural language."
-                    buttonText="Try It Out"
-                    buttonLink="/chatbot"
-                    codeSnippet={`
+        />
+        <FeatureSection
+          title="Filter Data Intelligently"
+          subtitle="Powerful Query Customization."
+          description="Easily filter blockchain transactions by type, amount, or date using natural language."
+          buttonText="Try It Out"
+          buttonLink="/chatbot"
+          codeSnippet={`
 	use swquery::SWqueryClient;
 
 	fn main() {
@@ -89,15 +87,15 @@ export const Landing: React.FC = () => {
 			}
 	}
                     `}
-                    reversed
-                />
-                <FeatureSection
-                    title="Analyze Total Value Locked"
-                    subtitle="Insights for DeFi Projects."
-                    description="Calculate TVL for any Solana-based project directly through the SWquery SDK."
-                    buttonText="Get Started"
-                    buttonLink="#get-started"
-                    codeSnippet={`
+          reversed
+        />
+        <FeatureSection
+          title="Analyze Total Value Locked"
+          subtitle="Insights for DeFi Projects."
+          description="Calculate TVL for any Solana-based project directly through the SWquery SDK."
+          buttonText="Get Started"
+          buttonLink="#get-started"
+          codeSnippet={`
 	use swquery::SWqueryClient;
 
 	fn main() {
@@ -112,9 +110,9 @@ export const Landing: React.FC = () => {
 			}
 	}
                     `}
-                />
-                <Footer />
-            </div>
-        </div>
-    );
+        />
+        <Footer />
+      </div>
+    </div>
+  );
 };

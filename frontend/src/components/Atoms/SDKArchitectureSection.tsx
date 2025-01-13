@@ -125,7 +125,9 @@ export const SDKArchitectureSection: React.FC = () => {
                     >
                       <step.Icon size={36} color="#E156FF" />
                     </div>
-                    <h3 className="text-2xl font-semibold mb-2">{step.title}</h3>
+                    <h3 className="text-2xl font-semibold mb-2">
+                      {step.title}
+                    </h3>
                     <p className="text-gray-400 text-md leading-relaxed">
                       {step.description}
                     </p>

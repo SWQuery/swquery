@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X } from "lucide-react";
@@ -44,11 +45,9 @@ export const CreditsSidebar: React.FC<CreditsSidebarProps> = ({
 			getUserByPubkey(wallet.publicKey.toBase58())
 				.then(() => {
 					setUserExists(true);
-					console.log("User exists!", wallet);
 				})
 				.catch(() => {
 					setUserExists(false);
-					console.log("User exists!", wallet);
 				});
 		}
 	}, [wallet.publicKey]);
@@ -65,10 +64,9 @@ export const CreditsSidebar: React.FC<CreditsSidebarProps> = ({
 
 		try {
 			const response = await axios.request(options);
-			console.log(response.data);
 			return response.data.solana.usd;
 		} catch (error) {
-			console.error(error);
+			// console.logerror(error);
 			throw error;
 		}
 	};
@@ -88,31 +86,28 @@ export const CreditsSidebar: React.FC<CreditsSidebarProps> = ({
 
 		try {
 			const solanaValue = await getUSDCValue(); // 182.51
-			const lamports = 
-                // solana value is 1 SOL = 182.51 USD
-                // amount is in USD
-                // 1 SOL = 10^9 lamports
-                // lamports = amount * 10^9 / solana value
-                Math.floor((parseFloat(usdcAmount) * 10 ** 9) / solanaValue);
+			const lamports =
+				// solana value is 1 SOL = 182.51 USD
+				// amount is in USD
+				// 1 SOL = 10^9 lamports
+				// lamports = amount * 10^9 / solana value
+				Math.floor((parseFloat(usdcAmount) * 10 ** 9) / solanaValue);
 
 			const txid = await programService.buyCredits(
 				wallet,
 				recipient,
 				lamports
 			);
-			console.log(`Transaction successful via Solana! TxID: ${txid}`);
 			alert(`Transaction successful! TxID: ${txid}`);
 
 			const response = await buyCredits(
 				wallet.publicKey.toBase58(),
 				lamports
 			);
-			console.log("Credits purchase response:", response);
 			alert("Credits successfully added to your account!");
 
 			setUsdcAmount("");
 		} catch (error) {
-			console.error("Transaction failed:", error);
 			alert("Transaction failed: " + error);
 		} finally {
 			setLoading(false);
