@@ -23,8 +23,7 @@ import { usePathname } from "next/navigation";
 import { useTokenAccess } from "@/app/hooks/useTokenAccess";
 
 const SWQUERY_MINT_ADDRESS = "EwdcspW8mEjp4UswrcjmHPV3Y4GdGQPMG6RMTDV2pump";
-const RPC_URL =
-	"https://mainnet.helius-rpc.com/?api-key=421c3f90-610f-4118-85cf-5e8f6f9caad1";
+const RPC_URL = "https://mainnet.helius-rpc.com/?api-key=";
 
 const validateOpenAIKey = (value: string) => {
 	const pattern = /^sk-proj-/;
@@ -69,9 +68,12 @@ export const Navbar = () => {
 	const { connected, publicKey } = useWallet();
 	const pathname = usePathname();
 
+	const rpc =
+		RPC_URL +
+		(getCookie("helius_key") || "421c3f90-610f-4118-85cf-5e8f6f9caad1");
 	const { hasAccess, isLoading: isTokenLoading } = useTokenAccess(
 		SWQUERY_MINT_ADDRESS,
-		RPC_URL
+		rpc
 	);
 
 	useEffect(() => {

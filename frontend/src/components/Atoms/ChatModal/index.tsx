@@ -28,22 +28,6 @@ export const ChatModal = ({ isOpen, onClose }: ChatModalProps) => {
 		}
 	}, []);
 
-	useEffect(() => {
-		if (isOpen && openAIKey !== "" && heliusKey !== "") {
-			toast.success(
-				"Keys found in cookies, you can either change them or proceed.",
-				{
-					duration: 3000,
-					style: {
-						background: "#18181B",
-						color: "#FFFFFF",
-						border: "0.5px solid #9C88FF",
-					},
-				}
-			);
-		}
-	}, [isOpen, openAIKey, heliusKey]);
-
 	const validateOpenAIKey = (value: string) => {
 		const pattern = /^sk-proj-/;
 		return pattern.test(value);
@@ -75,10 +59,17 @@ export const ChatModal = ({ isOpen, onClose }: ChatModalProps) => {
 			const openai_key = getCookie("openai_key");
 			const helius_key = getCookie("helius_key");
 			if (openai_key && helius_key) {
+				toast.success("API keys have been successfully saved!", {
+					duration: 3000,
+					style: {
+						background: "#18181B",
+						color: "#FFFFFF",
+						border: "0.5px solid #9C88FF",
+					},
+				});
 				router.push("/chatbot");
 			}
 		} catch (error) {
-			// console.logerror(error);
 			toast.error("An error occurred while setting up the keys.");
 		}
 	};
@@ -120,7 +111,7 @@ export const ChatModal = ({ isOpen, onClose }: ChatModalProps) => {
 	if (!isOpen) return null;
 
 	return (
-		<div className="fixed inset-0 bg-black bg-opacity-80 backdrop-blur-sm flex items-center justify-center z-50">
+		<div className="fixed inset-0 top-0 bg-black bg-opacity-80 backdrop-blur-sm flex items-center justify-center z-50">
 			<div className="bg-black border border-purple-500/20 p-8 rounded-xl shadow-lg relative w-full mx-4 md:mx-0 md:w-1/4 lg:w-1/2 max-w-4xl">
 				<button
 					onClick={onClose}
