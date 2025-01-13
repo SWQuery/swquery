@@ -121,10 +121,12 @@ export const Footer = () => {
             >
               <Twitter size={24} />
             </a>
+
             <a
               href="https://t.me/ofcswquery"
               className="text-gray-400 hover:text-[#9945FF]"
             >
+
               <MessageCircle size={24} />
             </a>
             <a
