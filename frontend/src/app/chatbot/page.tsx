@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+import { useState } from "react";
 import { Button } from "@/components/Atoms/Buttons/button";
 import { cn } from "@/lib/utils";
 import { ArrowRight, Loader2, MessageSquarePlus, X } from "lucide-react";
@@ -13,11 +13,10 @@ import api from "@/services/config/api";
 import { toast } from "react-hot-toast";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { Connection, PublicKey } from "@solana/web3.js";
-import { getAccount, getAssociatedTokenAddress } from "@solana/spl-token";
 import { useRouter } from "next/navigation";
 import { getCookie } from "cookies-next/client";
 import { useForm } from "react-hook-form";
+import { useTokenAccess } from "../hooks/useTokenAccess";
 
 async function interactChatbot(input_user: string, address: string) {
 	try {
@@ -601,71 +600,6 @@ export default function ChatInterface() {
 		</div>
 	);
 }
-
-export const useTokenAccess = (tokenMintAddress: string, rpcUrl: string) => {
-	const wallet = useWallet();
-	const [hasAccess, setHasAccess] = useState<boolean | null>(null);
-	const [isLoading, setIsLoading] = useState(true);
-
-	const memoizedRpcUrl = useMemo(() => rpcUrl, [rpcUrl]);
-
-	useEffect(() => {
-		let mounted = true;
-		setIsLoading(true);
-
-		const checkOwnership = async () => {
-			if (!wallet.publicKey) {
-				setHasAccess(false);
-				setIsLoading(false);
-				return;
-			}
-
-			try {
-				const connection = new Connection(memoizedRpcUrl, {
-					commitment: "confirmed",
-					confirmTransactionInitialTimeout: 60000,
-				});
-
-				const tokenMint = new PublicKey(tokenMintAddress);
-				const associatedTokenAddress = await getAssociatedTokenAddress(
-					tokenMint,
-					wallet.publicKey
-				);
-
-				try {
-					const tokenAccount = await getAccount(
-						connection,
-						associatedTokenAddress
-					);
-					if (mounted) {
-						setHasAccess(tokenAccount.amount >= 20000);
-						setIsLoading(false);
-					}
-					// eslint-disable-next-line @typescript-eslint/no-unused-vars
-				} catch (err) {
-					if (mounted) {
-						setHasAccess(false);
-						setIsLoading(false);
-					}
-				}
-				// eslint-disable-next-line @typescript-eslint/no-unused-vars
-			} catch (err) {
-				if (mounted) {
-					setHasAccess(false);
-					setIsLoading(false);
-				}
-			}
-		};
-
-		checkOwnership();
-
-		return () => {
-			mounted = false;
-		};
-	}, [wallet.publicKey, tokenMintAddress, memoizedRpcUrl]);
-
-	return { hasAccess, isLoading };
-};
 
 interface ModalProps {
 	title: string;

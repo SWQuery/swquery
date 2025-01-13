@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import { useState, useEffect } from "react";
-import { usePathname } from "next/navigation";
+"use client";
+
+import { useEffect, useState } from "react";
 import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { PublicKey, Connection } from "@solana/web3.js";
@@ -11,7 +12,6 @@ import Image from "next/image";
 import Link from "next/link";
 import HorizontalLogo from "../../../assets/images/logo-horizontal.png";
 import { CreditsSidebar } from "@/components/Molecules/CreditSidebar";
-import { useTokenAccess } from "@/app/chatbot/page";
 import ChatModal from "@/components/Atoms/ChatModal";
 import { Button } from "@/components/Atoms/Buttons/button";
 import { Input } from "@/components/Atoms/input";
@@ -19,6 +19,8 @@ import { Eye, EyeOff } from "lucide-react";
 import { toast } from "react-hot-toast";
 import { getCookie, setCookie } from "cookies-next/client";
 import { useForm } from "react-hook-form";
+import { usePathname } from "next/navigation";
+import { useTokenAccess } from "@/app/hooks/useTokenAccess";
 
 const SWQUERY_MINT_ADDRESS = "EwdcspW8mEjp4UswrcjmHPV3Y4GdGQPMG6RMTDV2pump";
 const RPC_URL =
