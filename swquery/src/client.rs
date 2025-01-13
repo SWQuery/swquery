@@ -149,14 +149,15 @@ impl SWqueryClient {
         // Send the request to the Agent API
         let payload = json!({
             "inputUser": input,
-            "address": pubkey
+            "address": pubkey,
+            "openai_key": self.openai_key
         });
 
         println!("Sending request to Agent API: {:#?}", payload);
         let response = self
             .client
             .post(AGENT_API_URL)
-            .header("x-api-key", &self.openai_key)
+            // .header("x-api-key", &self.openai_key)
             .json(&payload)
             .send()
             .await

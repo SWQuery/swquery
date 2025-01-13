@@ -1,34 +1,18 @@
-FROM python:3.10-slim-bullseye
+FROM python:3.11-slim
 
-# Set working directory
+RUN apt-get update && apt-get install -y \
+  libgl1-mesa-glx \
+  libglib2.0-0 \
+  git
+
 WORKDIR /app
 
-# Set environment variables
-ENV PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONUNBUFFERED=1 \
-    PIP_NO_CACHE_DIR=1 \
-    PIP_DISABLE_PIP_VERSION_CHECK=1 \
-    TZ=UTC
+COPY requirements.txt requirements.txt
 
-# Create non-root user
-RUN addgroup --system app && adduser --system --group app
-
-# Install Python dependencies
-COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy project files
-COPY --chown=app:app services/ /app/services/
-COPY --chown=app:app .env /app/.env
+COPY . .
 
-# Change ownership to non-root user
-RUN chown -R app:app /app
+EXPOSE 8000
 
-# Switch to non-root user
-USER app
-
-# Expose port
-EXPOSE 3003
-
-# Run the application with a single worker to ensure consistent key usage
-CMD ["uvicorn", "services.main:app", "--host", "0.0.0.0", "--port", "3003", "--workers", "4", "--use-colors"] %                                                                          
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]

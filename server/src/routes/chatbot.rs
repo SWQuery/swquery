@@ -191,6 +191,7 @@ pub async fn chatbot_interact(
         input_user: query_result.clone().to_string(),
         address: payload.address.clone(),
         chatted: payload.input_user.clone(),
+        openai_key: payload.openai_key.clone(),
     };
 
     let report = generate_report_service(pool, headers, axum::Json(report_input)).await?;

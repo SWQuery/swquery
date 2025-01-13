@@ -3,7 +3,7 @@
 import { Card } from "@/components/Atoms/card";
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
-import { ArrowDownRight, ArrowUpRight, ExternalLink, Copy } from "lucide-react";
+import { ArrowDownRight, ArrowUpRight, Copy } from "lucide-react";
 import { useState } from "react";
 
 interface Transaction {
@@ -17,6 +17,15 @@ interface Transaction {
   fee?: number;
   status?: string;
   mint?: string;
+  token_metadata?: Record<
+    string,
+    {
+      links?: {
+        image?: string;
+      };
+      files?: { cdn_uri?: string }[];
+    }
+  >;
 }
 
 const containerVariants = {
@@ -75,6 +84,9 @@ const glowVariants = {
   },
 };
 
+const FALLBACK_ICON =
+  "https://cdn.helius-rpc.com/cdn-cgi/image//https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/So11111111111111111111111111111111111111112/logo.png";
+
 export function TransactionPreview({
   transactions,
 }: {
@@ -124,92 +136,103 @@ export function TransactionPreview({
               )}
 
               <div className="space-y-3">
-                {txs.map((tx, index) => (
-                  <motion.div
-                    key={index}
-                    variants={cardVariants}
-                    whileHover="hover"
-                    className="relative"
-                  >
-                    <Card className="relative overflow-hidden bg-black/40 border border-purple-500/20 p-4">
-                      <motion.div
-                        variants={glowVariants}
-                        initial="initial"
-                        whileHover="hover"
-                        className="absolute inset-0 bg-gradient-to-r from-purple-600/10 to-blue-600/10"
-                      />
+                {txs.map((tx, index) => {
+                  const imageUrl =
+                    tx.url_icon ||
+                    tx.token_metadata?.[tx.mint ?? ""]?.links?.image ||
+                    FALLBACK_ICON;
 
-                      <div className="relative flex items-center gap-4">
-                        <div className="relative">
-                          <Image
-                            src={
-                              tx.url_icon ||
-                              "https://cdn.helius-rpc.com/cdn-cgi/image//https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/So11111111111111111111111111111111111111112/logo.png"
-                            }
-                            alt={tx.coin_name || "SOL"}
-                            width={32}
-                            height={32}
-                            className="rounded-lg ring-2 ring-purple-500/20 ring-offset-2 ring-offset-black"
-                          />
-                          {tx.direction === "in" ? (
-                            <ArrowDownRight className="absolute -bottom-1 -right-1 w-4 h-4 text-green-400" />
-                          ) : (
-                            <ArrowUpRight className="absolute -bottom-1 -right-1 w-4 h-4 text-red-400" />
-                          )}
-                        </div>
+                  return (
+                    <motion.div
+                      key={index}
+                      variants={cardVariants}
+                      whileHover="hover"
+                      className="relative"
+                    >
+                      <Card className="relative overflow-hidden bg-black/40 border border-purple-500/20 p-4">
+                        <motion.div
+                          variants={glowVariants}
+                          initial="initial"
+                          whileHover="hover"
+                          className="absolute inset-0 bg-gradient-to-r from-purple-600/10 to-blue-600/10"
+                        />
+                        <div className="relative flex items-center gap-4">
+                          <div className="relative">
+                            <Image
+                              src={imageUrl}
+                              alt={tx.coin_name || "SOL"}
+                              width={32}
+                              height={32}
+                              className="rounded-lg ring-2 ring-purple-500/20 ring-offset-2 ring-offset-black"
+                            />
+                            {tx.direction === "in" ? (
+                              <ArrowDownRight className="absolute -bottom-1 -right-1 w-4 h-4 text-green-400" />
+                            ) : (
+                              <ArrowUpRight className="absolute -bottom-1 -right-1 w-4 h-4 text-red-400" />
+                            )}
+                          </div>
 
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center justify-between gap-4">
-                            <div className="truncate">
-                              <span className="text-sm font-medium text-gray-200">
-                                {tx.amount} {tx.coin_name || "SOL"}
-                              </span>
-                              <div className="flex items-center gap-1 text-xs text-gray-400">
-                                <span>
-                                  {tx.direction === "in" ? "From" : "To"}
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center justify-between gap-4">
+                              <div className="truncate">
+                                <span className="text-sm font-medium text-gray-200">
+                                  {tx.amount} {tx.coin_name || "SOL"}
                                 </span>
-                                <span className="truncate">{tx.recipient}</span>
-
-                                <button
-                                  onClick={() => handleCopy(tx.recipient)}
-                                  className="ml-1 text-gray-400 hover:text-gray-200"
-                                >
-                                  <Copy className="w-3 h-3 opacity-60" />
-                                </button>
-                                {copied === tx.recipient && (
-                                  <span className="text-xs text-green-400 ml-1">
-                                    Copied!
+                                <div className="flex items-center gap-1 text-xs text-gray-400">
+                                  <span>
+                                    {tx.direction === "in" ? "From" : "To"}
+                                  </span>
+                                  <span className="truncate">
+                                    {tx.recipient}
+                                  </span>
+                                  <button
+                                    onClick={() => handleCopy(tx.recipient)}
+                                    className="ml-1 text-gray-400 hover:text-gray-200"
+                                  >
+                                    <Copy className="w-3 h-3 opacity-60" />
+                                  </button>
+                                  {copied === tx.recipient && (
+                                    <span className="text-xs text-green-400 ml-1">
+                                      Copied!
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                              <div className="text-right shrink-0">
+                                <div className="text-xs font-medium text-gray-300">
+                                  {tx.date}
+                                </div>
+                                {tx.status && (
+                                  <span
+                                    className={`text-xs ${
+                                      tx.status.toLowerCase() === "confirmed"
+                                        ? "text-green-400"
+                                        : "text-gray-400"
+                                    }`}
+                                  >
+                                    {tx.status}
                                   </span>
                                 )}
                               </div>
                             </div>
-                            <div className="text-right shrink-0">
-                              <div className="text-xs font-medium text-gray-300">
-                                {tx.date}
+
+                            {tx.token_metadata?.[tx.mint ?? ""]?.links?.image && (
+                              <div className="mt-1 text-xs text-gray-400 truncate">
+                                {tx.token_metadata[tx.mint ?? ""]?.links?.image}
                               </div>
-                              {tx.status && (
-                                <span
-                                  className={`text-xs ${
-                                    tx.status.toLowerCase() === "confirmed"
-                                      ? "text-green-400"
-                                      : "text-gray-400"
-                                  }`}
-                                >
-                                  {tx.status}
-                                </span>
-                              )}
-                            </div>
+                            )}
+
+                            {tx.fee !== undefined && (
+                              <div className="mt-1 text-xs text-gray-500">
+                                Network fee: {tx.fee} SOL
+                              </div>
+                            )}
                           </div>
-                          {tx.fee !== undefined && (
-                            <div className="mt-1 text-xs text-gray-500">
-                              Network fee: {tx.fee} SOL
-                            </div>
-                          )}
                         </div>
-                      </div>
-                    </Card>
-                  </motion.div>
-                ))}
+                      </Card>
+                    </motion.div>
+                  );
+                })}
               </div>
             </div>
           </motion.div>

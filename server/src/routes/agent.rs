@@ -24,6 +24,7 @@ pub struct QueryRequestReport {
     #[serde(rename = "question")]
     pub chatted: String,
     pub address: String,
+    pub openai_key: String,
 }
 
 #[derive(Serialize, Deserialize)]

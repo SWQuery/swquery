@@ -3,9 +3,8 @@
 
 import { useEffect, useState, useMemo } from "react";
 import { Button } from "@/components/Atoms/Buttons/button";
-import { Input } from "@/components/Atoms/input";
 import { cn } from "@/lib/utils";
-import { Menu, EyeOff, Eye, Loader2, ArrowRight } from "lucide-react";
+import { ArrowRight, Loader2, X } from "lucide-react"; // Importação do ícone 'X'
 import { TransactionPreview } from "@/components/Molecules/TransactionPrev/TransactionPreview";
 import { Navbar } from "@/components/Molecules/Navbar";
 import { motion, AnimatePresence } from "framer-motion";
@@ -17,35 +16,9 @@ import remarkGfm from "remark-gfm";
 import { Connection, PublicKey } from "@solana/web3.js";
 import { getAccount, getAssociatedTokenAddress } from "@solana/spl-token";
 import { useRouter } from "next/navigation";
-import { getCookie, setCookie } from "cookies-next/client";
+import { getCookie } from "cookies-next/client";
 import TutorialModal from "@/components/Atoms/TutorialModal";
 import { useForm } from "react-hook-form";
-
-// Keep existing key validation functions
-const validateOpenAIKey = (value: string) => {
-	const pattern = /^sk-proj-/;
-	return pattern.test(value);
-};
-
-const validateHeliusKey = (value: string) => {
-	const pattern =
-		/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-	return pattern.test(value);
-};
-
-const formatHeliusKey = (value: string) => {
-	const cleaned = value.replace(/[^0-9a-f]/gi, "");
-
-	let formatted = "";
-	for (let i = 0; i < cleaned.length && i < 32; i++) {
-		if (i === 8 || i === 12 || i === 16 || i === 20) {
-			formatted += "-";
-		}
-		formatted += cleaned[i];
-	}
-
-	return formatted;
-};
 
 async function interactChatbot(input_user: string, address: string) {
 	try {
@@ -57,7 +30,7 @@ async function interactChatbot(input_user: string, address: string) {
 		}
 
 		const response = await api.post(
-			"http://0.0.0.0:5500/chatbot/interact", // TODO: Change to deployed URL
+			"http://0.0.0.0:5500/chatbot/interact", // Use the service name 'agent'
 			{
 				input_user,
 				address,
@@ -67,7 +40,7 @@ async function interactChatbot(input_user: string, address: string) {
 			{
 				headers: {
 					"Content-Type": "application/json",
-					"x-api-key": "WDAO4Z1Z503DWJH7060GIYGR0TWIIPBM", // TODO: Not required
+					"x-api-key": "WDAO4Z1Z503DWJH7060GIYGR0TWIIPBM", // Ensure this matches the curl command
 				},
 			}
 		);
@@ -96,16 +69,10 @@ export default function ChatInterface() {
 	const [fetchedTransactions, setFetchedTransactions] = useState<any[]>([]);
 	const [isLoading, setIsLoading] = useState(false);
 	const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-	const [openAIKey, setOpenAIKey] = useState("");
-	const [heliusKey, setHeliusKey] = useState("");
-	const [isOpenAIValid, setIsOpenAIValid] = useState(true);
-	const [isHeliusValid, setIsHeliusValid] = useState(true);
-	const [heliusVisible, setHeliusVisible] = useState(false);
-	const [openaiVisible, setOpenaiVisible] = useState(false);
-	const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 	const [showTutorial, setShowTutorial] = useState(false);
 
 	const { connected, publicKey } = useWallet();
+	const router = useRouter(); // Mova o useRouter para o início do componente
 
 	const currentChat = chats.find((chat) => chat.id === currentChatId);
 
@@ -184,66 +151,12 @@ export default function ChatInterface() {
 		</div>
 	);
 
-	useEffect(() => {
-		const openai_key = getCookie("openai_key");
-		const helius_key = getCookie("helius_key");
-		if (openai_key && helius_key) {
-			setOpenAIKey(openai_key);
-			setHeliusKey(helius_key);
-		}
-	}, []);
+	const { register, handleSubmit } = useForm();
 
-	const handleOpenAIChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-		const value = e.target.value;
-		setOpenAIKey(value);
-		setIsOpenAIValid(value === "" || validateOpenAIKey(value));
+	// Função para redirecionar para a página inicial
+	const handleCloseChat = () => {
+		router.push("/"); // Altere para a rota da página inicial do chatbot se for diferente
 	};
-
-	const handleHeliusChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-		const value = e.target.value;
-		const formattedValue = formatHeliusKey(value);
-		setHeliusKey(formattedValue);
-		setIsHeliusValid(
-			formattedValue === "" || validateHeliusKey(formattedValue)
-		);
-	};
-
-	const changeVisibility = (key: string) => {
-		if (key === "helius") {
-			setHeliusVisible(!heliusVisible);
-		} else {
-			setOpenaiVisible(!openaiVisible);
-		}
-	};
-
-	const saveSettings = () => {
-		try {
-			setCookie("openai_key", openAIKey, {
-				maxAge: 60 * 60 * 24 * 30,
-			});
-			setCookie("helius_key", heliusKey, {
-				maxAge: 60 * 60 * 24 * 30,
-			});
-			toast.success("Settings saved successfully!", {
-				duration: 3000,
-				style: {
-					background: "#18181B",
-					color: "#FFFFFF",
-					border: "0.5px solid #9C88FF",
-				},
-			});
-			setIsSettingsOpen(false);
-		} catch (error) {
-			console.error(error);
-			toast.error("Failed to save settings");
-		}
-	};
-
-	const {
-		register,
-		handleSubmit,
-		formState: { errors },
-	} = useForm();
 
 	return (
 		<div className="relative flex flex-col h-screen overflow-hidden">
@@ -292,219 +205,30 @@ export default function ChatInterface() {
 								onClick={() => setIsSidebarOpen(false)}
 							/>
 						)}
-						{/* Sidebar */}
-						<div
-							className={`${
-								isSidebarOpen
-									? "translate-x-0"
-									: "-translate-x-full"
-							} md:translate-x-0 fixed md:static left-0 top-20 h-[calc(100vh-5rem)] md:h-full w-80 border-r border-[#141416] flex flex-col bg-black z-[60] transition-transform duration-300 ease-in-out`}
-						>
-							{/* <div className="p-4 flex items-center justify-between border-b border-[#141416]">
-								<div className="flex items-center gap-2">
-									<MessageSquare className="w-5 h-5 text-gray-400" />
-									<span className="text-gray-200">
-										My Chats
-									</span>
-								</div>
-								<button
-									onClick={() => setIsSidebarOpen(false)}
-									className="md:hidden p-2 rounded-full hover:bg-[#2b2b2b] transition-colors"
-								>
-									<X className="w-5 h-5 text-gray-400" />
-								</button>
-							</div>
-							<div className="p-4">
-								<div className="relative">
-									<Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-500" />
-									<Input
-										placeholder="Search"
-										className="pl-9 bg-[#1A1A1A] border-[#141416]"
-									/>
-								</div>
-							</div>
-							<ScrollArea className="flex-1 px-4">
-								<div className="space-y-4">
-									<div className="text-sm text-gray-400 font-medium mt-6">
-										Chats
-									</div>
-									<AnimatePresence>
-										{chats.map((chat) => (
-											<motion.div
-												key={chat.id}
-												initial={{ opacity: 0, x: -10 }}
-												animate={{ opacity: 1, x: 0 }}
-												exit={{ opacity: 0, x: -10 }}
-												transition={{ duration: 0.2 }}
-											>
-												<Button
-													variant="ghost"
-													className={cn(
-														"w-full justify-start text-gray-300 hover:bg-[#2b2b2b] transition-colors",
-														currentChatId ===
-															chat.id &&
-															"bg-[#1A1A1A]"
-													)}
-													onClick={() =>
-														setCurrentChatId(
-															chat.id
-														)
-													}
-												>
-													<MessageSquare className="mr-2 h-4 w-4" />
-													{chat.name}
-												</Button>
-											</motion.div>
-										))}
-									</AnimatePresence>
-								</div>
-							</ScrollArea> */}
-							{/* <div className="p-4 border-t border-[#141416]">
-								<Button
-									onClick={startNewChat}
-									className="w-full bg-gradient-to-r from-[#9C88FF] to-[#6C5CE7] hover:scale-105 hover:opacity-90 text-white gap-2 transition-transform"
-								>
-									<Plus className="h-4 w-4" />
-									New Chat
-								</Button>
-							</div> */}
 
-							{/* Need a settings section here, when clicking, it should appear two inputs with the API keys of Open AI and Helius so that the user can change it for example */}
-							<div className="p-4 border-t border-[#141416] mt-auto">
-								<Button
-									onClick={() =>
-										setIsSettingsOpen(!isSettingsOpen)
-									}
-									className="w-full bg-[#1A1A1A] hover:bg-[#2b2b2b] text-gray-300 gap-2 transition-colors mb-4"
-								>
-									{isSettingsOpen
-										? "Close Settings"
-										: "Settings"}
-								</Button>
-
-								{isSettingsOpen && (
-									<div className="space-y-4">
-										<div className="space-y-2">
-											<div className="w-full relative">
-												<label className="text-white text-sm">
-													OpenAI Key
-												</label>
-												<input
-													type={
-														openaiVisible
-															? "text"
-															: "password"
-													}
-													placeholder="sk-proj-..."
-													value={openAIKey}
-													onChange={
-														handleOpenAIChange
-													}
-													className={`w-full bg-gray-900/50 border ${
-														isOpenAIValid
-															? "border-purple-500/20"
-															: "border-red-500"
-													} text-white px-4 py-3 rounded-lg focus:outline-none focus:border-purple-500 transition-colors placeholder-gray-500 pr-12`}
-												/>
-												<button
-													className="transparent absolute right-4 top-10"
-													onClick={() =>
-														changeVisibility(
-															"openai"
-														)
-													}
-												>
-													{openaiVisible ? (
-														<EyeOff size={18} />
-													) : (
-														<Eye size={18} />
-													)}
-												</button>
-											</div>
-
-											{!isOpenAIValid && (
-												<p className="text-red-500 text-sm mt-1">
-													Key must be an OpenAI key
-												</p>
-											)}
-										</div>
-
-										<div className="space-y-2">
-											<div className="w-full relative">
-												<label className="text-white text-sm">
-													Helius Key
-												</label>
-												<input
-													type={
-														heliusVisible
-															? "text"
-															: "password"
-													}
-													placeholder="00000000-0000-0000-0000-000000000000"
-													value={heliusKey}
-													onChange={
-														handleHeliusChange
-													}
-													maxLength={36}
-													className={`w-full bg-gray-900/50 border ${
-														isHeliusValid
-															? "border-purple-500/20"
-															: "border-red-500"
-													} text-white px-4 py-3 rounded-lg focus:outline-none focus:border-purple-500 transition-colors placeholder-gray-500 pr-12`}
-												/>
-												<button
-													className="transparent absolute right-4 top-10"
-													onClick={() =>
-														changeVisibility(
-															"helius"
-														)
-													}
-												>
-													{heliusVisible ? (
-														<EyeOff size={18} />
-													) : (
-														<Eye size={18} />
-													)}
-												</button>
-											</div>
-										</div>
-
-										<Button
-											onClick={saveSettings}
-											className="w-full bg-gradient-to-r from-[#9C88FF] to-[#6C5CE7] hover:opacity-90 text-white"
-											disabled={
-												!isOpenAIValid || !isHeliusValid
-											}
-										>
-											Save Settings
-										</Button>
-									</div>
-								)}
-							</div>
-						</div>
 						<div className="flex-1 flex flex-col bg-gradient-to-br from-zinc-900 to-black">
-							{/* Sidebar toggle button for mobile */}
-							<button
-								onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-								className={`md:hidden fixed top-24 left-4 z-50 p-2 bg-transparent rounded-full inline-flex items-center justify-center transition-opacity duration-300 ${
-									isSidebarOpen
-										? "opacity-0 pointer-events-none"
-										: "opacity-100"
-								}`}
-							>
-								<Menu className="w-6 h-6 text-gray-400" />
-							</button>
 							<div className="flex-1 overflow-hidden">
 								<AnimatePresence mode="wait">
 									{currentChat ? (
+										// Chat view content
 										<motion.div
-											key="chat-view"
+											key="chat-view" 
 											initial={{ opacity: 0, y: 10 }}
 											animate={{ opacity: 1, y: 0 }}
 											exit={{ opacity: 0, y: -10 }}
 											transition={{ duration: 0.3 }}
-											className="flex flex-col md:flex-row h-full"
+											className="flex flex-col md:flex-row h-full relative"
 										>
+											{/* Chat view content... */}
+											{/* Botão de fechar chat */}
+											<Button
+												onClick={handleCloseChat}
+												className="absolute top-4 right-4 bg-transparent p-2 rounded-full hover:bg-gray-800 transition-colors z-50" // Ajustes de estilo
+												aria-label="Close Chat"
+											>
+												<X className="w-6 h-6 text-gray-400 hover:text-white" />
+											</Button>
+
 											<div className="w-full md:w-1/2 h-1/2 md:h-full overflow-y-auto">
 												<div className="p-6 space-y-4">
 													{currentChat.messages.map(
@@ -682,6 +406,7 @@ export default function ChatInterface() {
 											</div>
 										</motion.div>
 									) : (
+										// Initial view content (single instance)
 										<motion.div
 											key="initial-view"
 											initial={{ opacity: 0, y: 10 }}
@@ -690,8 +415,9 @@ export default function ChatInterface() {
 											transition={{ duration: 0.3 }}
 											className="flex-1 p-6 flex flex-col space-y-6 h-full"
 										>
+											{/* Initial view content... */}
 											<div
-												className="flex-1 overflow-y-auto space-y-8"
+												className="flex-1 overflow-y-auto space-y-8 my-20"
 												style={{
 													maxHeight:
 														"calc(100vh - 14rem)",
@@ -725,46 +451,115 @@ export default function ChatInterface() {
 														your own query.
 													</p>
 												</div>
+												<div
+													className="flex-1 overflow-y-auto space-y-8"
+													style={{
+														maxHeight:
+															"calc(100vh - 14rem)",
+													}}
+												>
+													{" "}
+													<div className="p-8">
+														<div className="max-w-3xl mx-auto space-y-4">
+															<form
+																onSubmit={handleSubmit(
+																	() => {
+																		handleSend();
+																	}
+																)}
+																className="relative"
+															>
+																<textarea
+																	{...register(
+																		"message"
+																	)}
+																	placeholder="Start a new conversation..."
+																	className="rounded-lg w-full h-44 text-md bg-[#1A1A1A] border-[#1A1A1A] focus:outline-none focus:ring-0 transition-shadow p-4 resize-none focus:shadow-[0_0_15px_#9C88FF55]"
+																	onChange={(
+																		e
+																	) =>
+																		setPrompt(
+																			e
+																				.target
+																				.value
+																		)
+																	}
+																/>
+																<div className="absolute left-3 bottom-3 text-sm text-gray-500">
+																	{
+																		prompt.length
+																	}
+																	/2000
+																</div>
+																<Button
+																	type="submit"
+																	className="absolute right-3 bottom-3 bg-gradient-to-r from-[#9C88FF] to-[#6C5CE7] hover:scale-105 text-white transition-transform"
+																	disabled={
+																		isLoading
+																	}
+																>
+																	{isLoading ? (
+																		<Loader2 className="w-5 h-5 animate-spin" />
+																	) : (
+																		<ArrowRight className="w-5 h-5" />
+																	)}
+																</Button>
+															</form>
+														</div>
+													</div>
+													{/* Cards Section */}
+													<div className="space-y-4 px-28">
+														<h2 className="text-xl font-semibold text-gray-400">
+															Suggestions
+														</h2>
+														<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+															{[
+																{
+																	title: "Fetch Recent Transactions",
+																	description:
+																		"Retrieve the latest transactions for a specific Solana address in the last 3 days.",
+																},
+																{
+																	title: "Check Biggest Transaction",
+																	description:
+																		"Retrieve the biggest transaction from a specific wallet in the last 15 days.",
+																},
+																{
+																	title: "Retrieve Wallet Activities",
+																	description:
+																		"Get a summary of recent activities for a specific wallet including transactions and interactions.",
+																},
+																{
+																	title: "Check Token Transactions",
+																	description:
+																		"What is the biggest transactions involving a specific token address?",
+																},
+															].map((card) => (
+																<div
+																	key={
+																		card.title
+																	}
+																	className="p-4 bg-[#1A1A1A]/50 rounded-lg border-[#141416] hover:bg-[#2b2b2b]/70 transition-colors cursor-pointer"
+																>
+																	<h3 className="font-bold text-gray-200 mb-2">
+																		{
+																			card.title
+																		}
+																	</h3>
+																	<p className="text-sm text-gray-400">
+																		{
+																			card.description
+																		}
+																	</p>
+																</div>
+															))}
+														</div>
+													</div>
+												</div>
 											</div>
 										</motion.div>
 									)}
 								</AnimatePresence>
-							</div>
-
-							<div className="p-8 border-t border-[#141416]">
-								<div className="max-w-3xl mx-auto space-y-4">
-									<form
-										onSubmit={handleSubmit((data) => {
-											setPrompt(data.message);
-											handleSend();
-										})}
-										className="flex flex-col md:flex-row gap-3"
-									>
-										<div className="flex-1">
-											<Input
-												{...register("message")}
-												placeholder="Type your prompt here..."
-												className="w-full h-14 text-lg bg-[#1A1A1A] border-[#141416] focus:ring-2 focus:ring-[#9C88FF] transition-shadow hover:shadow-[0_0_15px_#9C88FF55]"
-											/>
-											{errors.message && (
-												<span className="text-red-500 text-sm mt-1">
-													This field is required
-												</span>
-											)}
-										</div>
-										<Button
-											type="submit"
-											className="h-14 px-12 text-lg bg-gradient-to-r from-[#9C88FF] to-[#6C5CE7] hover:scale-105 text-white transition-transform"
-											disabled={isLoading}
-										>
-											{isLoading ? (
-												<Loader2 className="w-5 h-5 animate-spin" />
-											) : (
-												"Send"
-											)}
-										</Button>
-									</form>
-								</div>
 							</div>
 						</div>
 					</div>
@@ -777,7 +572,7 @@ export default function ChatInterface() {
 						>
 							<p className="text-gray-300">
 								You don&apos;t own $SWQUERY tokens to access the
-								Alpha version of the chatbot. Minimum 50,000
+								Alpha version of the chatbot. Minimum 20,000
 								$SWQUERY tokens are required to access the
 								chatbot.
 							</p>
@@ -843,16 +638,18 @@ export const useTokenAccess = (tokenMintAddress: string, rpcUrl: string) => {
 						associatedTokenAddress
 					);
 					if (mounted) {
-						setHasAccess(tokenAccount.amount >= 50000);
+						setHasAccess(tokenAccount.amount >= 20000);
 						setIsLoading(false);
 					}
-				} catch (_) {
+					// eslint-disable-next-line @typescript-eslint/no-unused-vars
+				} catch (err) {
 					if (mounted) {
 						setHasAccess(false);
 						setIsLoading(false);
 					}
 				}
-			} catch (_) {
+				// eslint-disable-next-line @typescript-eslint/no-unused-vars
+			} catch (err) {
 				if (mounted) {
 					setHasAccess(false);
 					setIsLoading(false);

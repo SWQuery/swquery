@@ -5,7 +5,6 @@ use {
     serde_json::{json, Value},
     solana_sdk::{native_token::LAMPORTS_PER_SOL, pubkey::Pubkey},
     std::{
-        cmp::Ordering,
         collections::{HashMap, HashSet},
         str::FromStr,
     },

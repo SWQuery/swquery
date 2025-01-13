@@ -9,27 +9,34 @@ services:
       - "5432:5432"
     volumes:
       - "../server/database/init.sql:/docker-entrypoint-initdb.d/init.sql"
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U swquery" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
-  # server:
-  #   build:
-  #     context: ../server
-  #     dockerfile: Dockerfile
-  #   ports:
-  #     - "5500:5500"
-  #   depends_on:
-  #     - swquery-db
-  #   env_file:
-  #     - ../.env
-  # agent:
-  #   build:
-  #     context: ../ai-agent
-  #     dockerfile: Dockerfile
-  #   ports:
-  #     - "8000:8000"
-  #   depends_on:
-  #     - server
-  #   env_file:
-  #     - ../ai-agent/.env
+  server:
+    build:
+      context: ..
+      dockerfile: server/Dockerfile
+    ports:
+      - "5500:5500"
+    depends_on:
+      swquery-db:
+        condition: service_healthy
+      agent:
+        condition: service_started
+    env_file:
+      - ../.env
+
+  agent:
+    build:
+      context: ../ai-agent
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    env_file:
+      - ../ai-agent/.env
 
 volumes:
   swquery-db-data:

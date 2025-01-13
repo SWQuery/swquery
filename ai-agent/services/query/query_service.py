@@ -3,16 +3,16 @@ from openai import OpenAI
 from configs.settings import settings
 import json
 
-openAIClient = OpenAI(
-    api_key=settings.openai_key_secret,
-)
-
-
 def query_generator(input: str):
     return input + " generated"
 
 
-def query_generator_openai(user_input: str, wallet: str):
+def query_generator_openai(user_input: str, wallet: str, key_openai: str):
+
+    openAIClient = OpenAI(
+        api_key=key_openai,
+    )
+
     system_prompt = (
         "You are a highly specialized RPC assistant for the SWQuery SDK, which enhances Solana RPC functionalities. "
         "The user will provide input in natural language, and your role is to return ONLY a JSON in the following format:\n"
@@ -152,7 +152,11 @@ def query_generator_openai(user_input: str, wallet: str):
     }
 
 
-def generate_visualization(input_json: str, question: str) -> Dict[str, Any]:
+def generate_visualization(input_json: str, question: str, key_openai: str) -> Dict[str, Any]:
+    openAIClient = OpenAI(
+        api_key=key_openai,
+    )
+
     """
     Generate a Markdown visualization from JSON input using OpenAI's GPT-4.
 
@@ -163,23 +167,23 @@ def generate_visualization(input_json: str, question: str) -> Dict[str, Any]:
         Dictionary containing the markdown result and token usage
     """
     system_prompt = (
-        "You are a Solana blockchain data analyzer that generates clear Markdown summaries. "
-        "Analyze the provided JSON data and create a structured summary with these exact sections:"
-        "\n\n"
-        "You need to provide a Markdown visualization of the JSON data, based on the question made by the user before. That was: \n"
-        f"{question}"
-        "\n\n"
-        "Guidelines:\n"
+        "You are a Solana blockchain data analyzer that generates clear Markdown responses. "
+        "Answer the user's question based on the provided JSON data. "
+        "The user's question was: \n"
+        f"{question}\n\n"
+        "Use the following guidelines:\n"
         "- Use clean, consistent Markdown formatting\n"
+        "- Use section separators for Markdown\n"
         "- Keep descriptions concise and technical\n"
         "- Format addresses as `code` style\n"
         "- Use bullet points for lists\n"
         "- Convert lamports to SOL where relevant (1 SOL = 1,000,000,000 lamports)\n"
         "- Highlight any errors or anomalies\n"
         "- **Do not ignore or omit any part of the JSON data, even if the structure varies or seems irrelevant.**\n"
-        "- **If certain fields are missing or null, explicitly mention this in the summary.**\n"
+        "- **If certain fields are missing or null, explicitly mention this in the response.**\n"
         "- **If the JSON contains nested or unstructured data, attempt to represent it in the most organized and readable format possible.**\n"
     )
+
 
     try:
         print(f"Generating visualization for JSON input...")
