@@ -79,7 +79,7 @@ fn main() {
 								</p>
 							</div>
 							<Link
-								href="https://pump.fun/coin/EwdcspW8mEjp4UswrcjmHPV3Y4GdGQPMG6RMTDV2pump"
+								href="https://jup.ag/swap/SOL-EwdcspW8mEjp4UswrcjmHPV3Y4GdGQPMG6RMTDV2pump"
 								target="_blank"
 								className="inline-block"
 							>
