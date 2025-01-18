@@ -111,8 +111,8 @@ pub async fn generate_query(
     println!("Generating query");
     // let api_key = headers
     //     .get("x-api-key")
-        // .and_then(|v| v.to_str().ok())
-        // .ok_or((StatusCode::UNAUTHORIZED, "Missing API key".to_string()))?;
+    // .and_then(|v| v.to_str().ok())
+    // .ok_or((StatusCode::UNAUTHORIZED, "Missing API key".to_string()))?;
 
     // println!("Getting user info");
     // let credit = fetch_credit_info(&pool, api_key).await?;

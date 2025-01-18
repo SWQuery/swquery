@@ -17,6 +17,7 @@ use {
         chatbot::{chatbot_interact, get_chat_by_id, get_chats_for_user},
         credits::{buy_credits, refund_credits},
         users::{create_user, get_user_by_pubkey, get_users},
+        websocket::manage_websocket
     },
     std::time::Duration,
     tower_http::cors::{Any, CorsLayer},
@@ -57,12 +58,17 @@ async fn main() {
         .with_state(pool)
         .layer(cors)
         .layer(from_fn_with_state(
-        rate_limiter.clone(),
-        middlewares::rate_limiter::rate_limit_middleware,
-    ));
+            rate_limiter.clone(),
+            middlewares::rate_limiter::rate_limit_middleware,
+        ));
 
     let listener = tokio::net::TcpListener::bind("0.0.0.0:5500").await.unwrap();
 
     println!("Listening on: http://{}", listener.local_addr().unwrap());
+
+    tokio::spawn(async {
+        manage_websocket().await;
+    });
+
     axum::serve(listener, app).await.unwrap();
 }
