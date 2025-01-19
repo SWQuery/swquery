@@ -35,14 +35,14 @@ fn main() {
 				</div>
 			</div>
 
-			<div className="flex md:flex-col flex-col-reverse md:grid md:grid-cols-2 gap-4 md:gap-8 items-center px-4 md:px-6">
-				<motion.div
+			<div className="flex md:flex-col flex-col-reverse md:grid gap-4 md:gap-8 items-center px-4 md:px-6">
+				{/* <motion.div
 					initial={{ opacity: 0, y: 50 }}
 					animate={{ opacity: 1, y: 0 }}
 					transition={{ duration: 0.8 }}
 					className="w-full min-h-[450px] md:h-[500px] rounded-lg overflow-hidden shadow-lg"
-				>
-					<Card className="border-none h-full">
+				> */}
+					{/* <Card className="border-none h-full">
 						<CardContent className="p-0 h-full">
 							<iframe
 								className="w-full h-full min-h-[450px] md:h-full"
@@ -54,8 +54,8 @@ fn main() {
 								allowFullScreen
 							></iframe>
 						</CardContent>
-					</Card>
-				</motion.div>
+					</Card> */}
+				{/* </motion.div> */}
 
 				<motion.div
 					initial={{ opacity: 0, y: 50 }}
@@ -67,7 +67,7 @@ fn main() {
 						className="bg-[#181818] p-4 md:p-6 lg:p-8 rounded-2xl border border-[#3b3b3b] shadow-md
                       shadow-[#8F00FF33] hover:shadow-[#E156FF55] transition-all duration-500 ease-in-out text-white"
 					>
-						<CardContent className="p-4 md:p-6 space-y-3 md:space-y-4 flex flex-col gap-3 md:gap-4">
+						<CardContent className="p-4 md:p-6 space-y-3 md:space-y-4 flex gap-3 md:gap-4">
 							<div>
 								<h3 className="text-2xl md:text-3xl font-bold mb-2 md:mb-3">
 									Join Our Alpha Version 🚀
