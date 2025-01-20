@@ -11,7 +11,14 @@ export const Footer = () => {
       <div className="container mx-auto">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
           <div className="flex justify-center md:justify-start">
-            <Image src={HorizontalLogo} alt="SWquery Logo" />
+            <Image 
+              src={HorizontalLogo} 
+              alt="SWquery Logo" 
+              width={400}
+              height={100}
+              style={{ objectFit: 'contain' }}
+              priority
+            />
           </div>
           <div className="text-center md:text-left">
             <h3 className="text-lg font-semibold mb-4">Learn</h3>

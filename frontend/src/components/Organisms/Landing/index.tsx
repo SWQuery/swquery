@@ -409,6 +409,7 @@ export const Landing: React.FC = () => {
           />
           <SDKArchitectureSection />
           <CoreFeaturesSection />
+          <div className="flex justify-center pt-28 md:pt-40">
           <FeatureSection
             title="Query Wallet Transactions"
             subtitle="Real-Time Data Retrieval."
@@ -416,6 +417,7 @@ export const Landing: React.FC = () => {
             buttonText="View Documentation"
             buttonLink="https://bretasarthur1.gitbook.io/swquery/"
           />
+          </div>
           <Footer />
         </div>
       </div>
