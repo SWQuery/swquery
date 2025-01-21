@@ -11,7 +11,6 @@ pub async fn manage_websocket() {
         Ok((mut ws_stream, _)) => {
             println!("Connected to WebSocket!");
 
-            // Subscribe to events
             let subscribe_new_token = json!({ "method": "subscribeNewToken" });
             let subscribe_account_trade = json!({
                 "method": "subscribeAccountTrade",
@@ -35,7 +34,6 @@ pub async fn manage_websocket() {
                 .await
                 .expect("Failed to send subscribeTokenTrade");
 
-            // Handle incoming messages
             while let Some(msg) = ws_stream.next().await {
                 match msg {
                     Ok(Message::Text(text)) => {
