@@ -1,3 +1,4 @@
+use serde::{Deserialize, Serialize};
 use {
     axum::{
         extract::State,
@@ -5,7 +6,6 @@ use {
         Json,
     },
     reqwest::Client,
-    serde::{Deserialize, Serialize},
     serde_json::Value,
     sqlx::PgPool,
 };
@@ -52,7 +52,7 @@ pub async fn fetch_credit_info(
     api_key: &str,
 ) -> Result<(i32, String, i64, String), (StatusCode, String)> {
     sqlx::query_as::<_, (i32, String, i64, String)>(
-        "SELECT c.user_id, u.pubkey, c.balance, c.api_key 
+        "SELECT c.user_id, u.pubkey, c.remaining_requests::bigint, c.api_key 
          FROM credits c 
          JOIN users u ON u.id = c.user_id 
          WHERE c.api_key = $1 LIMIT 1",
@@ -127,12 +127,28 @@ pub async fn generate_query(
     //     ));
     // }
 
-    // sqlx::query("UPDATE credits SET balance = balance - $1 WHERE user_id = $2")
-    //     .bind(query_response.tokens)
-    //     .bind(credit.0)
-    //     .execute(&pool)
-    //     .await
-    //     .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+    let api_key = headers
+        .get("x-api-key")
+        .and_then(|v| v.to_str().ok())
+        .ok_or((StatusCode::UNAUTHORIZED, "Missing API key".to_string()))?;
+
+    println!("Getting user info");
+    let credit = fetch_credit_info(&pool, api_key).await?;
+
+    if credit.2 < 1 {
+        return Err((
+            StatusCode::PAYMENT_REQUIRED,
+            "Insufficient credits".to_string(),
+        ));
+    }
+
+    sqlx::query(
+        "UPDATE credits SET remaining_requests = remaining_requests - 1 WHERE user_id = $1",
+    )
+    .bind(credit.0)
+    .execute(&pool)
+    .await
+    .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
 
     // println!("Summary:
     // User ID: {}

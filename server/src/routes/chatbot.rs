@@ -1,9 +1,6 @@
 use {
-    super::agent::{generate_report, generate_report_service, QueryRequestReport},
-    crate::{
-        models::ChatModel,
-        routes::agent::fetch_credit_info, // Remove unused imports
-    },
+    super::agent::{generate_report_service, QueryRequestReport},
+    crate::{models::ChatModel, routes::agent::fetch_credit_info},
     axum::{
         extract::{Path, State},
         http::{HeaderMap, StatusCode},

@@ -1,6 +1,7 @@
 pub mod chat;
 pub mod credits;
-pub mod user;
+pub mod package;
 pub mod token;
+pub mod user;
 
-pub use {chat::*, credits::*, user::*, token::*};
+pub use {chat::*, credits::*, package::*, token::*, user::*};

@@ -16,9 +16,10 @@ use {
         agent::{generate_query, generate_report},
         chatbot::{chatbot_interact, get_chat_by_id, get_chats_for_user},
         credits::{buy_credits, refund_credits},
+        packages::{get_packages, verify_transaction},
+        token::create_pumpfun_token,
         users::{create_user, get_user_by_pubkey, get_users},
         websocket::manage_websocket,
-        token::create_pumpfun_token
     },
     std::time::Duration,
     tower_http::cors::{Any, CorsLayer},
@@ -48,8 +49,7 @@ async fn main() {
         .route("/chats", get(get_chats_for_user))
         .route("/chats/:id", get(get_chat_by_id));
 
-    let token_router = Router::new()
-        .route("/create-token", post(create_pumpfun_token));
+    // let token_router = Router::new().route("/create-token", post(create_pumpfun_token));
 
     let app = Router::new()
         .route("/health", get(|| async { "ok" }))
@@ -57,9 +57,11 @@ async fn main() {
         .route("/users/:pubkey", get(get_user_by_pubkey))
         .route("/credits/buy", post(buy_credits))
         .route("/credits/refund", post(refund_credits))
+        .route("/packages", get(get_packages))
+        .route("/packages/verify", post(verify_transaction))
         .nest("/agent", agent_router)
         .nest("/chatbot", chatbot_router)
-        .nest("/token", token_router)
+        // .nest("/token", token_router)
         .with_state(pool)
         .layer(cors)
         .layer(from_fn_with_state(

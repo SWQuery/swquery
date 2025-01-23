@@ -15,9 +15,22 @@ pub async fn create_pumpfun_token(
     Json(payload): Json<CreateTokenRequest>,
 ) -> impl IntoResponse {
     // Generate token metadata
-    let form = multipart::Form::new()
-        .file("file", payload.image_path.clone())
-        .expect("Failed to add image file to form")
+    let mut form = multipart::Form::new();
+    form = form.part(
+        "file",
+        multipart::Part::bytes(match std::fs::read(&payload.image_path) {
+            Ok(bytes) => bytes,
+            Err(e) => {
+                return (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    format!("Failed to read image file: {}", e),
+                )
+                    .into_response()
+            }
+        })
+        .file_name(payload.image_path.clone()),
+    );
+    form = form
         .text("name", payload.name.clone())
         .text("symbol", payload.symbol.clone())
         .text("description", payload.description.clone())
@@ -41,11 +54,10 @@ pub async fn create_pumpfun_token(
         )
             .into_response();
     }
-
     let metadata_response = metadata_response.unwrap();
-    if metadata_response.status() != StatusCode::OK {
+    if metadata_response.status().as_u16() != axum::http::StatusCode::OK.as_u16() {
         return (
-            StatusCode::INTERNAL_SERVER_ERROR,
+            axum::http::StatusCode::INTERNAL_SERVER_ERROR,
             "Metadata upload failed".to_string(),
         )
             .into_response();
@@ -78,9 +90,8 @@ pub async fn create_pumpfun_token(
         .json(&body)
         .send()
         .await;
-
     match response {
-        Ok(resp) if resp.status() == StatusCode::OK => {
+        Ok(resp) if resp.status().as_u16() == axum::http::StatusCode::OK.as_u16() => {
             let data: serde_json::Value = resp.json().await.unwrap();
             let signature = data["signature"].as_str().unwrap();
             (

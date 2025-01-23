@@ -6,9 +6,7 @@ use {
     tracing::error,
 };
 
-const AGENT_API_URL: &str = 
-    // "http://0.0.0.0:5500/agent/generate-query";
-    "https://api.swquery.xyz/agent/generate-query";
+const AGENT_API_URL: &str = "https://api.swquery.xyz/agent/generate-query";
 
 /// Enum to represent the Solana network.
 #[derive(Debug, Clone, Copy, Default)]
@@ -79,65 +77,6 @@ impl SWqueryClient {
         }
     }
 
-    // /// Sends a query to the SWQuery Agent API, receives a response type and
-    // /// parameters, and then invokes the appropriate RPC method based on the
-    // pub async fn execute_generated_function(
-    //     &self,
-    //     filter_function: &str,
-    //     transactions: Vec<FullTransaction>,
-    // ) -> Result<Vec<FullTransaction>, SdkError> {
-    //     // Prepare the WASM engine
-    //     let engine = Engine::default();
-
-    //     // Compile the filter function as a module
-    //     let wasm_code = format!(
-    //         r#"
-    //         use serde_json::{{Value, json}};
-    //         use crate::FullTransaction;
-    //         pub fn filter(transactions: Vec<FullTransaction>) ->
-    // Vec<FullTransaction> {{             {}
-    //         }}
-    //         "#,
-    //         filter_function
-    //     );
-
-    //     let module = Module::new(&engine, wasm_code).map_err(|e| {
-    //         SdkError::Unexpected(format!("Failed to compile WASM module: {}", e))
-    //     })?;
-
-    //     // Create a new store
-    //     let mut store = Store::new(&engine, ());
-
-    //     // Serialize the transactions into JSON
-    //     let transactions_json = serde_json::to_string(&transactions).map_err(|e|
-    // {         SdkError::Unexpected(format!("Failed to serialize transactions:
-    // {}", e))     })?;
-
-    //     // Define the function in WASM
-    //     let instance = wasmtime::Instance::new(&mut store, &module,
-    // &[]).map_err(|e| {         SdkError::Unexpected(format!("Failed to create
-    // WASM instance: {}", e))     })?;
-
-    //     // Call the function
-    //     let filter_fn = instance.get_typed_func::<(String,), String>(&mut store,
-    // "filter")         .map_err(|e| SdkError::Unexpected(format!("Failed to
-    // retrieve 'filter' function: {}", e)))?;
-
-    //     // Execute the filter function
-    //     let filtered_transactions_json = filter_fn.call(&mut store,
-    // transactions_json).map_err(|e| {         SdkError::Unexpected(format!("
-    // Failed to execute 'filter': {}", e))     })?;
-
-    //     // Deserialize the JSON result back into `Vec<FullTransaction>`
-    //     let filtered_transactions: Vec<FullTransaction> =
-    // serde_json::from_str(&filtered_transactions_json).map_err(|e| {
-    //         SdkError::Unexpected(format!("Failed to deserialize filtered
-    // transactions: {}", e))     })?;
-
-    //     Ok(filtered_transactions)
-    // }
-
-    ///
     /// # Arguments
     ///
     /// * `input` - User input or query for the agent.
@@ -148,7 +87,10 @@ impl SWqueryClient {
     /// A JSON value representing the RPC response, or an error if something
     /// went wrong.
     pub async fn query(&self, input: &str, pubkey: &str) -> Result<Value, SdkError> {
-        println!("Querying...\nInput: {}\nPubkey: {}\nHelius Key: {}\nOpenAI Key: {}", input, pubkey, self.helius_key, self.openai_key);
+        println!(
+            "Querying...\nInput: {}\nPubkey: {}\nHelius Key: {}\nOpenAI Key: {}",
+            input, pubkey, self.helius_key, self.openai_key
+        );
 
         // Send the request to the Agent API
         let payload = json!({

@@ -511,9 +511,9 @@ pub fn apply_filters(
     filters: &Value,
 ) -> Result<Vec<FullTransaction>, SdkError> {
     // Ensure filters is an array
-    let filter_list = filters.as_array().ok_or_else(|| {
-        SdkError::InvalidInput("Filters must be an array".to_string())
-    })?;
+    let filter_list = filters
+        .as_array()
+        .ok_or_else(|| SdkError::InvalidInput("Filters must be an array".to_string()))?;
 
     // Precompute global maximums for "biggest" filters
     let mut global_maxes: HashMap<String, f64> = HashMap::new();
@@ -526,7 +526,8 @@ pub fn apply_filters(
                 // Compute global maximum for this field across all transactions
                 let mut max_value: Option<f64> = None;
                 for tx in &transactions {
-                    if let Some(transfers) = tx.details.get("transfers").and_then(|t| t.as_array()) {
+                    if let Some(transfers) = tx.details.get("transfers").and_then(|t| t.as_array())
+                    {
                         for transfer in transfers {
                             if let Some(value) = transfer.get(field) {
                                 let numeric_value = if let Some(s) = value.as_str() {
@@ -589,35 +590,24 @@ pub fn apply_filters(
                     );
 
                     let matches_filter = match operator {
-                        "equals" => field_value
-                            .and_then(|v| v.as_str())
-                            .map_or(false, |v| {
-                                v.to_lowercase() == value.as_str().unwrap_or("").to_lowercase()
-                            }),
+                        "equals" => field_value.and_then(|v| v.as_str()).map_or(false, |v| {
+                            v.to_lowercase() == value.as_str().unwrap_or("").to_lowercase()
+                        }),
 
-                        "contains" => field_value
-                            .and_then(|v| v.as_str())
-                            .map_or(false, |v| {
-                                v.to_lowercase().contains(
-                                    &value.as_str().unwrap_or("").to_lowercase(),
-                                )
-                            }),
+                        "contains" => field_value.and_then(|v| v.as_str()).map_or(false, |v| {
+                            v.to_lowercase()
+                                .contains(&value.as_str().unwrap_or("").to_lowercase())
+                        }),
 
-                        "starts_with" => field_value
-                            .and_then(|v| v.as_str())
-                            .map_or(false, |v| {
-                                v.to_lowercase().starts_with(
-                                    &value.as_str().unwrap_or("").to_lowercase(),
-                                )
-                            }),
+                        "starts_with" => field_value.and_then(|v| v.as_str()).map_or(false, |v| {
+                            v.to_lowercase()
+                                .starts_with(&value.as_str().unwrap_or("").to_lowercase())
+                        }),
 
-                        "ends_with" => field_value
-                            .and_then(|v| v.as_str())
-                            .map_or(false, |v| {
-                                v.to_lowercase().ends_with(
-                                    &value.as_str().unwrap_or("").to_lowercase(),
-                                )
-                            }),
+                        "ends_with" => field_value.and_then(|v| v.as_str()).map_or(false, |v| {
+                            v.to_lowercase()
+                                .ends_with(&value.as_str().unwrap_or("").to_lowercase())
+                        }),
 
                         "greater_than" => {
                             let threshold = value.as_f64().ok_or_else(|| {
@@ -645,7 +635,8 @@ pub fn apply_filters(
                             })?;
                             if range.len() != 2 {
                                 return Err(SdkError::InvalidInput(
-                                    "Value for 'between' must have exactly two elements".to_string(),
+                                    "Value for 'between' must have exactly two elements"
+                                        .to_string(),
                                 ));
                             }
                             let start = range[0].as_f64().ok_or_else(|| {
