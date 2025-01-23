@@ -1,7 +1,14 @@
 #!/bin/bash
 
+# Load environment variables from .env
+set -a
+source .env
+set +a
+
 BASE_URL="http://localhost:5500"
-API_KEY="WDAO4Z1Z503DWJH7060GIYGR0TWIIPBM"
+API_KEY="$TEST_API_KEY"
+HELIUS_API_KEY="$TEST_HELIUS_API_KEY"
+OPENAI_API_KEY="$TEST_OPENAI_API_KEY"
 
 check_response() {
   local response="$1"
@@ -18,6 +25,13 @@ check_response() {
   fi
 }
 
+# Generate a unique transaction signature using timestamp and random string
+generate_signature() {
+  local timestamp=$(date +%s)
+  local random_string=$(cat /dev/urandom | LC_ALL=C tr -dc 'A-Za-z0-9' | head -c 32)
+  echo "${timestamp}${random_string}"
+}
+
 # Test health endpoint
 echo "Testing /health..."
 response=$(curl -s -o /dev/null -w "%{http_code}" -X GET "$BASE_URL/health")
@@ -26,10 +40,14 @@ check_response "" "$response" 200
 # Test create user
 echo "Creating user..."
 response=$(curl -s -w "\n%{http_code}" -H "Content-Type: application/json" -X POST -d '{
-  "pubkey": "GtJHNhKQnnJZQTHq2Vh49HpR4yKKJmUonVYbLeS1RPs8"
+  "pubkey": "9unenHYtwUowNkWdZmSYTwzGxxdzKVJh7npk6W6uqRF3"
 }' "$BASE_URL/users")
 status=$(echo "$response" | tail -n1)
-check_response "$response" "$status" 200
+if [[ "$status" != "201" && "$status" != "200" ]]; then
+    echo "❌ Test failed (Expected: 201 or 200, Got: $status)"
+    exit 1
+fi
+echo "✅ Test passed"
 
 # Test get users
 echo "Fetching users..."
@@ -37,22 +55,29 @@ response=$(curl -s -w "\n%{http_code}" -X GET "$BASE_URL/users")
 status=$(echo "$response" | tail -n1)
 check_response "$response" "$status" 200
 
-# Test buy credits
-echo "Buying credits..."
-response=$(curl -s -w "\n%{http_code}" -H "Content-Type: application/json" -H "x-api-key: $API_KEY" -X POST -d '{
-  "user_pubkey": "GtJHNhKQnnJZQTHq2Vh49HpR4yKKJmUonVYbLeS1RPs8",
-  "amount": 5000
-}' "$BASE_URL/credits/buy")
+# Test get packages
+echo "Fetching packages..."
+response=$(curl -s -w "\n%{http_code}" -X GET "$BASE_URL/packages")
 status=$(echo "$response" | tail -n1)
-check_response "$response" "$status" 201
+check_response "$response" "$status" 200
 
-# Test chatbot interaction
+# Test verify transaction with real signature
+echo "Verifying transaction..."
+response=$(curl -s -w "\n%{http_code}" -H "Content-Type: application/json" -X POST -d '{
+  "package_id": 1,
+  "signature": "3dMe8itJ7Rbc3E42aFMDWyrJJPv4dHUpXgoqWFKhHNKB4mbd2veFp8LMEdfzEAoYS9XbXTTQSpQszwSpmY33q9Ky",
+  "user_pubkey": "9unenHYtwUowNkWdZmSYTwzGxxdzKVJh7npk6W6uqRF3"
+}' "$BASE_URL/packages/verify")
+status=$(echo "$response" | tail -n1)
+check_response "$response" "$status" 200
+
+# Test chatbot interaction with new API key system
 echo "Chatbot interaction..."
-response=$(curl -s -w "\n%{http_code}" -H "Content-Type: application/json" -H "x-api-key: $API_KEY" -X POST -d '{
-  "input_user": "Any transaction on my wallet for the token 2zMMhcVQEXDtdE6vsFS7S7D5oUodfJHE8vd1gnBouauv in the last 30 days?",
+response=$(curl -s -w "\n%{http_code}" -H "Content-Type: application/json" -H "x-api-key: $TEST_API_KEY" -X POST -d '{
+  "input_user": "What was my biggest transaction in the last 30 days?",
   "address": "9unenHYtwUowNkWdZmSYTwzGxxdzKVJh7npk6W6uqRF3",
-  "helius_key": "1f3f8151-4e8d-46c7-9555-22d4d8b38294",
-  "openai_key": "OPEN_AI"
+  "openai_key": "'"$OPENAI_API_KEY"'",
+  "helius_key": "'"$TEST_HELIUS_API_KEY"'"
 }' "$BASE_URL/chatbot/interact")
 status=$(echo "$response" | tail -n1)
 check_response "$response" "$status" 200
