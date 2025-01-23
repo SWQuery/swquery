@@ -4,7 +4,7 @@ import { Section } from "@/components/Molecules/Landing/Section";
 import { Navbar } from "@/components/Molecules/Navbar";
 import { FeatureSection } from "@/components/Atoms/FeatureSection";
 import { SDKArchitectureSection } from "@/components/Atoms/SDKArchitectureSection";
-import { Wallet, Filter, BarChart } from "lucide-react";
+import { Wallet,BarChart, MessageCircle} from "lucide-react";
 import { CoreFeaturesSection } from "@/components/Atoms/CoreFeaturesSection";
 import { useEffect, useState, useMemo } from 'react';
 
@@ -20,16 +20,14 @@ export const Landing: React.FC = () => {
   const [mousePosition, setMousePosition] = useState({ x: 50, y: 50 });
   const [scrollProgress, setScrollProgress] = useState(0);
 
- 
   const neuralNodes = useMemo(() => {
     const nodes: NeuralNode[] = [];
-    const gridSize = 6; // 6x6 grid for more nodes
+    const gridSize = 6; 
     
     for (let i = 0; i < 36; i++) {
       const gridX = (i % gridSize) / gridSize;
       const gridY = Math.floor(i / gridSize) / gridSize;
       
-   
       const x = (gridX * 90 + Math.random() * 10) + 5;
       const y = (gridY * 90 + Math.random() * 10) + 5;
       
@@ -42,10 +40,9 @@ export const Landing: React.FC = () => {
       });
     }
 
-
     return nodes.map(node => {
       const connections: number[] = [];
-      const numConnections = Math.floor(Math.random() * 3) + 2; // 2-4 connections
+      const numConnections = Math.floor(Math.random() * 3) + 2; 
       
       const otherNodes = nodes
         .filter(n => n.id !== node.id)
@@ -62,7 +59,6 @@ export const Landing: React.FC = () => {
       return { ...node, connections };
     });
   }, []);
-
 
   const flowingParticles = useMemo(() => {
     return Array.from({ length: 30 }, (_, i) => ({
@@ -108,10 +104,10 @@ export const Landing: React.FC = () => {
         "Use your Solana wallet to integrate with the SWquery system.",
     },
     {
-      Icon: Filter,
+      Icon: MessageCircle,
       iconColor: "#9945FF",
-      title: "Select Data",
-      description: "Choose the transactions you want to query and filter.",
+      title: "Access the chatbot",
+      description: "Access the chatbot and prompt what you want to query.",
     },
     {
       Icon: BarChart,
@@ -119,11 +115,12 @@ export const Landing: React.FC = () => {
       title: "Visualize Results",
       description: "Access intuitive visualizations and personalized reports.",
     },
+   
   ];
 
   return (
     <div className="min-h-screen bg-[#0A0A0A] text-white relative overflow-hidden perspective-[2000px]">
-      {/* Background with a hazy, underwater effect */}
+      
       <div 
         className="fixed inset-0 pointer-events-none"
         style={{
@@ -140,7 +137,7 @@ export const Landing: React.FC = () => {
         }}
       />
 
-      {/* Animated sine wave pattern */}
+     
       <div
         className="absolute inset-0 pointer-events-none opacity-10"
         style={{
@@ -200,7 +197,7 @@ export const Landing: React.FC = () => {
         />
       ))}
 
-      {/* Slow-moving bubble elements */}
+      
       {[0, 1].map((_, i) => (
         <div
           key={i}
@@ -223,7 +220,7 @@ export const Landing: React.FC = () => {
         />
       ))}
 
-      {/* Flowing particles with a viscous, organic movement */}
+     
       {flowingParticles.map((particle) => (
         <div
           key={particle.id}
@@ -263,7 +260,7 @@ export const Landing: React.FC = () => {
         }}
       />
 
-      {/* Neural network with reduced pulsing */}
+     
       <div className="absolute inset-0 pointer-events-none">
         <svg className="w-full h-full">
           <defs>
@@ -334,7 +331,21 @@ export const Landing: React.FC = () => {
         </svg>
       </div>
 
-      {/* Content wrapper */}
+     
+      <div
+        className="scroll-indicator"
+        style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          width: `${scrollProgress}%`,
+          height: '5px',
+          backgroundColor: 'rgba(153, 69, 255, 0.8)',
+          transition: 'width 0.2s ease-out'
+        }}
+      />
+
+    
       <div className="relative z-10">
         <style jsx global>{`
           @keyframes float {
@@ -381,20 +392,46 @@ export const Landing: React.FC = () => {
           }
 
           .feature-card {
-            background: rgba(20, 30, 48, 0.5);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(153, 69, 255, 0.3);
-            border-radius: 12px;
-            transition: all 1s cubic-bezier(0.4, 0, 0.2, 1);
+            background: rgba(20, 30, 48, 0.3);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(153, 69, 255, 0.2);
+            border-radius: 8px;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            padding: 20px;
+            color: #fff;
           }
 
           .feature-card:hover {
-            transform: translateY(-8px) translateZ(80px);
-            border-color: rgba(153, 69, 255, 0.8);
-            box-shadow: 
-              0 20px 60px rgba(0, 10, 20, 0.5),
-              0 0 0 1px rgba(153, 69, 255, 0.6),
-              0 0 40px rgba(153, 69, 255, 0.6);
+            transform: translateY(-5px) scale(1.02);
+            border-color: rgba(153, 69, 255, 0.5);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+          }
+
+          .animated-section {
+            animation: fadeInUp 0.8s ease-out;
+          }
+
+          @keyframes fadeInUp {
+            from {
+              opacity: 0;
+              transform: translate3d(0, 20px, 0);
+            }
+            to {
+              opacity: 1;
+              transform: translate3d(0, 0, 0);
+            }
+          }
+
+          .video-container {
+            margin-top: 20px;
+            text-align: center;
+          }
+
+          .how-it-works-video {
+            width: 100%;
+            max-width: 600px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
           }
         `}</style>
 
@@ -406,17 +443,26 @@ export const Landing: React.FC = () => {
             items={itemsHowItWorks}
             columns={3}
             textAlign="center"
-          />
+            className="animated-section"
+          >
+            <div className="video-container">
+              <video
+                src="/path/to/your/video.mp4"
+                controls
+                className="how-it-works-video"
+              />
+            </div>
+          </Section>
           <SDKArchitectureSection />
           <CoreFeaturesSection />
-          <div className="flex justify-center pt-28 md:pt-40">
-          <FeatureSection
-            title="Query Wallet Transactions"
-            subtitle="Real-Time Data Retrieval."
-            description="Leverage the SWquery SDK to fetch and analyze wallet transactions instantly."
-            buttonText="View Documentation"
-            buttonLink="https://bretasarthur1.gitbook.io/swquery/"
-          />
+          <div className=" justify-center   items-center pt-28 md:pt-40">
+            <FeatureSection
+              title="Query Wallet Transactions"
+              subtitle="Real-Time Data Retrieval."
+              description="Leverage the SWQuery SDK to fetch and analyze wallet transactions instantly."
+              buttonText="View Documentation"
+              buttonLink="https://bretasarthur1.gitbook.io/swquery/"
+            />
           </div>
           <Footer />
         </div>

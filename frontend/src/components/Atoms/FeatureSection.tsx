@@ -49,25 +49,27 @@ export const FeatureSection: React.FC<FeatureSectionProps> = ({
             items-center gap-10
           `}
         >
-          {/* Text Content */}
+         
           <motion.div
             className="flex-1 min-w-0"
             initial={{ opacity: 0, x: reversed ? 50 : -50 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.5 }}
           >
-            <h2 className="text-4xl font-bold mb-2">
+            <h2 className="flex justify-center text-4xl font-bold mb-2">
               {title} <span className="text-[#9945FF]">{subtitle}</span>
             </h2>
-            <p className="text-gray-300 mb-6">{description}</p>
-            <motion.a
-              href={buttonLink}
-              className="inline-block bg-[#9945FF] text-white py-2 px-6 rounded-full font-semibold hover:bg-[#8134FF] transition duration-300"
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-            >
-              {buttonText}
-            </motion.a>
+            <p className="flex justify-center text-gray-300 mb-6">{description}</p>
+            <div className="flex justify-center">
+              <motion.a
+                href={buttonLink}
+                className="inline-block bg-[#9945FF] text-white py-2 px-6 rounded-full font-semibold hover:bg-[#8134FF] transition duration-300"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                {buttonText}
+              </motion.a>
+            </div>
           </motion.div>
 
           {/* Code Snippet */}
