@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { Twitter, Github, MessageCircle, Pill } from "lucide-react";
 import HorizontalLogo from "../../../../assets/images/logo-horizontal.png";
+import LogoComplete from "../../../../assets/images/logo-complete.png";
 
 export const Footer = () => {
   const currentYear = new Date().getFullYear();
@@ -11,7 +12,13 @@ export const Footer = () => {
       <div className="container mx-auto">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
           <div className="flex justify-center md:justify-start">
-            <Image src={HorizontalLogo} alt="SWquery Logo" />
+            <Image
+              src={LogoComplete}
+              alt="SWquery Logo"
+              width={250}
+              style={{ objectFit: "contain" }}
+              priority
+            />
           </div>
           <div className="text-center md:text-left">
             <h3 className="text-lg font-semibold mb-4">Learn</h3>
@@ -126,7 +133,6 @@ export const Footer = () => {
               href="https://t.me/ofcswquery"
               className="text-gray-400 hover:text-[#9945FF]"
             >
-
               <MessageCircle size={24} />
             </a>
             <a
