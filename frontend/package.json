@@ -12,6 +12,7 @@
     "@coral-xyz/anchor": "^0.30.1",
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.0",
+    "@headlessui/react": "^2.2.0",
     "@mui/material": "^6.4.1",
     "@radix-ui/react-scroll-area": "^1.2.2",
     "@radix-ui/react-slot": "^1.1.1",
