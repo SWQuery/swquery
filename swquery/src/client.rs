@@ -1,12 +1,16 @@
 use {
     crate::{errors::SdkError, models::*, utils::*},
     reqwest::Client,
+    reqwest::header::{HeaderMap, HeaderValue, USER_AGENT},
     serde_json::{self, json, Value},
     std::time::Duration,
     tracing::error,
+    std::collections::HashMap,
 };
 
-const AGENT_API_URL: &str = "https://api.swquery.xyz/agent/generate-query";
+const AGENT_API_URL: &str = 
+    "http://0.0.0.0:5500/agent/generate-query";
+    // "https://api.swquery.xyz/agent/generate-query";
 
 /// Enum to represent the Solana network.
 #[derive(Debug, Clone, Copy, Default)]
@@ -31,6 +35,11 @@ pub struct SWqueryClient {
     pub network: Network,
     /// A reusable reqwest client.
     client: Client,
+}
+
+pub struct SWqueryResponse {
+    pub response: serde_json::Value,
+    pub response_type: String,
 }
 
 impl SWqueryClient {
@@ -86,7 +95,7 @@ impl SWqueryClient {
     ///
     /// A JSON value representing the RPC response, or an error if something
     /// went wrong.
-    pub async fn query(&self, input: &str, pubkey: &str) -> Result<Value, SdkError> {
+    pub async fn query(&self, input: &str, pubkey: &str) -> Result<SWqueryResponse, SdkError> {
         println!(
             "Querying...\nInput: {}\nPubkey: {}\nHelius Key: {}\nOpenAI Key: {}",
             input, pubkey, self.helius_key, self.openai_key
@@ -99,11 +108,13 @@ impl SWqueryClient {
             "openai_key": self.openai_key
         });
 
+        let mut res_type = "transactions";
+
         println!("Sending request to Agent API: {:#?}", payload);
         let response = self
             .client
             .post(AGENT_API_URL)
-            // .header("x-api-key", &self.openai_key)
+            .header("x-api-key", "WDAO4Z1Z503DWJH7060GIYGR0TWIIPBP")
             .json(&payload)
             .send()
             .await
@@ -160,6 +171,7 @@ impl SWqueryClient {
 
                 let response_unparsed = self.get_recent_transactions(address, days).await?;
                 response = to_value_response(response_unparsed).unwrap();
+                res_type = "transactions";
             }
             "getSignaturesForAddressPeriod" => {
                 let address = get_optional_str_param(params, "address").unwrap_or_default();
@@ -176,12 +188,19 @@ impl SWqueryClient {
                     .get_signatures_for_address(address, Some(from), Some(to))
                     .await?;
                 response = to_value_response(response_unparsed).unwrap();
+                res_type = "signatures";
             }
             "getSignaturesForAddress" => {
                 let address = get_required_str_param(params, "address")?;
                 let response_unparsed =
                     self.get_signatures_for_address(address, None, None).await?;
                 response = to_value_response(response_unparsed).unwrap();
+                res_type = "signatures";
+            }
+            "getTrendingTokens" => {
+                let response_unparsed = self.get_trending_tokens().await?;
+                response = to_value_response(response_unparsed).unwrap();
+                res_type = "tokens";
             }
             // "getAssetsByOwner" => {
             //     let owner = get_required_str_param(params, "owner")?;
@@ -418,7 +437,9 @@ impl SWqueryClient {
             }
         }
 
-        Ok(response)
+
+
+        Ok( SWqueryResponse {response: response, response_type: res_type.to_string()} )
     }
 
     /// Fetch recent transactions for the last 'n' days using Helius RPC.
@@ -802,5 +823,35 @@ impl SWqueryClient {
             params,
         )
         .await
+    }
+
+    pub async fn get_trending_tokens(&self) -> Result<Vec<TokenData>, SdkError> {
+        let phantom_url = "https://api.phantom.app/explore/v2/trending-tokens?timeFrame=24h&sortBy=rank&sortDirection=asc&limit=100&rankAlgo=default&platform=extension&locale=pt&appVersion=24.30.0&chainIds%5B%5D=solana%3A101";
+
+        let response = self.client
+            .get(phantom_url)
+            .header(USER_AGENT, "Mozilla/5.0")
+            .send()
+            .await
+            .map_err(|e| {
+                error!("Falha ao enviar requisição para Phantom: {:?}", e);
+                SdkError::RequestFailed
+            })?;
+
+        println!("Phantom status: {}", response.status());
+
+        if !response.status().is_success() {
+            error!("Requisição falhou com status: {}", response.status());
+            return Err(SdkError::RequestFailed);
+        }
+
+        let trending_tokens_response: GetTrendingTokensResponse = response.json().await.map_err(|e| {
+            error!("Falha ao desserializar resposta da Phantom: {:?}", e);
+            SdkError::ParseError(e.to_string())
+        })?;
+
+        let top_tokens = trending_tokens_response.tokens.into_iter().take(5).collect();
+
+        Ok(top_tokens)
     }
 }

@@ -129,6 +129,7 @@ pub struct ChatResponse {
     pub response: serde_json::Value,
     pub metadata: Option<serde_json::Value>,
     pub report: String,
+    pub response_type: String,
 }
 
 pub async fn chatbot_interact(
@@ -182,10 +183,10 @@ pub async fn chatbot_interact(
             )
         })?;
 
-    let metadata = query_result.get("metadata").cloned();
+    let metadata = query_result.response.get("metadata").cloned();
 
     let report_input = QueryRequestReport {
-        input_user: query_result.clone().to_string(),
+        input_user: query_result.response.clone().to_string(),
         address: payload.address.clone(),
         chatted: payload.input_user.clone(),
         openai_key: payload.openai_key.clone(),
@@ -197,7 +198,8 @@ pub async fn chatbot_interact(
         StatusCode::OK,
         Json(ChatResponse {
             credits: credit.2,
-            response: query_result,
+            response: query_result.response,
+            response_type: query_result.response_type,
             metadata,
             report: report.1.result.clone(),
         }),

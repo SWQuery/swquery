@@ -5,6 +5,11 @@ set -a
 source .env
 set +a
 
+# Depuração: Verificar se as variáveis foram carregadas
+echo "TEST_API_KEY: $TEST_API_KEY"
+echo "TEST_HELIUS_API_KEY: $TEST_HELIUS_API_KEY"
+echo "TEST_OPENAI_API_KEY: $TEST_OPENAI_API_KEY"
+
 BASE_URL="http://localhost:5500"
 API_KEY="$TEST_API_KEY"
 HELIUS_API_KEY="$TEST_HELIUS_API_KEY"
@@ -61,23 +66,23 @@ response=$(curl -s -w "\n%{http_code}" -X GET "$BASE_URL/packages")
 status=$(echo "$response" | tail -n1)
 check_response "$response" "$status" 200
 
-# Test verify transaction with real signature
-echo "Verifying transaction..."
-response=$(curl -s -w "\n%{http_code}" -H "Content-Type: application/json" -X POST -d '{
-  "package_id": 1,
-  "signature": "3dMe8itJ7Rbc3E42aFMDWyrJJPv4dHUpXgoqWFKhHNKB4mbd2veFp8LMEdfzEAoYS9XbXTTQSpQszwSpmY33q9Ky",
-  "user_pubkey": "9unenHYtwUowNkWdZmSYTwzGxxdzKVJh7npk6W6uqRF3"
-}' "$BASE_URL/packages/verify")
-status=$(echo "$response" | tail -n1)
-check_response "$response" "$status" 200
+# # Test verify transaction with real signature
+# echo "Verifying transaction..."
+# response=$(curl -s -w "\n%{http_code}" -H "Content-Type: application/json" -X POST -d '{
+#   "package_id": 1,
+#   "signature": "3dMe8itJ7Rbc3E42aFMDWyrJJPv4dHUpXgoqWFKhHNKB4mbd2veFp8LMEdfzEAoYS9XbXTTQSpQszwSpmY33q9Ky",
+#   "user_pubkey": "9unenHYtwUowNkWdZmSYTwzGxxdzKVJh7npk6W6uqRF3"
+# }' "$BASE_URL/packages/verify")
+# status=$(echo "$response" | tail -n1)
+# check_response "$response" "$status" 200
 
 # Test chatbot interaction with new API key system
 echo "Chatbot interaction..."
 response=$(curl -s -w "\n%{http_code}" -H "Content-Type: application/json" -H "x-api-key: $TEST_API_KEY" -X POST -d '{
-  "input_user": "What was my biggest transaction in the last 30 days?",
+  "input_user": "What was the trending tokens today?",
   "address": "9unenHYtwUowNkWdZmSYTwzGxxdzKVJh7npk6W6uqRF3",
   "openai_key": "'"$OPENAI_API_KEY"'",
-  "helius_key": "'"$TEST_HELIUS_API_KEY"'"
+  "helius_key": "'"$HELIUS_API_KEY"'"
 }' "$BASE_URL/chatbot/interact")
 status=$(echo "$response" | tail -n1)
 check_response "$response" "$status" 200

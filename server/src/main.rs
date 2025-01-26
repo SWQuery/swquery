@@ -25,7 +25,8 @@ use {
     tower_http::cors::{Any, CorsLayer},
 };
 
-pub const AGENT_API_URL: &str = "http://agent:8000";
+// pub const AGENT_API_URL: &str = "http://agent:8000";
+pub const AGENT_API_URL: &str = "http://localhost:8000";
 
 #[tokio::main]
 async fn main() {

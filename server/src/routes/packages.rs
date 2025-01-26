@@ -160,11 +160,11 @@ async fn verify_solana_transaction(
     // Create RPC client
     let rpc_client = RpcClient::new(format!(
         "https://mainnet.helius-rpc.com/?api-key={}",
-        std::env::var("HELIUS_API_KEY").unwrap_or_default()
+        std::env::var("TEST_HELIUS_API_KEY").unwrap_or_default()
     ));
 
     // The official SWQuery USDC receiving wallet
-    let expected_recipient = Pubkey::from_str("BXVjUeXZ5GgbPvqCsUXdGz2G7zsg436GctEC3HkNLABK")
+    let expected_recipient = Pubkey::from_str("5xTzJevG6oR7KhoraFzypzXWYHxuhuEJruSVc3A2Zz2p")
         .map_err(|_| {
             (
                 StatusCode::INTERNAL_SERVER_ERROR,

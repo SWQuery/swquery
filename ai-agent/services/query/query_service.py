@@ -84,6 +84,7 @@ def query_generator_openai(user_input: str, wallet: str, key_openai: str):
         "   - `getTransaction(signature: String)`\n"
         "   - `getBalance(address: String)`\n"
         "   - `getAssetsByOwner(owner: String)`\n\n"
+        "   - `getTrendingTokens()`\n"
         "7. Response Examples:\n\n"
         "   **Example 1:** Query: \"What were my successful transactions in the last 5 days?\"\n"
         "   {\n"
