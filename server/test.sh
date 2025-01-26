@@ -6,14 +6,14 @@ source .env
 set +a
 
 # Depuração: Verificar se as variáveis foram carregadas
-echo "TEST_API_KEY: $TEST_API_KEY"
-echo "TEST_HELIUS_API_KEY: $TEST_HELIUS_API_KEY"
-echo "TEST_OPENAI_API_KEY: $TEST_OPENAI_API_KEY"
+echo "TEST_API: $TEST_API"
+echo "TEST_HELIUS_API: $TEST_HELIUS_API"
+echo "TEST_OPENAI_API: $TEST_OPENAI_API"
 
 BASE_URL="http://localhost:5500"
-API_KEY="$TEST_API_KEY"
-HELIUS_API_KEY="$TEST_HELIUS_API_KEY"
-OPENAI_API_KEY="$TEST_OPENAI_API_KEY"
+API="$TEST_API"
+HELIUS_API="$TEST_HELIUS_API"
+OPENAI_API="$TEST_OPENAI_API"
 
 check_response() {
   local response="$1"
@@ -78,11 +78,11 @@ check_response "$response" "$status" 200
 
 # Test chatbot interaction with new API key system
 echo "Chatbot interaction..."
-response=$(curl -s -w "\n%{http_code}" -H "Content-Type: application/json" -H "x-api-key: $TEST_API_KEY" -X POST -d '{
+response=$(curl -s -w "\n%{http_code}" -H "Content-Type: application/json" -H "x-api-key: $TEST_API" -X POST -d '{
   "input_user": "What was the trending tokens today?",
   "address": "9unenHYtwUowNkWdZmSYTwzGxxdzKVJh7npk6W6uqRF3",
-  "openai_key": "'"$OPENAI_API_KEY"'",
-  "helius_key": "'"$HELIUS_API_KEY"'"
+  "openai_key": "'"$OPENAI_API"'",
+  "helius_key": "'"$HELIUS_API"'"
 }' "$BASE_URL/chatbot/interact")
 status=$(echo "$response" | tail -n1)
 check_response "$response" "$status" 200
