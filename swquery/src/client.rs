@@ -29,6 +29,8 @@ pub struct SWqueryClient {
     pub openai_key: String,
     /// The Helius API key for RPC calls.
     pub helius_key: String,
+    /// The API key for the SWQuery API.
+    pub api_key: String,
     /// The timeout for requests.
     pub timeout: Duration,
     /// The network to use for Helius RPC calls.
@@ -58,12 +60,14 @@ impl SWqueryClient {
     pub fn new(
         openai_key: String,
         helius_key: String,
+        api_key: String,
         timeout: Option<Duration>,
         network: Option<Network>,
     ) -> Self {
         SWqueryClient {
             openai_key,
             helius_key,
+            api_key,
             timeout: timeout.unwrap_or(Duration::from_secs(5)),
             network: network.unwrap_or_default(),
             client: Client::builder()
@@ -114,7 +118,7 @@ impl SWqueryClient {
         let response = self
             .client
             .post(AGENT_API_URL)
-            .header("x-api-key", "WDAO4Z1Z503DWJH7060GIYGR0TWIIPBP")
+            .header("x-api-key", self.api_key.clone())
             .json(&payload)
             .send()
             .await

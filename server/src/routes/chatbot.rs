@@ -168,6 +168,7 @@ pub async fn chatbot_interact(
     let swquery_client = SWqueryClient::new(
         payload.openai_key.clone(),
         payload.helius_key.clone(),
+        api_key.to_string().clone(),
         None,
         Some(Network::Mainnet),
     );
