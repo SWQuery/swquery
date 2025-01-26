@@ -1,9 +1,11 @@
 use {
     crate::{errors::SdkError, models::*, utils::*},
     reqwest::Client,
+    reqwest::header::{HeaderMap, HeaderValue, USER_AGENT},
     serde_json::{self, json, Value},
     std::time::Duration,
     tracing::error,
+    std::collections::HashMap,
 };
 
 const AGENT_API_URL: &str = 
@@ -27,12 +29,19 @@ pub struct SWqueryClient {
     pub openai_key: String,
     /// The Helius API key for RPC calls.
     pub helius_key: String,
+    /// The API key for the SWQuery API.
+    pub api_key: String,
     /// The timeout for requests.
     pub timeout: Duration,
     /// The network to use for Helius RPC calls.
     pub network: Network,
     /// A reusable reqwest client.
     client: Client,
+}
+
+pub struct SWqueryResponse {
+    pub response: serde_json::Value,
+    pub response_type: String,
 }
 
 impl SWqueryClient {
@@ -51,12 +60,14 @@ impl SWqueryClient {
     pub fn new(
         openai_key: String,
         helius_key: String,
+        api_key: String,
         timeout: Option<Duration>,
         network: Option<Network>,
     ) -> Self {
         SWqueryClient {
             openai_key,
             helius_key,
+            api_key,
             timeout: timeout.unwrap_or(Duration::from_secs(5)),
             network: network.unwrap_or_default(),
             client: Client::builder()
@@ -79,65 +90,6 @@ impl SWqueryClient {
         }
     }
 
-    // /// Sends a query to the SWQuery Agent API, receives a response type and
-    // /// parameters, and then invokes the appropriate RPC method based on the
-    // pub async fn execute_generated_function(
-    //     &self,
-    //     filter_function: &str,
-    //     transactions: Vec<FullTransaction>,
-    // ) -> Result<Vec<FullTransaction>, SdkError> {
-    //     // Prepare the WASM engine
-    //     let engine = Engine::default();
-
-    //     // Compile the filter function as a module
-    //     let wasm_code = format!(
-    //         r#"
-    //         use serde_json::{{Value, json}};
-    //         use crate::FullTransaction;
-    //         pub fn filter(transactions: Vec<FullTransaction>) ->
-    // Vec<FullTransaction> {{             {}
-    //         }}
-    //         "#,
-    //         filter_function
-    //     );
-
-    //     let module = Module::new(&engine, wasm_code).map_err(|e| {
-    //         SdkError::Unexpected(format!("Failed to compile WASM module: {}", e))
-    //     })?;
-
-    //     // Create a new store
-    //     let mut store = Store::new(&engine, ());
-
-    //     // Serialize the transactions into JSON
-    //     let transactions_json = serde_json::to_string(&transactions).map_err(|e|
-    // {         SdkError::Unexpected(format!("Failed to serialize transactions:
-    // {}", e))     })?;
-
-    //     // Define the function in WASM
-    //     let instance = wasmtime::Instance::new(&mut store, &module,
-    // &[]).map_err(|e| {         SdkError::Unexpected(format!("Failed to create
-    // WASM instance: {}", e))     })?;
-
-    //     // Call the function
-    //     let filter_fn = instance.get_typed_func::<(String,), String>(&mut store,
-    // "filter")         .map_err(|e| SdkError::Unexpected(format!("Failed to
-    // retrieve 'filter' function: {}", e)))?;
-
-    //     // Execute the filter function
-    //     let filtered_transactions_json = filter_fn.call(&mut store,
-    // transactions_json).map_err(|e| {         SdkError::Unexpected(format!("
-    // Failed to execute 'filter': {}", e))     })?;
-
-    //     // Deserialize the JSON result back into `Vec<FullTransaction>`
-    //     let filtered_transactions: Vec<FullTransaction> =
-    // serde_json::from_str(&filtered_transactions_json).map_err(|e| {
-    //         SdkError::Unexpected(format!("Failed to deserialize filtered
-    // transactions: {}", e))     })?;
-
-    //     Ok(filtered_transactions)
-    // }
-
-    ///
     /// # Arguments
     ///
     /// * `input` - User input or query for the agent.
@@ -147,8 +99,11 @@ impl SWqueryClient {
     ///
     /// A JSON value representing the RPC response, or an error if something
     /// went wrong.
-    pub async fn query(&self, input: &str, pubkey: &str) -> Result<Value, SdkError> {
-        println!("Querying...\nInput: {}\nPubkey: {}\nHelius Key: {}\nOpenAI Key: {}", input, pubkey, self.helius_key, self.openai_key);
+    pub async fn query(&self, input: &str, pubkey: &str) -> Result<SWqueryResponse, SdkError> {
+        println!(
+            "Querying...\nInput: {}\nPubkey: {}\nHelius Key: {}\nOpenAI Key: {}",
+            input, pubkey, self.helius_key, self.openai_key
+        );
 
         // Send the request to the Agent API
         let payload = json!({
@@ -157,11 +112,13 @@ impl SWqueryClient {
             "openai_key": self.openai_key
         });
 
+        let mut res_type = "transactions";
+
         println!("Sending request to Agent API: {:#?}", payload);
         let response = self
             .client
             .post(AGENT_API_URL)
-            // .header("x-api-key", &self.openai_key)
+            .header("x-api-key", self.api_key.clone())
             .json(&payload)
             .send()
             .await
@@ -218,6 +175,7 @@ impl SWqueryClient {
 
                 let response_unparsed = self.get_recent_transactions(address, days).await?;
                 response = to_value_response(response_unparsed).unwrap();
+                res_type = "transactions";
             }
             "getSignaturesForAddressPeriod" => {
                 let address = get_optional_str_param(params, "address").unwrap_or_default();
@@ -234,12 +192,19 @@ impl SWqueryClient {
                     .get_signatures_for_address(address, Some(from), Some(to))
                     .await?;
                 response = to_value_response(response_unparsed).unwrap();
+                res_type = "signatures";
             }
             "getSignaturesForAddress" => {
                 let address = get_required_str_param(params, "address")?;
                 let response_unparsed =
                     self.get_signatures_for_address(address, None, None).await?;
                 response = to_value_response(response_unparsed).unwrap();
+                res_type = "signatures";
+            }
+            "getTrendingTokens" => {
+                let response_unparsed = self.get_trending_tokens().await?;
+                response = to_value_response(response_unparsed).unwrap();
+                res_type = "tokens";
             }
             // "getAssetsByOwner" => {
             //     let owner = get_required_str_param(params, "owner")?;
@@ -476,7 +441,9 @@ impl SWqueryClient {
             }
         }
 
-        Ok(response)
+
+
+        Ok( SWqueryResponse {response: response, response_type: res_type.to_string()} )
     }
 
     /// Fetch recent transactions for the last 'n' days using Helius RPC.
@@ -862,33 +829,33 @@ impl SWqueryClient {
         .await
     }
 
-    // pub async fn get_trending_tokens(&self) -> Result<GetTrendingTokensResponse, SdkError> {
-    //     let coingecko_url = "https://api.phantom.app/explore/v2/trending-tokens?timeFrame=24h&sortBy=rank&sortDirection=asc&limit=5&rankAlgo=default&platform=extension&locale=pt&appVersion=24.30.0&chainIds%5B%5D=solana%3A101";
+    pub async fn get_trending_tokens(&self) -> Result<Vec<TokenData>, SdkError> {
+        let phantom_url = "https://api.phantom.app/explore/v2/trending-tokens?timeFrame=24h&sortBy=rank&sortDirection=asc&limit=100&rankAlgo=default&platform=extension&locale=pt&appVersion=24.30.0&chainIds%5B%5D=solana%3A101";
 
-    //     let response = self.client
-    //         .get(coingecko_url)
-    //         .header(USER_AGENT, "Mozilla/5.0")
-    //         .send()
-    //         .await
-    //         .map_err(|e| {
-    //             tracing::error!("Falha ao enviar requisição para CoinGecko: {:?}", e);
-    //             SdkError::RequestFailed
-    //         })?;
+        let response = self.client
+            .get(phantom_url)
+            .header(USER_AGENT, "Mozilla/5.0")
+            .send()
+            .await
+            .map_err(|e| {
+                error!("Falha ao enviar requisição para Phantom: {:?}", e);
+                SdkError::RequestFailed
+            })?;
 
-    //     println!("CoinGecko status: {}", response.status());
+        println!("Phantom status: {}", response.status());
 
-    //     if !response.status().is_success() {
-    //         tracing::error!("Requisição falhou com status: {}", response.status());
-    //         return Err(SdkError::RequestFailed);
-    //     }
+        if !response.status().is_success() {
+            error!("Requisição falhou com status: {}", response.status());
+            return Err(SdkError::RequestFailed);
+        }
 
-    //     let coingecko_tokens: Vec<TokenData> = response.json().await.map_err(|e| {
-    //         tracing::error!("Falha ao desserializar resposta da CoinGecko: {:?}", e);
-    //         SdkError::ParseError(e.to_string())
-    //     })?;
+        let trending_tokens_response: GetTrendingTokensResponse = response.json().await.map_err(|e| {
+            error!("Falha ao desserializar resposta da Phantom: {:?}", e);
+            SdkError::ParseError(e.to_string())
+        })?;
 
-    //     let top_tokens = coingecko_tokens.into_iter().take(5).collect();
+        let top_tokens = trending_tokens_response.tokens.into_iter().take(5).collect();
 
-    //     Ok(GetTrendingTokensResponse { tokens: top_tokens })
-    // }
+        Ok(top_tokens)
+    }
 }

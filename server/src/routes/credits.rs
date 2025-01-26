@@ -1,5 +1,5 @@
 use {
-    crate::models::{CreditModel, UserModel},
+    crate::models::{CreditModel, User},
     axum::{extract::State, http::StatusCode, Json},
     serde::{Deserialize, Serialize},
     sqlx::PgPool,
@@ -42,7 +42,7 @@ pub async fn buy_credits(
     State(pool): State<PgPool>,
     Json(payload): Json<BuyCredits>,
 ) -> Result<(StatusCode, Json<CreditResponse>), (StatusCode, String)> {
-    let user = sqlx::query_as::<_, UserModel>("SELECT id, pubkey FROM users WHERE pubkey = $1")
+    let user = sqlx::query_as::<_, User>("SELECT id, pubkey FROM users WHERE pubkey = $1")
         .bind(&payload.user_pubkey)
         .fetch_optional(&pool)
         .await
@@ -135,7 +135,7 @@ pub async fn refund_credits(
     State(pool): State<PgPool>,
     Json(payload): Json<RefundCredits>,
 ) -> Result<(StatusCode, Json<CreditResponse>), (StatusCode, String)> {
-    let user = sqlx::query_as::<_, UserModel>("SELECT id, pubkey FROM users WHERE pubkey = $1")
+    let user = sqlx::query_as::<_, User>("SELECT id, pubkey FROM users WHERE pubkey = $1")
         .bind(&payload.user_pubkey)
         .fetch_optional(&pool)
         .await

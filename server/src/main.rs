@@ -17,11 +17,13 @@ use {
         chatbot::{chatbot_interact, get_chat_by_id, get_chats_for_user},
         credits::{buy_credits, refund_credits},
         users::{create_user, get_user_by_pubkey, get_users, manage_subscription},
+        packages::{get_packages, verify_transaction},
     },
     std::time::Duration,
     tower_http::cors::{Any, CorsLayer},
 };
 
+// pub const AGENT_API_URL: &str = "http://agent:8000";
 pub const AGENT_API_URL: &str = "http://localhost:8000";
 
 #[tokio::main]
@@ -54,6 +56,8 @@ async fn main() {
         .route("/health", get(|| async { "ok" }))
         .route("/credits/buy", post(buy_credits))
         .route("/credits/refund", post(refund_credits))
+        .route("/packages", get(get_packages))
+        .route("/packages/verify", post(verify_transaction))
         .nest("/agent", agent_router)
         .nest("/chatbot", chatbot_router)
         .nest("/users", users_router)

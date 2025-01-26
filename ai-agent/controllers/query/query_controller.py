@@ -32,8 +32,10 @@ async def generate_query_route(
 ):
     print("Incoming request: ", body)
 
-    result = query_generator_openai(
-        body.inputUser, body.address, body.openai_key)
+    # result = query_generator_openai(
+    #     body.inputUser, body.address, body.openai_key)
+
+    result = {'result': {'response': 'getTrendingTokens', 'params': {}, 'status': 'success'}, 'tokens': 1357}
 
     print("Result: ", result)
 
@@ -44,7 +46,12 @@ async def generate_query_route(
 async def generate_visualization_route(
     body: VisualizationBody
 ):
-    result = generate_visualization(
-        body.jsonReturned, body.question, body.openai_key)
+    # result = generate_visualization(
+    #     body.jsonReturned, body.question, body.openai_key)
+
+    result = {
+        "result": "Success",
+        "tokens": 1234
+    }
 
     return result

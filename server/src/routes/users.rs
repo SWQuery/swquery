@@ -1,6 +1,5 @@
 use {
-    crate::models::UserModel,
-    axum::{
+    crate::models::User, axum::{
         extract::{Path, State},
         http::StatusCode,
         Json,
@@ -38,7 +37,7 @@ pub async fn create_user(
 
     // Check if user already exists
     if let Some(existing_user) =
-        sqlx::query_as::<_, UserModel>("SELECT id, pubkey FROM users WHERE pubkey = $1")
+        sqlx::query_as::<_, User>("SELECT id, pubkey FROM users WHERE pubkey = $1")
             .bind(&payload.pubkey)
             .fetch_optional(&pool)
             .await
@@ -54,18 +53,17 @@ pub async fn create_user(
     }
 
     // Insert new user
-    let user = sqlx::query_as::<_, UserModel>(
-        "INSERT INTO users (pubkey) VALUES ($1) RETURNING id, pubkey",
-    )
-    .bind(&payload.pubkey)
-    .fetch_one(&pool)
-    .await
-    .map_err(|e| {
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            format!("Failed to insert user: {}", e),
-        )
-    })?;
+    let user =
+        sqlx::query_as::<_, User>("INSERT INTO users (pubkey) VALUES ($1) RETURNING id, pubkey")
+            .bind(&payload.pubkey)
+            .fetch_one(&pool)
+            .await
+            .map_err(|e| {
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    format!("Failed to insert user: {}", e),
+                )
+            })?;
 
     Ok((
         StatusCode::CREATED,
@@ -77,7 +75,7 @@ pub async fn create_user(
 }
 
 pub async fn get_users(State(pool): State<PgPool>) -> Json<Vec<User>> {
-    let users = sqlx::query_as::<_, UserModel>("SELECT id, pubkey FROM users")
+    let users = sqlx::query_as::<_, User>("SELECT id, pubkey FROM users")
         .fetch_all(&pool)
         .await
         .expect("Failed to fetch users")
@@ -95,7 +93,7 @@ pub async fn get_user_by_pubkey(
     State(pool): State<PgPool>,
     Path(pubkey): Path<String>,
 ) -> Result<Json<User>, (StatusCode, String)> {
-    let user = sqlx::query_as::<_, UserModel>("SELECT id, pubkey FROM users WHERE pubkey = $1")
+    let user = sqlx::query_as::<_, User>("SELECT id, pubkey FROM users WHERE pubkey = $1")
         .bind(&pubkey)
         .fetch_optional(&pool)
         .await
