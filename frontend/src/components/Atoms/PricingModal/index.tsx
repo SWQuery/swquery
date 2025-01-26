@@ -1,99 +1,152 @@
-import React, { useEffect, useState } from "react";
+"use client";
+
+import React, { useState } from "react";
 import { X, Check } from "lucide-react";
-import { useConnection, useWallet } from "@solana/wallet-adapter-react";
-import {
-  createTransferInstruction,
-  getAssociatedTokenAddress,
-} from "@solana/spl-token";
-import { PublicKey, Transaction } from "@solana/web3.js";
-import axios from "axios";
 import { Card, CardContent } from "@/components/Atoms/CardComponent";
-import { USDC_MINT, SWQUERY_WALLET, API_URL } from "@/utils/constants";
+import {
+  Connection,
+  PublicKey,
+  Transaction,
+  SystemProgram,
+  LAMPORTS_PER_SOL,
+} from "@solana/web3.js";
+import Alert from "@mui/material/Alert";
+import Snackbar from "@mui/material/Snackbar";
+import Button from "@mui/material/Button";
+import Modal from "@mui/material/Modal";
+import Box from "@mui/material/Box";
+import Typography from "@mui/material/Typography";
 
-interface Package {
-  id: string;
-  name: string;
-  price_usdc: number;
-  features: string[];
-}
-
-interface PurchaseResult {
-  message: string;
-  remaining_requests: number;
-  package_requests: number;
-}
+const connection = new Connection("https://api.mainnet-beta.solana.com");
 
 interface PricingModalProps {
   isOpen: boolean;
   onClose: () => void;
 }
 
-export const PricingModal: React.FC<PricingModalProps> = ({
-  isOpen,
-  onClose,
-}) => {
-  const { connection } = useConnection();
-  const { publicKey, sendTransaction } = useWallet();
+const pricingOptions = [
+  {
+    title: "Basic Plan",
+    price: "$10",
+    lamports: 10 * LAMPORTS_PER_SOL,
+    features: ["25 requests", "Access to basic insights", "Email support"],
+    buttonText: "Get Basic Plan",
+  },
+  {
+    title: "Standard Plan",
+    price: "$30",
+    lamports: 30 * LAMPORTS_PER_SOL,
+    features: [
+      "80 requests",
+      "Advanced on-chain analytics",
+      "Real-time notifications",
+    ],
+    buttonText: "Get Standard Plan",
+  },
+  {
+    title: "Pro Plan",
+    price: "$50",
+    lamports: 50 * LAMPORTS_PER_SOL,
+    features: [
+      "150 requests",
+      "Priority on-chain analytics",
+      "Priority support",
+    ],
+    buttonText: "Get Pro Plan",
+  },
+  {
+    title: "Enterprise Plan",
+    price: "Contact Us",
+    lamports: 0,
+    features: [
+      "Custom request limits",
+      "Tailored solutions for businesses",
+      "Dedicated account manager",
+      "Premium support",
+    ],
+    buttonText: "Contact Us",
+  },
+];
 
-  const [packages, setPackages] = useState<Package[]>([]);
-  const [selectedPackage, setSelectedPackage] = useState<Package | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [purchaseResult, setPurchaseResult] = useState<PurchaseResult | null>(
-    null
-  );
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (isOpen) {
-      axios
-        .get(`${API_URL}/packages`)
-        .then((response) => setPackages(response.data))
-        .catch((error) => console.error("Failed to fetch packages:", error));
+const getProvider = () => {
+  if ("solana" in window) {
+    const provider = (window as any).solana;
+    if (provider.isPhantom) {
+      return provider;
     }
-  }, [isOpen]);
+  }
+  window.open("https://phantom.app/", "_blank");
+};
 
-  const handlePurchase = async () => {
-    if (!selectedPackage || !publicKey) return;
+const PricingModal = ({ isOpen, onClose }: PricingModalProps) => {
+  const [alertOpen, setAlertOpen] = useState(false);
+  const [alertMessage, setAlertMessage] = useState<string>("");
+  const [alertSeverity, setAlertSeverity] = useState<
+    "success" | "error" | "warning" | "info"
+  >("info");
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [selectedPlan, setSelectedPlan] = useState<
+    null | (typeof pricingOptions)[0]
+  >(null);
+
+  const buyCredits = async (amount: number) => {
+    const provider = getProvider();
+    if (!provider) {
+      setAlertMessage("Phantom wallet not found. Please install it.");
+      setAlertSeverity("error");
+      setAlertOpen(true);
+      return;
+    }
+
     try {
-      setLoading(true);
-      setError(null);
-
-      const senderAta = await getAssociatedTokenAddress(
-        new PublicKey(USDC_MINT),
-        publicKey!
-      );
-      const recipientAta = await getAssociatedTokenAddress(
-        new PublicKey(USDC_MINT),
-        new PublicKey(SWQUERY_WALLET)
+      const fromPubkey = provider.publicKey;
+      const toPubkey = new PublicKey(
+        "BXVjUeXZ5GgbPvqCsUXdGz2G7zsg436GctEC3HkNLABK"
       );
 
-      const transferInstruction = createTransferInstruction(
-        senderAta,
-        recipientAta,
-        publicKey!,
-        BigInt(selectedPackage.price_usdc * 1_000_000) // Convert to USDC decimals
+      const transaction = new Transaction().add(
+        SystemProgram.transfer({
+          fromPubkey,
+          toPubkey,
+          lamports: amount,
+        })
       );
 
-      const transaction = new Transaction().add(transferInstruction);
-      const signature = await sendTransaction(transaction, connection);
+      const { blockhash } = await connection.getLatestBlockhash();
+      transaction.recentBlockhash = blockhash;
+      transaction.feePayer = fromPubkey;
 
+      const signedTransaction = await provider.signTransaction(transaction);
+      const signature = await connection.sendRawTransaction(
+        signedTransaction.serialize()
+      );
       await connection.confirmTransaction(signature);
 
-      const { data } = await axios.post<PurchaseResult>(
-        `${API_URL}/packages/verify`,
-        {
-          package_id: selectedPackage.id,
-          signature,
-          user_pubkey: publicKey.toString(),
-        }
-      );
-
-      setPurchaseResult(data);
+      setAlertMessage("Transaction successful! Signature: " + signature);
+      setAlertSeverity("success");
+      setAlertOpen(true);
     } catch (err: any) {
-      setError(err.response?.data || err.message);
-      console.error("Purchase failed:", err);
-    } finally {
-      setLoading(false);
+      setAlertMessage("Transaction failed: " + err.message);
+      setAlertSeverity("error");
+      setAlertOpen(true);
+    }
+  };
+
+  const handlePlanSelection = (plan: (typeof pricingOptions)[0]) => {
+    setSelectedPlan(plan);
+    setConfirmOpen(true);
+  };
+
+  const handleConfirmTransaction = () => {
+    setConfirmOpen(false);
+    if (selectedPlan) {
+      if (selectedPlan.lamports > 0) {
+        buyCredits(selectedPlan.lamports);
+      } else {
+        setAlertMessage("Please contact us for Enterprise Plan pricing.");
+        setAlertSeverity("error");
+        setAlertOpen(true);
+      }
     }
   };
 
@@ -109,9 +162,7 @@ export const PricingModal: React.FC<PricingModalProps> = ({
           >
             <X size={24} />
           </button>
-
           <CardContent className="space-y-8">
-            {/* Modal Title */}
             <h2 className="text-3xl font-semibold text-white text-center mb-0">
               Oops, your free trial credits have ended!
             </h2>
@@ -119,8 +170,6 @@ export const PricingModal: React.FC<PricingModalProps> = ({
               But don’t worry, we’ve got you covered with the best plans to keep
               you querying seamlessly.
             </p>
-
-            {/* Call to Action */}
             <h3 className="text-2xl font-semibold text-purple-500 text-center">
               Choose the plan that fits your needs!
             </h3>
@@ -128,30 +177,20 @@ export const PricingModal: React.FC<PricingModalProps> = ({
               From casual users to power developers, we have options designed
               just for you.
             </p>
-
-            {/* Pricing Options */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-              {packages.map((pkg) => (
+              {pricingOptions.map((option, index) => (
                 <div
-                  key={pkg.id}
-                  className={`flex flex-col bg-gradient-to-br from-indigo-500/10 to-purple-600/10 rounded-xl p-6 border ${
-                    selectedPackage?.id === pkg.id
-                      ? "border-blue-500"
-                      : "border-gray-700"
-                  }`}
-                  onClick={() => setSelectedPackage(pkg)}
+                  key={index}
+                  className="flex flex-col bg-gradient-to-br from-indigo-500/10 to-purple-600/10 rounded-xl p-6 border border-gray-700"
                 >
-                  {/* Plan Header */}
                   <h3 className="text-xl font-semibold text-white mb-2">
-                    {pkg.name}
+                    {option.title}
                   </h3>
                   <p className="text-3xl font-bold text-purple-500 mb-4">
-                    {pkg.price_usdc} USDC
+                    {option.price}
                   </p>
-
-                  {/* Features List */}
                   <ul className="text-gray-300 space-y-2 pb-4">
-                    {pkg.features.map((feature, i) => (
+                    {option.features.map((feature, i) => (
                       <li key={i} className="flex items-center">
                         <Check
                           size={20}
@@ -162,38 +201,76 @@ export const PricingModal: React.FC<PricingModalProps> = ({
                       </li>
                     ))}
                   </ul>
+                  <button
+                    className="mt-auto px-4 py-2 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-lg text-white hover:opacity-90 transition-colors"
+                    onClick={() => handlePlanSelection(option)}
+                  >
+                    {option.buttonText}
+                  </button>
                 </div>
               ))}
             </div>
-
-            {/* Purchase Button */}
-            <div className="mt-4 text-center">
-              <button
-                onClick={handlePurchase}
-                disabled={loading || !publicKey || !selectedPackage}
-                className="px-4 py-2 bg-blue-500 text-white rounded disabled:opacity-50"
-              >
-                {loading
-                  ? "Processing..."
-                  : selectedPackage
-                  ? `Purchase ${selectedPackage.name}`
-                  : "Select a Package"}
-              </button>
-              {error && <p className="text-red-500 mt-2">{error}</p>}
-            </div>
-
-            {/* Success Message */}
-            {purchaseResult && (
-              <div className="mt-4 p-4 bg-green-100 rounded">
-                <h3 className="font-bold">Purchase Successful!</h3>
-                <p>{purchaseResult.message}</p>
-                <p>Remaining Credits: {purchaseResult.remaining_requests}</p>
-                <p>Added Credits: {purchaseResult.package_requests}</p>
-              </div>
-            )}
+            <p className="text-gray-400 text-center text-sm">
+              Need help deciding? Reach out to us anytime, and we’ll help you
+              find the perfect plan!
+            </p>
           </CardContent>
         </Card>
       </div>
+      <Snackbar
+        open={alertOpen}
+        autoHideDuration={6000}
+        onClose={() => setAlertOpen(false)}
+        anchorOrigin={{ vertical: "top", horizontal: "right" }}
+      >
+        <Alert
+          onClose={() => setAlertOpen(false)}
+          severity={alertSeverity}
+          variant="filled"
+        >
+          {alertMessage}
+        </Alert>
+      </Snackbar>
+      <Modal open={confirmOpen} onClose={() => setConfirmOpen(false)}>
+        <Box
+          sx={{
+            position: "absolute",
+            top: "50%",
+            left: "50%",
+            transform: "translate(-50%, -50%)",
+            width: 400,
+            bgcolor: "#2d2d2d",
+            border: "2px solid #6366f1",
+            borderRadius: 4,
+            boxShadow: 24,
+            p: 4,
+          }}
+        >
+          <Typography variant="h6" component="h2" gutterBottom>
+            Confirm Purchase
+          </Typography>
+          <Typography sx={{ mb: 2 }}>
+            Are you sure you want to purchase the {selectedPlan?.title} for{" "}
+            {selectedPlan?.price}?
+          </Typography>
+          <div style={{ display: "flex", justifyContent: "space-between" }}>
+            <Button
+              onClick={() => setConfirmOpen(false)}
+              variant="outlined"
+              color="primary"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleConfirmTransaction}
+              variant="contained"
+              color="secondary"
+            >
+              Confirm
+            </Button>
+          </div>
+        </Box>
+      </Modal>
     </div>
   );
 };
