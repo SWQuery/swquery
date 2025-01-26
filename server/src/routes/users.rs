@@ -7,6 +7,7 @@ use {
     },
     serde::{Deserialize, Serialize},
     sqlx::PgPool,
+    serde_json::Value
 };
 
 #[derive(Deserialize)]
@@ -18,6 +19,12 @@ pub struct CreateUser {
 pub struct User {
     pub id: i32,
     pub pubkey: String,
+}
+
+#[derive(Deserialize)]
+pub struct SubscriptionPayload {
+    method: String,
+    keys: Option<Vec<String>>, 
 }
 
 pub async fn create_user(
@@ -106,5 +113,68 @@ pub async fn get_user_by_pubkey(
         }))
     } else {
         Err((StatusCode::NOT_FOUND, "User not found".into()))
+    }
+}
+
+pub async fn manage_subscription(
+    State(pool): State<PgPool>,
+    Path(pubkey): Path<String>,          // Chave pública do usuário
+    Json(payload): Json<SubscriptionPayload>, // Payload recebido
+) -> Result<(StatusCode, String), (StatusCode, String)> {
+    let user = sqlx::query!("SELECT subscriptions FROM users WHERE pubkey = $1", &pubkey)
+        .fetch_optional(&pool)
+        .await
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, format!("Error querying user: {}", e)))?;
+
+    if let Some(mut user) = user {
+        let mut subscriptions = serde_json::from_value(
+            user.subscriptions.unwrap_or_else(|| serde_json::json!({})),
+        )
+        .unwrap_or_else(|_| serde_json::json!({}));
+
+        if let Some(keys) = payload.keys {
+            if payload.method.starts_with("subscribe") {
+                let method_key = payload.method.strip_prefix("subscribe").unwrap();
+                let list = subscriptions
+                    .get_mut(method_key)
+                    .and_then(|v| v.as_array_mut())
+                    .unwrap_or_else(|| {
+                        subscriptions[method_key] = serde_json::json!([]);
+                        subscriptions[method_key].as_array_mut().unwrap()
+                    });
+
+                for key in keys {
+                    if !list.contains(&serde_json::json!(key)) {
+                        list.push(serde_json::json!(key));
+                    }
+                }
+            } else if payload.method.starts_with("unsubscribe") {
+                let method_key = payload.method.strip_prefix("unsubscribe").unwrap();
+                if let Some(list) = subscriptions
+                    .get_mut(method_key)
+                    .and_then(|v| v.as_array_mut())
+                {
+                    list.retain(|v| !keys.contains(&v.as_str().unwrap_or_default().to_string()));
+                }
+            }
+        }
+
+        sqlx::query!(
+            "UPDATE users SET subscriptions = $1 WHERE pubkey = $2",
+            serde_json::to_value(subscriptions).unwrap(),
+            &pubkey
+        )
+        .execute(&pool)
+        .await
+        .map_err(|e| {
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                format!("Error updating subscriptions: {}", e),
+            )
+        })?;
+
+        Ok((StatusCode::OK, "Subscriptions updated".to_string()))
+    } else {
+        Err((StatusCode::NOT_FOUND, "User not found".to_string()))
     }
 }

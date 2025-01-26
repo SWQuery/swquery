@@ -16,15 +16,13 @@ use {
         agent::{generate_query, generate_report},
         chatbot::{chatbot_interact, get_chat_by_id, get_chats_for_user},
         credits::{buy_credits, refund_credits},
-        users::{create_user, get_user_by_pubkey, get_users},
-        websocket::manage_websocket,
-        token::create_pumpfun_token
+        users::{create_user, get_user_by_pubkey, get_users, manage_subscription},
     },
     std::time::Duration,
     tower_http::cors::{Any, CorsLayer},
 };
 
-pub const AGENT_API_URL: &str = "http://agent:8000";
+pub const AGENT_API_URL: &str = "http://localhost:8000";
 
 #[tokio::main]
 async fn main() {
@@ -47,19 +45,18 @@ async fn main() {
         .route("/interact", post(chatbot_interact))
         .route("/chats", get(get_chats_for_user))
         .route("/chats/:id", get(get_chat_by_id));
-
-    let token_router = Router::new()
-        .route("/create-token", post(create_pumpfun_token));
+    let users_router = Router::new()
+        .route("/", get(get_users).post(create_user))
+        .route("/:pubkey", get(get_user_by_pubkey))
+        .route("/:pubkey/subscriptions", post(manage_subscription)); 
 
     let app = Router::new()
         .route("/health", get(|| async { "ok" }))
-        .route("/users", get(get_users).post(create_user))
-        .route("/users/:pubkey", get(get_user_by_pubkey))
         .route("/credits/buy", post(buy_credits))
         .route("/credits/refund", post(refund_credits))
         .nest("/agent", agent_router)
         .nest("/chatbot", chatbot_router)
-        .nest("/token", token_router)
+        .nest("/users", users_router)
         .with_state(pool)
         .layer(cors)
         .layer(from_fn_with_state(
@@ -70,10 +67,6 @@ async fn main() {
     let listener = tokio::net::TcpListener::bind("0.0.0.0:5500").await.unwrap();
 
     println!("Listening on: http://{}", listener.local_addr().unwrap());
-
-    tokio::spawn(async {
-        manage_websocket().await;
-    });
 
     axum::serve(listener, app).await.unwrap();
 }

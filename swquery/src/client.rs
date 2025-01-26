@@ -7,8 +7,8 @@ use {
 };
 
 const AGENT_API_URL: &str = 
-    // "http://0.0.0.0:5500/agent/generate-query";
-    "https://api.swquery.xyz/agent/generate-query";
+    "http://0.0.0.0:5500/agent/generate-query";
+    // "https://api.swquery.xyz/agent/generate-query";
 
 /// Enum to represent the Solana network.
 #[derive(Debug, Clone, Copy, Default)]
@@ -861,4 +861,34 @@ impl SWqueryClient {
         )
         .await
     }
+
+    // pub async fn get_trending_tokens(&self) -> Result<GetTrendingTokensResponse, SdkError> {
+    //     let coingecko_url = "https://api.phantom.app/explore/v2/trending-tokens?timeFrame=24h&sortBy=rank&sortDirection=asc&limit=5&rankAlgo=default&platform=extension&locale=pt&appVersion=24.30.0&chainIds%5B%5D=solana%3A101";
+
+    //     let response = self.client
+    //         .get(coingecko_url)
+    //         .header(USER_AGENT, "Mozilla/5.0")
+    //         .send()
+    //         .await
+    //         .map_err(|e| {
+    //             tracing::error!("Falha ao enviar requisição para CoinGecko: {:?}", e);
+    //             SdkError::RequestFailed
+    //         })?;
+
+    //     println!("CoinGecko status: {}", response.status());
+
+    //     if !response.status().is_success() {
+    //         tracing::error!("Requisição falhou com status: {}", response.status());
+    //         return Err(SdkError::RequestFailed);
+    //     }
+
+    //     let coingecko_tokens: Vec<TokenData> = response.json().await.map_err(|e| {
+    //         tracing::error!("Falha ao desserializar resposta da CoinGecko: {:?}", e);
+    //         SdkError::ParseError(e.to_string())
+    //     })?;
+
+    //     let top_tokens = coingecko_tokens.into_iter().take(5).collect();
+
+    //     Ok(GetTrendingTokensResponse { tokens: top_tokens })
+    // }
 }
