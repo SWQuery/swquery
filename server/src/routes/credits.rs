@@ -57,16 +57,35 @@ pub async fn buy_credits(
     match user {
         Some(user) => {
             let api_key = generate_api_key();
-            match update_or_insert_credits(&pool, user.id, payload.amount, &api_key).await {
-                Ok(credit) => Ok((
-                    StatusCode::CREATED,
-                    Json(CreditResponse {
-                        user_pubkey: payload.user_pubkey,
-                        new_balance: credit.balance,
-                        api_key: Some(api_key),
-                    }),
+            
+            // Call the process_buy_credits_instruction
+            let result = process_buy_credits_instruction(
+                &[
+                    AccountInfo::new(&user.pubkey, true, false),
+                    AccountInfo::new(&TREASURY, false, false),
+                    // Add other required accounts
+                ],
+                &payload.amount.to_le_bytes(),
+            );
+
+            match result {
+                Ok(()) => {
+                    match update_or_insert_credits(&pool, user.id, payload.amount, &api_key).await {
+                        Ok(credit) => Ok((
+                            StatusCode::CREATED,
+                            Json(CreditResponse {
+                                user_pubkey: payload.user_pubkey,
+                                new_balance: credit.balance,
+                                api_key: Some(api_key),
+                            }),
+                        )),
+                        Err(e) => Err(e),
+                    }
+                }
+                Err(e) => Err((
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    format!("Error processing buy credits instruction: {}", e),
                 )),
-                Err(e) => Err(e),
             }
         }
         None => Ok((

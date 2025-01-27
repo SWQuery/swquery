@@ -3,25 +3,29 @@
 import React, { useState } from "react";
 import { X, Check } from "lucide-react";
 import { Card, CardContent } from "@/components/Atoms/CardComponent";
-import {
-  Connection,
-  PublicKey,
-  Transaction,
-  SystemProgram,
-  LAMPORTS_PER_SOL,
-} from "@solana/web3.js";
+import { LAMPORTS_PER_SOL } from "@solana/web3.js";
 import Alert from "@mui/material/Alert";
 import Snackbar from "@mui/material/Snackbar";
 import Button from "@mui/material/Button";
 import Modal from "@mui/material/Modal";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
+import axios from "axios";
 
-const connection = new Connection("https://api.mainnet-beta.solana.com");
+// const connection = new Connection("https://api.mainnet-beta.solana.com");
 
 interface PricingModalProps {
   isOpen: boolean;
   onClose: () => void;
+}
+
+interface WindowWithSolana extends Window {
+  solana?: {
+    isPhantom: boolean;
+    publicKey: {
+      toString(): string;
+    };
+  };
 }
 
 const pricingOptions = [
@@ -70,8 +74,8 @@ const pricingOptions = [
 
 const getProvider = () => {
   if ("solana" in window) {
-    const provider = (window as any).solana;
-    if (provider.isPhantom) {
+    const provider = (window as WindowWithSolana).solana;
+    if (provider?.isPhantom) {
       return provider;
     }
   }
@@ -99,34 +103,21 @@ const PricingModal = ({ isOpen, onClose }: PricingModalProps) => {
     }
 
     try {
-      const fromPubkey = provider.publicKey;
-      const toPubkey = new PublicKey(
-        "BXVjUeXZ5GgbPvqCsUXdGz2G7zsg436GctEC3HkNLABK"
-      );
+      const response = await axios.post("/api/buy-credits", {
+        amount,
+        user_pubkey: provider.publicKey.toString(),
+      });
 
-      const transaction = new Transaction().add(
-        SystemProgram.transfer({
-          fromPubkey,
-          toPubkey,
-          lamports: amount,
-        })
-      );
-
-      const { blockhash } = await connection.getLatestBlockhash();
-      transaction.recentBlockhash = blockhash;
-      transaction.feePayer = fromPubkey;
-
-      const signedTransaction = await provider.signTransaction(transaction);
-      const signature = await connection.sendRawTransaction(
-        signedTransaction.serialize()
-      );
-      await connection.confirmTransaction(signature);
-
-      setAlertMessage("Transaction successful! Signature: " + signature);
-      setAlertSeverity("success");
+      if (response.data.api_key) {
+        setAlertMessage("Transaction successful! New balance: " + response.data.new_balance);
+        setAlertSeverity("success");
+      } else {
+        setAlertMessage("Transaction failed: " + response.data.error);
+        setAlertSeverity("error");
+      }
       setAlertOpen(true);
-    } catch (err: any) {
-      setAlertMessage("Transaction failed: " + err.message);
+    } catch (err: unknown) {
+      setAlertMessage("Transaction failed: " + (err as Error).message);
       setAlertSeverity("error");
       setAlertOpen(true);
     }
@@ -167,7 +158,7 @@ const PricingModal = ({ isOpen, onClose }: PricingModalProps) => {
               Oops, your free trial credits have ended!
             </h2>
             <p className="text-lg text-gray-300 text-center mt-0">
-              But don’t worry, we’ve got you covered with the best plans to keep
+              But don&apos;t worry, we&apos;ve got you covered with the best plans to keep
               you querying seamlessly.
             </p>
             <h3 className="text-2xl font-semibold text-purple-500 text-center">
@@ -211,7 +202,7 @@ const PricingModal = ({ isOpen, onClose }: PricingModalProps) => {
               ))}
             </div>
             <p className="text-gray-400 text-center text-sm">
-              Need help deciding? Reach out to us anytime, and we’ll help you
+              Need help deciding? Reach out to us anytime, and we&apos;ll help you
               find the perfect plan!
             </p>
           </CardContent>
