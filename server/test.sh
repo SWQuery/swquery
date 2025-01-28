@@ -65,15 +65,15 @@ response=$(curl -s -w "\n%{http_code}" -X GET "$BASE_URL/packages")
 status=$(echo "$response" | tail -n1)
 check_response "$response" "$status" 200
 
-# # Test verify transaction with real signature
-# echo "Verifying transaction..."
-# response=$(curl -s -w "\n%{http_code}" -H "Content-Type: application/json" -X POST -d '{
-#   "package_id": 1,
-#   "signature": "3dMe8itJ7Rbc3E42aFMDWyrJJPv4dHUpXgoqWFKhHNKB4mbd2veFp8LMEdfzEAoYS9XbXTTQSpQszwSpmY33q9Ky",
-#   "user_pubkey": "9unenHYtwUowNkWdZmSYTwzGxxdzKVJh7npk6W6uqRF3"
-# }' "$BASE_URL/packages/verify")
-# status=$(echo "$response" | tail -n1)
-# check_response "$response" "$status" 200
+# Test verify transaction with real signature
+echo "Verifying transaction..."
+response=$(curl -s -w "\n%{http_code}" -H "Content-Type: application/json" -X POST -d '{
+  "package_id": 1,
+  "signature": "3dMe8itJ7Rbc3E42aFMDWyrJJPv4dHUpXgoqWFKhHNKB4mbd2veFp8LMEdfzEAoYS9XbXTTQSpQszwSpmY33q9Ky",
+  "user_pubkey": "9unenHYtwUowNkWdZmSYTwzGxxdzKVJh7npk6W6uqRF3"
+}' "$BASE_URL/packages/verify")
+status=$(echo "$response" | tail -n1)
+check_response "$response" "$status" 200
 
 # Test chatbot interaction with new API key system
 echo "Chatbot interaction..."
