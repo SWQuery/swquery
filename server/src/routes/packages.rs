@@ -189,26 +189,25 @@ async fn verify_solana_transaction(
 
                     // Find the recipient's balance change
                     for (pre, post) in pre_balances.iter().zip(post_balances.iter()) {
-                        if let (mint, owner) = (&pre.mint, &post.owner) {
-                            if mint == &usdc_mint.to_string()
-                                && owner.clone().unwrap() == expected_recipient.to_string()
+                        let (mint, owner) = (&pre.mint, &post.owner);
+                        if mint == &usdc_mint.to_string()
+                            && owner.clone().unwrap() == expected_recipient.to_string()
+                        {
+                            let pre_amount = pre.ui_token_amount.ui_amount.unwrap_or(0.0);
+                            let post_amount = post.ui_token_amount.ui_amount.unwrap_or(0.0);
+                            let amount_change = (post_amount - pre_amount).abs();
+
+                            println!("Found transfer to recipient: {} USDC", amount_change);
+                            println!("Expected: {} USDC", expected_amount);
+                            println!("Recipient: {:?}", owner);
+
+                            // Compare with expected amount with some tolerance
+                            if (rust_decimal::Decimal::try_from(amount_change).unwrap()
+                                - expected_amount)
+                                .abs()
+                                < rust_decimal::Decimal::new(1, 2)
                             {
-                                let pre_amount = pre.ui_token_amount.ui_amount.unwrap_or(0.0);
-                                let post_amount = post.ui_token_amount.ui_amount.unwrap_or(0.0);
-                                let amount_change = (post_amount - pre_amount).abs();
-
-                                println!("Found transfer to recipient: {} USDC", amount_change);
-                                println!("Expected: {} USDC", expected_amount);
-                                println!("Recipient: {:?}", owner);
-
-                                // Compare with expected amount with some tolerance
-                                if (rust_decimal::Decimal::try_from(amount_change).unwrap()
-                                    - expected_amount)
-                                    .abs()
-                                    < rust_decimal::Decimal::new(1, 2)
-                                {
-                                    return Ok(true);
-                                }
+                                return Ok(true);
                             }
                         }
                     }

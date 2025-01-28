@@ -164,11 +164,11 @@ pub async fn generate_query(
 }
 
 pub async fn generate_report(
-    State(pool): State<PgPool>,
+    State(_pool): State<PgPool>,
     headers: HeaderMap,
     Json(mut payload): Json<QueryRequestReport>,
 ) -> Result<(StatusCode, Json<QueryResponseReport>), (StatusCode, String)> {
-    let api_key = headers
+    let _api_key = headers
         .get("x-api-key")
         .and_then(|v| v.to_str().ok())
         .ok_or((StatusCode::UNAUTHORIZED, "Missing API key".to_string()))?;
@@ -196,11 +196,11 @@ pub async fn generate_report(
 }
 
 pub async fn generate_report_service(
-    pool: PgPool,
+    _pool: PgPool,
     headers: HeaderMap,
     Json(mut payload): Json<QueryRequestReport>,
 ) -> Result<(StatusCode, Json<QueryResponseReport>), (StatusCode, String)> {
-    let api_key = headers
+    let _api_key = headers
         .get("x-api-key")
         .and_then(|v| v.to_str().ok())
         .ok_or((StatusCode::UNAUTHORIZED, "Missing API key".to_string()))?;

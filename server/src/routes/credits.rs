@@ -17,6 +17,7 @@ pub struct CreditResponse {
     pub new_balance: i64,
     pub api_key: Option<String>,
 }
+
 #[derive(Serialize)]
 pub struct ValidateCreditsResponse {
     pub success: bool,
@@ -26,7 +27,7 @@ pub struct ValidateCreditsResponse {
 // Add function to generate API key
 fn generate_api_key() -> String {
     use rand::{thread_rng, Rng};
-    const CHARSET: &[u8] = b"ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+    const CHARSET: &[u8] = b"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
     let mut rng = thread_rng();
     let key: String = (0..32)
         .map(|_| {
@@ -42,54 +43,32 @@ pub async fn buy_credits(
     State(pool): State<PgPool>,
     Json(payload): Json<BuyCredits>,
 ) -> Result<(StatusCode, Json<CreditResponse>), (StatusCode, String)> {
-    let user = sqlx::query_as::<_, User>("SELECT id, pubkey FROM users WHERE pubkey = $1")
+    let user = sqlx::query_as::<_, User>("SELECT id, pubkey, pump_portal_payload FROM users WHERE pubkey = $1")
         .bind(&payload.user_pubkey)
         .fetch_optional(&pool)
         .await
         .map_err(|e| {
             eprintln!("Database error: {}", e);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                "Database error".to_string(),
-            )
+            (StatusCode::INTERNAL_SERVER_ERROR, "Database error".to_string())
         })?;
 
     match user {
         Some(user) => {
             let api_key = generate_api_key();
-            
-            // Call the process_buy_credits_instruction
-            let result = process_buy_credits_instruction(
-                &[
-                    AccountInfo::new(&user.pubkey, true, false),
-                    AccountInfo::new(&TREASURY, false, false),
-                    // Add other required accounts
-                ],
-                &payload.amount.to_le_bytes(),
-            );
-
-            match result {
-                Ok(()) => {
-                    match update_or_insert_credits(&pool, user.id, payload.amount, &api_key).await {
-                        Ok(credit) => Ok((
-                            StatusCode::CREATED,
-                            Json(CreditResponse {
-                                user_pubkey: payload.user_pubkey,
-                                new_balance: credit.balance,
-                                api_key: Some(api_key),
-                            }),
-                        )),
-                        Err(e) => Err(e),
-                    }
-                }
-                Err(e) => Err((
-                    StatusCode::INTERNAL_SERVER_ERROR,
-                    format!("Error processing buy credits instruction: {}", e),
+            match update_or_insert_credits(&pool, user.id, payload.amount, &api_key).await {
+                Ok(credit) => Ok((
+                    StatusCode::CREATED,
+                    Json(CreditResponse {
+                        user_pubkey: payload.user_pubkey,
+                        new_balance: credit.balance,
+                        api_key: Some(api_key),
+                    }),
                 )),
+                Err(e) => Err(e),
             }
         }
         None => Ok((
-            StatusCode::NOT_FOUND,
+            StatusCode::CREATED,
             Json(CreditResponse {
                 user_pubkey: payload.user_pubkey,
                 new_balance: 0,

@@ -1531,7 +1531,6 @@ dependencies = [
  "solana-program-runtime",
  "solana-sdk",
  "solana-system-program",
- "solana-timings",
  "thiserror",
 ]
 
