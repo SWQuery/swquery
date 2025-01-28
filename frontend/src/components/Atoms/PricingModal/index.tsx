@@ -11,6 +11,7 @@ import Modal from "@mui/material/Modal";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import axios from "axios";
+import { API_URL } from "@/utils/constants";
 
 // const connection = new Connection("https://api.mainnet-beta.solana.com");
 
@@ -103,13 +104,15 @@ const PricingModal = ({ isOpen, onClose }: PricingModalProps) => {
     }
 
     try {
-      const response = await axios.post("/api/buy-credits", {
+      const response = await axios.post(`${API_URL}/credits/buy`, {
         amount,
         user_pubkey: provider.publicKey.toString(),
       });
 
       if (response.data.api_key) {
-        setAlertMessage("Transaction successful! New balance: " + response.data.new_balance);
+        setAlertMessage(
+          "Transaction successful! New balance: " + response.data.new_balance
+        );
         setAlertSeverity("success");
       } else {
         setAlertMessage("Transaction failed: " + response.data.error);
@@ -158,8 +161,8 @@ const PricingModal = ({ isOpen, onClose }: PricingModalProps) => {
               Oops, your free trial credits have ended!
             </h2>
             <p className="text-lg text-gray-300 text-center mt-0">
-              But don&apos;t worry, we&apos;ve got you covered with the best plans to keep
-              you querying seamlessly.
+              But don&apos;t worry, we&apos;ve got you covered with the best
+              plans to keep you querying seamlessly.
             </p>
             <h3 className="text-2xl font-semibold text-purple-500 text-center">
               Choose the plan that fits your needs!
@@ -202,8 +205,8 @@ const PricingModal = ({ isOpen, onClose }: PricingModalProps) => {
               ))}
             </div>
             <p className="text-gray-400 text-center text-sm">
-              Need help deciding? Reach out to us anytime, and we&apos;ll help you
-              find the perfect plan!
+              Need help deciding? Reach out to us anytime, and we&apos;ll help
+              you find the perfect plan!
             </p>
           </CardContent>
         </Card>
