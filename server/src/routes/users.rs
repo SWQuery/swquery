@@ -11,6 +11,12 @@ pub struct CreateUser {
     pub pubkey: String,
 }
 
+#[derive(Deserialize)]
+pub struct SubscriptionPayload {
+    method: String,
+    keys: Option<Vec<String>>, 
+}
+
 pub async fn create_user(
     State(pool): State<PgPool>,
     Json(payload): Json<CreateUser>,
@@ -22,7 +28,7 @@ pub async fn create_user(
 
     // Check if user already exists
     if let Some(existing_user) =
-        sqlx::query_as::<_, User>("SELECT id, pubkey, pump_portal_payload FROM users WHERE pubkey = $1")
+        sqlx::query_as::<_, User>("SELECT id, pubkey, subscriptions FROM users WHERE pubkey = $1")
             .bind(&payload.pubkey)
             .fetch_optional(&pool)
             .await
@@ -33,14 +39,14 @@ pub async fn create_user(
             Json(User {
                 id: existing_user.id,
                 pubkey: existing_user.pubkey,
-                pump_portal_payload: existing_user.pump_portal_payload,
+                subscriptions: existing_user.subscriptions,
             }),
         ));
     }
 
     // Insert new user
     let user =
-        sqlx::query_as::<_, User>("INSERT INTO users (pubkey) VALUES ($1) RETURNING id, pubkey, pump_portal_payload")
+        sqlx::query_as::<_, User>("INSERT INTO users (pubkey) VALUES ($1) RETURNING id, pubkey, subscriptions")
             .bind(&payload.pubkey)
             .fetch_one(&pool)
             .await
@@ -56,13 +62,13 @@ pub async fn create_user(
         Json(User {
             id: user.id,
             pubkey: user.pubkey,
-            pump_portal_payload: user.pump_portal_payload,
+            subscriptions: user.subscriptions,
         }),
     ))
 }
 
 pub async fn get_users(State(pool): State<PgPool>) -> Json<Vec<User>> {
-    let users = sqlx::query_as::<_, User>("SELECT id, pubkey, pump_portal_payload FROM users")
+    let users = sqlx::query_as::<_, User>("SELECT id, pubkey, subscriptions FROM users")
         .fetch_all(&pool)
         .await
         .expect("Failed to fetch users")
@@ -70,7 +76,7 @@ pub async fn get_users(State(pool): State<PgPool>) -> Json<Vec<User>> {
         .map(|user| User {
             id: user.id,
             pubkey: user.pubkey,
-            pump_portal_payload: user.pump_portal_payload,
+            subscriptions: user.subscriptions,
         })
         .collect();
 
@@ -81,7 +87,7 @@ pub async fn get_user_by_pubkey(
     State(pool): State<PgPool>,
     Path(pubkey): Path<String>,
 ) -> Result<Json<User>, (StatusCode, String)> {
-    let user = sqlx::query_as::<_, User>("SELECT id, pubkey, pump_portal_payload FROM users WHERE pubkey = $1")
+    let user = sqlx::query_as::<_, User>("SELECT id, pubkey, subscriptions FROM users WHERE pubkey = $1")
         .bind(&pubkey)
         .fetch_optional(&pool)
         .await
@@ -96,72 +102,77 @@ pub async fn get_user_by_pubkey(
         Ok(Json(User {
             id: user.id,
             pubkey: user.pubkey,
-            pump_portal_payload: user.pump_portal_payload,
+            subscriptions: user.subscriptions,
         }))
     } else {
         Err((StatusCode::NOT_FOUND, "User not found".into()))
     }
 }
 
-// pub async fn manage_subscription(
-//     State(pool): State<PgPool>,
-//     Path(pubkey): Path<String>,          
-//     Json(payload): Json<SubscriptionPayload>,
-// ) -> Result<(StatusCode, String), (StatusCode, String)> {
-//     let user = sqlx::query!("SELECT subscriptions FROM users WHERE pubkey = $1", &pubkey)
-//         .fetch_optional(&pool)
-//         .await
-//         .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, format!("Error querying user: {}", e)))?;
+pub async fn manage_subscription(
+    State(pool): State<PgPool>,
+    Path(pubkey): Path<String>,          
+    Json(payload): Json<SubscriptionPayload>,
+) -> Result<(StatusCode, String), (StatusCode, String)> {
+    let user = sqlx::query_as::<_, User>(
+        "SELECT id, pubkey, subscriptions FROM users WHERE pubkey = $1",
+    )
+    .bind(&pubkey)
+    .fetch_optional(&pool)
+    .await
+    .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, format!("Error querying user: {}", e)))?;
 
-//     if let Some(mut user) = user {
-//         let mut subscriptions = serde_json::from_value(
-//             user.subscriptions.unwrap_or_else(|| serde_json::json!({})),
-//         )
-//         .unwrap_or_else(|_| serde_json::json!({}));
+    if let Some(mut user) = user {
+        let mut subscriptions = if user.subscriptions.is_null() {
+            serde_json::json!({})
+        } else {
+            user.subscriptions.clone()
+        };
 
-//         if let Some(keys) = payload.keys {
-//             if payload.method.starts_with("subscribe") {
-//                 let method_key = payload.method.strip_prefix("subscribe").unwrap();
-//                 let list = subscriptions
-//                     .get_mut(method_key)
-//                     .and_then(|v| v.as_array_mut())
-//                     .unwrap_or_else(|| {
-//                         subscriptions[method_key] = serde_json::json!([]);
-//                         subscriptions[method_key].as_array_mut().unwrap()
-//                     });
+        if let Some(keys) = payload.keys {
+            if payload.method.starts_with("subscribe") {
+                let method_key = payload.method.strip_prefix("subscribe").unwrap();
+        
+                // Se a chave não existir, inicializa como um array vazio
+                if !subscriptions.get(method_key).is_some() {
+                    subscriptions[method_key] = serde_json::json!([]);
+                }
+        
+                let list = subscriptions
+                    .get_mut(method_key)
+                    .unwrap()
+                    .as_array_mut()
+                    .unwrap();
+        
+                for key in keys {
+                    if !list.contains(&serde_json::json!(key)) {
+                        list.push(serde_json::json!(key));
+                    }
+                }
+            } else if payload.method.starts_with("unsubscribe") {
+                let method_key = payload.method.strip_prefix("unsubscribe").unwrap();
+                if let Some(list) = subscriptions.get_mut(method_key).and_then(|v| v.as_array_mut()) {
+                    list.retain(|v| !keys.contains(&v.as_str().unwrap_or_default().to_string()));
+                }
+            }
+        }
 
-//                 for key in keys {
-//                     if !list.contains(&serde_json::json!(key)) {
-//                         list.push(serde_json::json!(key));
-//                     }
-//                 }
-//             } else if payload.method.starts_with("unsubscribe") {
-//                 let method_key = payload.method.strip_prefix("unsubscribe").unwrap();
-//                 if let Some(list) = subscriptions
-//                     .get_mut(method_key)
-//                     .and_then(|v| v.as_array_mut())
-//                 {
-//                     list.retain(|v| !keys.contains(&v.as_str().unwrap_or_default().to_string()));
-//                 }
-//             }
-//         }
+        let updated_user = sqlx::query_as::<_, User>(
+            "UPDATE users SET subscriptions = $1 WHERE pubkey = $2 RETURNING id, pubkey, subscriptions",
+        )
+        .bind(serde_json::to_value(subscriptions).unwrap())
+        .bind(&pubkey)
+        .fetch_one(&pool)
+        .await
+        .map_err(|e| {
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                format!("Error updating subscriptions: {}", e),
+            )
+        })?;
 
-//         sqlx::query!(
-//             "UPDATE users SET subscriptions = $1 WHERE pubkey = $2",
-//             serde_json::to_value(subscriptions).unwrap(),
-//             &pubkey
-//         )
-//         .execute(&pool)
-//         .await
-//         .map_err(|e| {
-//             (
-//                 StatusCode::INTERNAL_SERVER_ERROR,
-//                 format!("Error updating subscriptions: {}", e),
-//             )
-//         })?;
-
-//         Ok((StatusCode::OK, "Subscriptions updated".to_string()))
-//     } else {
-//         Err((StatusCode::NOT_FOUND, "User not found".to_string()))
-//     }
-// }
+        Ok((StatusCode::OK, format!("Subscriptions updated for user: {}", updated_user.pubkey)))
+    } else {
+        Err((StatusCode::NOT_FOUND, "User not found".to_string()))
+    }
+}

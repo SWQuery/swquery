@@ -2,7 +2,7 @@
 CREATE TABLE IF NOT EXISTS users (
     id SERIAL PRIMARY KEY,
     pubkey VARCHAR NOT NULL UNIQUE,
-    pump_portal_payload JSONB NOT NULL DEFAULT '{}'
+    subscriptions JSONB NOT NULL DEFAULT '{}'
 );
 
 CREATE TABLE IF NOT EXISTS credits (

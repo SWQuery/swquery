@@ -5,5 +5,5 @@ use serde::{Deserialize, Serialize};
 pub struct User {
     pub id: i32,
     pub pubkey: String,
-    pub pump_portal_payload: Value
+    pub subscriptions: Value
 }
