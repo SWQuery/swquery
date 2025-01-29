@@ -38,6 +38,30 @@ interface TokenLaunchCardProps {
 
 export default function TokenLaunchCard({ launch }: TokenLaunchCardProps) {
   const [details, setDetails] = useState<TokenDetails | null>(null);
+  const [liveData, setLiveData] = useState(launch);
+
+  useEffect(() => {
+    // 🔴 Conectar ao WebSocket para receber dados em tempo real
+    const ws = new WebSocket("wss://pumpportal.fun/api/data");
+
+    ws.onopen = () => console.log("🔗 WebSocket conectado!");
+
+    ws.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+      
+      // Atualiza os dados apenas se o mint corresponder ao card atual
+      if (data.mint === launch.mint) {
+        setLiveData(data);
+      }
+    };
+
+    ws.onerror = (error) => console.error("⚠️ Erro no WebSocket:", error);
+    ws.onclose = () => console.log("🔌 Conexão WebSocket fechada.");
+
+    return () => {
+      ws.close();
+    };
+  }, [launch.mint]);
 
   useEffect(() => {
     if (launch.uri) {
@@ -53,7 +77,7 @@ export default function TokenLaunchCard({ launch }: TokenLaunchCardProps) {
             website: data.website || "",
           });
         })
-        .catch((error) => console.error("Failed to fetch token details:", error));
+        .catch((error) => console.error("❌ Falha ao buscar detalhes do token:", error));
     }
   }, [launch.uri, launch.name, launch.symbol]);
 
@@ -64,7 +88,7 @@ export default function TokenLaunchCard({ launch }: TokenLaunchCardProps) {
       transition={{ duration: 0.3 }}
       className="bg-gray-800 rounded-lg p-6 shadow-lg flex gap-6 mb-6"
     >
-      {/* Coluna 1: Imagem */}
+      {/* 📌 Coluna 1: Imagem */}
       <div className="flex-shrink-0 w-2/9 flex items-center justify-center">
         {details?.image ? (
           <img
@@ -79,14 +103,14 @@ export default function TokenLaunchCard({ launch }: TokenLaunchCardProps) {
         )}
       </div>
 
-      {/* Coluna 2: Dados Gerais e Detalhes */}
+      {/* 📌 Coluna 2: Dados Gerais e Detalhes */}
       <div className="flex-1">
         <h3 className="text-2xl font-bold mb-2">{details?.name || launch.name}</h3>
         <p className="text-sm text-gray-400 mb-2">Pool: {launch.pool || "Unknown"}</p>
         <p className="text-sm text-gray-400 mb-4">Mint: {launch.mint}</p>
         <p className="text-base text-gray-300 mb-4">{details?.description}</p>
 
-        {/* Links */}
+        {/* 🔗 Links */}
         <div className="flex items-center gap-4">
           {details?.twitter && (
             <a
@@ -113,29 +137,29 @@ export default function TokenLaunchCard({ launch }: TokenLaunchCardProps) {
         </div>
       </div>
 
-      {/* Coluna 3: Dados Principais */}
+      {/* 📌 Coluna 3: Dados Principais */}
       <div className="flex-1 grid grid-cols-1 gap-y-4">
         <p className="text-base flex items-center gap-2">
           <PiggyBank className="text-purple-500" />
-          <span className="font-bold">Initial Buy:</span> {launch.initialBuy.toFixed(2)}
+          <span className="font-bold">Initial Buy:</span> {liveData.initialBuy.toFixed(2)}
         </p>
         <p className="text-base flex items-center gap-2">
           <CircleDollarSign className="text-purple-500" />
-          <span className="font-bold">Market Cap:</span> {launch.marketCapSol.toFixed(2)} SOL
+          <span className="font-bold">Market Cap:</span> {liveData.marketCapSol.toFixed(2)} SOL
         </p>
         <p className="text-base flex items-center gap-2">
           <ChartCandlestick className="text-purple-500" />
           <span className="font-bold">Tokens in Bonding Curve:</span>{" "}
-          {launch.vTokensInBondingCurve.toFixed(2)}
+          {liveData.vTokensInBondingCurve.toFixed(2)}
         </p>
         <p className="text-base flex items-center gap-2">
           <Activity className="text-purple-500" />
-          <span className="font-bold">SOL in Bonding Curve:</span> {launch.vSolInBondingCurve.toFixed(2)}
+          <span className="font-bold">SOL in Bonding Curve:</span> {liveData.vSolInBondingCurve.toFixed(2)}
         </p>
         <p className="text-base flex items-center gap-2">
           <Clock className="text-purple-500" />
           <span className="font-bold">Last Update:</span>{" "}
-          {new Date(launch.timestamp).toLocaleString()}
+          {new Date(liveData.timestamp).toLocaleString()}
         </p>
       </div>
     </motion.div>
