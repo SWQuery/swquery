@@ -265,13 +265,6 @@ export const Navbar = () => {
                 )}
               </>
             )}
-            <Button
-              onClick={() => setIsSettingsOpen(!isSettingsOpen)}
-              className={buttonBaseClasses}
-              aria-label="Configurações"
-            >
-              <Cog size={16} />
-            </Button>
           </div>
 
           <div className="md:hidden">
@@ -291,97 +284,6 @@ export const Navbar = () => {
       />
 
       <ChatModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
-
-      {isSettingsOpen && (
-        <div className="fixed top-0 left-0 right-0 bottom-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="relative bg-gradient-to-br from-zinc-800 to-black rounded-lg shadow-lg p-8 w-11/12 max-w-md">
-            <button
-              onClick={() => setIsSettingsOpen(false)}
-              className="absolute top-4 right-4 text-gray-400 hover:text-white"
-              aria-label="Close Settings"
-            >
-              <X size={20} />
-            </button>
-
-            <h2 className="text-2xl text-white mb-6">API Key Settings</h2>
-            <form
-              onSubmit={handleSubmit(() => {
-                saveSettings();
-              })}
-              className="space-y-6"
-            >
-              {/* OpenAI Key */}
-              <div className="relative">
-                <label className="text-white text-sm">OpenAI Key</label>
-                <Input
-                  type={openaiVisible ? "text" : "password"}
-                  placeholder="sk-proj-..."
-                  value={openAIKey}
-                  onChange={handleOpenAIChange}
-                  className={`w-full bg-gray-900/50 border ${
-                    isOpenAIValid ? "border-purple-500/20" : "border-red-500"
-                  } text-white px-4 py-3 rounded-lg focus:outline-none focus:border-purple-500 transition-colors pr-12`}
-                  style={{
-                    letterSpacing: "0.05em",
-                  }}
-                />
-                <button
-                  type="button"
-                  className="absolute right-4 top-10"
-                  onClick={() => changeVisibility("openai")}
-                  aria-label={openaiVisible ? "Hide Key" : "Show Key"}
-                >
-                  {openaiVisible ? <EyeOff size={15} /> : <Eye size={15} />}
-                </button>
-                {!isOpenAIValid && (
-                  <p className="text-red-500 text-sm mt-1">
-                    Key must be an OpenAI key
-                  </p>
-                )}
-              </div>
-
-              {/* Helius Key */}
-              <div className="relative">
-                <label className="text-white text-sm">Helius Key</label>
-                <Input
-                  type={heliusVisible ? "text" : "password"}
-                  placeholder="00000000-0000-0000-0000-000000000000"
-                  value={heliusKey}
-                  onChange={handleHeliusChange}
-                  maxLength={36}
-                  className={`w-full bg-gray-900/50 border ${
-                    isHeliusValid ? "border-purple-500/20" : "border-red-500"
-                  } text-white px-4 py-3 rounded-lg focus:outline-none focus:border-purple-500 transition-colors pr-12`}
-                  style={{
-                    letterSpacing: "0.05em",
-                  }}
-                />
-                <button
-                  type="button"
-                  className="absolute right-4 top-8"
-                  onClick={() => changeVisibility("helius")}
-                  aria-label={heliusVisible ? "Hide Key" : "Show Key"}
-                >
-                  {heliusVisible ? <EyeOff size={15} /> : <Eye size={15} />}
-                </button>
-                {!isHeliusValid && (
-                  <p className="text-red-500 text-sm mt-1">
-                    Key must be a valid Helius key
-                  </p>
-                )}
-              </div>
-
-              <Button
-                type="submit"
-                className="w-full bg-gradient-to-r from-[#9C88FF] to-[#6C5CE7] hover:opacity-90 text-white"
-                disabled={!isOpenAIValid || !isHeliusValid}
-              >
-                Save Settings
-              </Button>
-            </form>
-          </div>
-        </div>
-      )}
     </>
   );
 };
