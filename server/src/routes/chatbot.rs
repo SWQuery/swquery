@@ -193,7 +193,38 @@ pub async fn chatbot_interact(
         openai_key: payload.openai_key.clone(),
     };
 
-    let report = generate_report_service(pool, headers, axum::Json(report_input)).await?;
+    let report = generate_report_service(pool.clone(), headers, axum::Json(report_input)).await?;
+
+    // Get User ID
+    let user_id = sqlx::query_scalar::<_, i32>("SELECT id FROM users WHERE pubkey = $1")
+    .bind(&payload.address)
+    .fetch_one(&pool)
+    .await
+    .map_err(|e| {
+        eprintln!("Database error: {}", e);
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            "Failed to get user ID".to_string(),
+        )
+    })?;
+
+    //Create a chat record
+    sqlx::query(
+        "INSERT INTO chats (user_id, input_user, response, tokens_used) 
+         VALUES ($1, $2, $3, $4) RETURNING id",
+    ).bind(user_id.clone())
+    .bind(&payload.input_user)
+    .bind(query_result.response.to_string())
+    .bind(1000)
+    .execute(&pool)
+    .await
+    .map_err(|e| {
+        eprintln!("Database error: {}", e);
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            "Failed to create chat record".to_string(),
+        )
+    })?;
 
     Ok((
         StatusCode::OK,
