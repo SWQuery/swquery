@@ -1,5 +1,5 @@
 use {
-    crate::models::User, axum::{
+    crate::models::{User, UserWithApiKey}, axum::{
         extract::{Path, State},
         http::StatusCode,
         Json,
@@ -86,7 +86,7 @@ pub async fn get_users(State(pool): State<PgPool>) -> Json<Vec<User>> {
 pub async fn get_user_by_pubkey(
     State(pool): State<PgPool>,
     Path(pubkey): Path<String>,
-) -> Result<Json<User>, (StatusCode, String)> {
+) -> Result<Json<UserWithApiKey>, (StatusCode, String)> {
     let user = sqlx::query_as::<_, User>("SELECT id, pubkey, subscriptions FROM users WHERE pubkey = $1")
         .bind(&pubkey)
         .fetch_optional(&pool)
@@ -98,11 +98,30 @@ pub async fn get_user_by_pubkey(
             )
         })?;
 
+
+    if user.is_none() {
+        return Err((StatusCode::NOT_FOUND, "User not found".into()));
+    }
+
+    // Get user API-key
+    let user_api_key = sqlx::query_scalar::<_, String>(
+        "SELECT api_key FROM credits WHERE user_id = $1",
+    ).bind(user.clone().unwrap().id)
+    .fetch_optional(&pool)
+    .await
+    .map_err(|e| {
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            format!("Failed to query user API-key: {}", e),
+        )
+    })?;
+
     if let Some(user) = user {
-        Ok(Json(User {
+        Ok(Json(UserWithApiKey {
             id: user.id,
             pubkey: user.pubkey,
             subscriptions: user.subscriptions,
+            api_key: user_api_key,
         }))
     } else {
         Err((StatusCode::NOT_FOUND, "User not found".into()))

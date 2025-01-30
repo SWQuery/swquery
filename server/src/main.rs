@@ -17,7 +17,7 @@ use {
         chatbot::{chatbot_interact, get_chat_by_id, get_chats_for_user},
         credits::{buy_credits, refund_credits},
         users::{create_user, get_user_by_pubkey, get_users},
-        packages::{get_packages, verify_transaction},
+        packages::{get_packages, verify_transaction, get_user_usage},
     },
     std::time::Duration,
     tower_http::cors::{Any, CorsLayer},
@@ -49,6 +49,7 @@ async fn main() {
         .route("/chats/:id", get(get_chat_by_id));
     let users_router = Router::new()
         .route("/", get(get_users).post(create_user))
+        .route("/usage", get(get_user_usage))
         .route("/:pubkey", get(get_user_by_pubkey));
         // .route("/:pubkey/subscriptions", post(manage_subscription)); 
 

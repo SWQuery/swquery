@@ -1,8 +1,8 @@
 use {
     crate::models::{
-        Package, PackageResponse, VerifyTransactionRequest, VerifyTransactionResponse,
+        Package, PackageResponse, VerifyTransactionRequest, VerifyTransactionResponse, GetUserUsageRequest, GetUserUsageResponse, ChatQuantity
     },
-    axum::{extract::State, http::StatusCode, Json},
+    axum::{extract::State, http::{StatusCode, HeaderMap}, Json},
     rust_decimal::Decimal as DecimalType,
     solana_client::rpc_client::RpcClient,
     solana_sdk::{pubkey::Pubkey, signature::Signature},
@@ -238,4 +238,56 @@ async fn verify_solana_transaction(
     }
 
     Ok(false)
+}
+
+pub async fn get_user_usage(
+    State(pool): State<PgPool>,
+    headers: HeaderMap,
+) -> Result<Json<GetUserUsageResponse>, (StatusCode, String)> {
+    let api_key = headers
+        .get("x-api-key")
+        .and_then(|v| v.to_str().ok())
+        .ok_or((StatusCode::UNAUTHORIZED, "Missing API key".to_string()))?;
+
+    // Get user ID via API key
+    let user_id = sqlx::query_scalar::<_, i32>(
+        "SELECT user_id FROM credits WHERE api_key = $1"
+    ).bind(api_key)
+    .fetch_optional(&pool)
+    .await
+    .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?
+    .ok_or((StatusCode::UNAUTHORIZED, "Invalid API key".to_string()))?;
+
+    let remaining_requests = sqlx::query_scalar::<_, i32>(
+        "SELECT remaining_requests FROM credits WHERE user_id = $1"
+    ).bind(user_id)
+    .fetch_one(&pool)
+    .await
+    .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+
+    let total_requests_bought = sqlx::query_scalar::<_, i64>(
+        "SELECT COALESCE(SUM(p.requests_amount), 0) FROM transactions t
+        JOIN packages p ON t.package_id = p.id
+        WHERE t.user_id = $1",
+    ).bind(user_id)
+    .fetch_one(&pool)
+    .await
+    .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+
+    let chats_quantity = sqlx::query_as::<_, ChatQuantity>(
+        "SELECT DATE(created_at) AS chat_date, COUNT(*) AS chats_per_day
+         FROM chats
+         WHERE user_id = $1 AND created_at >= CURRENT_DATE - INTERVAL '7 days'
+         GROUP BY chat_date
+         ORDER BY chat_date DESC",
+    ).bind(user_id)
+    .fetch_all(&pool)
+    .await
+    .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+
+    Ok(Json(GetUserUsageResponse {
+        remaining_requests: remaining_requests as i64,
+        total_requests: total_requests_bought as i64,
+        chats_per_day: chats_quantity,
+    }))
 }
