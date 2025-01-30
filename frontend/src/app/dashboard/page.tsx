@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Chart as ChartJS,
   Tooltip,
@@ -15,19 +15,20 @@ import { Navbar } from "@/components/Molecules/Navbar";
 import { Info, Eye, EyeOff, Copy } from "lucide-react";
 import Alert from "@mui/material/Alert";
 import Snackbar from "@mui/material/Snackbar";
+import { API_URL } from "@/utils/constants";
 
 ChartJS.register(Tooltip, Legend, CategoryScale, LinearScale, BarElement);
 
 const Dashboard = () => {
-  //mock data
-  const totalTokens = 1000;
-  const usedTokens = 600;
-  const remainingTokens = totalTokens - usedTokens;
-  const percentageUsed = (usedTokens / totalTokens) * 100;
-  const requestData = {
-    7: [20, 30, 25, 40, 35, 50, 45],
-    30: new Array(30).fill(0).map(() => Math.floor(Math.random() * 50 + 10)),
-  };
+  const [useMockData, setUseMockData] = useState(false);
+
+  const [totalRequests, setTotalRequests] = useState(0);
+  const [remainingRequests, setRemainingRequests] = useState(0);
+  const [requestsPerDay, setRequestsPerDay] = useState<number[]>([]);
+  const [dates, setDates] = useState<string[]>([]);
+
+  const usedTokens = totalRequests - remainingRequests;
+  const totalTokens = totalRequests;
 
   const [selectedPeriod, setSelectedPeriod] = useState<7 | 30>(7);
   const [apiKey, setApiKey] = useState("sk-abc123def456ghi789");
@@ -49,24 +50,66 @@ const Dashboard = () => {
     setAlertOpen(true);
   };
 
-  const handleChangeApiKey = () => {
-    const newKey = "sk-new1234567890abc"; // Mocked new key
-    setApiKey(newKey);
-    setIsModalOpen(false);
-    handleAlert("API Key updated successfully!", "success");
+  const fetchDashboardData = async () => {
+    if (useMockData) return;
+
+    try {
+      const response = await fetch(`${API_URL}/dashboard`);
+      const data = await response.json();
+
+      console.log("📩 Dados recebidos:", data);
+
+      setTotalRequests(data.total_requests || 0);
+      setRemainingRequests(data.remaining_requests || 0);
+
+      const formattedData = data["chats _per_day"] || [];
+      setRequestsPerDay(
+        formattedData.map((item: any) => item["chats_ per_day"] || 0)
+      );
+      setDates(formattedData.map((item: any) => item["chat _date"] || ""));
+    } catch (error) {
+      console.error("⚠️ Erro ao buscar dados da API:", error);
+      handleAlert("Failed to load dashboard data!", "error");
+    }
   };
+
+  const generateMockData = () => {
+    setTotalRequests(500);
+    setRemainingRequests(200);
+    setRequestsPerDay(
+      new Array(30).fill(0).map(() => Math.floor(Math.random() * 50 + 10))
+    );
+    setDates(Array.from({ length: 30 }, (_, i) => `2025-02-${i + 1}`));
+  };
+
+  useEffect(() => {
+    if (useMockData) {
+      generateMockData();
+    } else {
+      fetchDashboardData();
+    }
+  }, [useMockData]);
+
+  const percentageUsed = (usedTokens / totalTokens) * 100 || 0;
 
   const handleCopyApiKey = () => {
     navigator.clipboard.writeText(apiKey);
     handleAlert("API Key copied to clipboard!", "info");
   };
 
+  const handleChangeApiKey = () => {
+    const newKey = "sk-new1234567890abc";
+    setApiKey(newKey);
+    setIsModalOpen(false);
+    handleAlert("API Key updated successfully!", "success");
+  };
+
   const requestsChartData = {
-    labels: Array.from({ length: selectedPeriod }, (_, i) => `Day ${i + 1}`),
+    labels: dates.slice(0, selectedPeriod),
     datasets: [
       {
         label: "Requests",
-        data: requestData[selectedPeriod],
+        data: requestsPerDay.slice(0, selectedPeriod),
         backgroundColor: "#4F46E5",
       },
     ],
@@ -197,7 +240,7 @@ const Dashboard = () => {
               <p className="text-gray-400 mt-2 text-center">
                 Remaining Tokens:{" "}
                 <span className="text-white font-semibold">
-                  {remainingTokens}
+                  {remainingRequests}
                 </span>
               </p>
             </CardContent>
