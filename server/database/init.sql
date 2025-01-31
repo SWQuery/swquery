@@ -45,27 +45,27 @@ CREATE INDEX idx_users_pubkey ON users(pubkey);
 CREATE INDEX idx_credits_user_id ON credits(user_id);
 CREATE INDEX idx_chats_user_id_created_at ON chats(user_id, created_at);
 
-INSERT INTO
-    users (pubkey)
-VALUES (
-        'GtJHNhKQnnJZQTHq2Vh49HpR4yKKJmUonVYbLeS1RPs8'
-    );
+-- INSERT INTO
+--     users (pubkey)
+-- VALUES (
+--         'GtJHNhKQnnJZQTHq2Vh49HpR4yKKJmUonVYbLeS1RPs8'
+--     );
 
-INSERT INTO
-    credits (user_id, api_key)
-VALUES (
-        1,
-        'WDAO4Z1Z503DWJH7060GIYGR0TWIIPBM'
-    );
+-- INSERT INTO
+--     credits (user_id, api_key)
+-- VALUES (
+--         1,
+--         'WDAO4Z1Z503DWJH7060GIYGR0TWIIPBM'
+--     );
 
-INSERT INTO
-    chats (user_id, input_user, response, tokens_used)
-VALUES (
-        1,
-        'Hello',
-        'Hi there!',
-        1
-    );
+-- INSERT INTO
+--     chats (user_id, input_user, response, tokens_used)
+-- VALUES (
+--         1,
+--         'Hello',
+--         'Hi there!',
+--         1
+--     );
 
 INSERT INTO packages (name, price_usdc, requests_amount, description) VALUES
     ('Free', 0.01, 1, 'Single request package for testing'),

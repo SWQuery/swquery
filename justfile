@@ -123,3 +123,14 @@ check-fmt:
     cargo check --manifest-path credit-sales/Cargo.toml
     cargo check -p server
     cargo +nightly fmt --all
+
+# ========= Database Commands =========
+# Reset Database (completely removes container, image, volumes and starts fresh)
+reset-db:
+    @echo "Completely resetting database..."
+    docker compose -f deployment/compose.yml down swquery-db
+    docker container rm -f swquery-db || true
+    docker volume rm -f swquery_swquery-db-data || true
+    docker rmi postgres:12 || true
+    docker compose -f deployment/compose.yml up -d swquery-db
+    @echo "Database has been completely reset and reinitialized"
