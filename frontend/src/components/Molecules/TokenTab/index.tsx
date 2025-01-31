@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import TokenCard from "@/components/Atoms/TokenCard";
+import AvaiableSoon from "@/components/Atoms/AvaiableSoon";
 
 const mockTokenLaunches = [
   {
@@ -109,7 +110,7 @@ export default function TokenTab() {
   return (
     <div className="flex">
       {/* Sidebar de Filtros */}
-      <div className="w-64 bg-gray-900 text-white p-4 rounded-lg">
+      {/* <div className="w-64 bg-gray-900 text-white p-4 rounded-lg">
         <h2 className="text-lg font-semibold mb-4">Filters</h2>
         <div className="space-y-4">
           {(
@@ -157,7 +158,7 @@ export default function TokenTab() {
         >
           Reset Filters
         </button>
-      </div>
+      </div> */}
 
       {/* Cards de Token Launch */}
       <motion.div
@@ -167,9 +168,10 @@ export default function TokenTab() {
         transition={{ duration: 0.5 }}
         className="grid grid-cols-1 gap-6 flex-1 ml-6"
       >
-        {filteredLaunches.map((launch, index) => (
+        {/* {filteredLaunches.map((launch, index) => (
           <TokenCard key={index} launch={launch} />
-        ))}
+        ))} */}
+              <AvaiableSoon/>
       </motion.div>
     </div>
   );

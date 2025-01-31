@@ -38,30 +38,40 @@ interface TokenLaunchCardProps {
 
 export default function TokenLaunchCard({ launch }: TokenLaunchCardProps) {
   const [details, setDetails] = useState<TokenDetails | null>(null);
-  const [liveData, setLiveData] = useState(launch);
+  const [liveData, setLiveData] = useState<Map<string, Launch>>(new Map());
+  const formatCurrencyUSD = (value: number) => {
+    return new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD",
+      maximumFractionDigits: 2,
+    }).format(value);
+  };
 
   useEffect(() => {
-    // 🔴 Conectar ao WebSocket para receber dados em tempo real
     const ws = new WebSocket("wss://pumpportal.fun/api/data");
 
-    ws.onopen = () => console.log("🔗 WebSocket conectado!");
+    ws.onopen = () => console.log(`🔗 WebSocket connected for ${launch.mint}`);
 
     ws.onmessage = (event) => {
       const data = JSON.parse(event.data);
-      
+
       // Atualiza os dados apenas se o mint corresponder ao card atual
-      if (data.mint === launch.mint) {
-        setLiveData(data);
+      if (data.mint) {
+        setLiveData((prevData) => {
+          const updatedData = new Map(prevData);
+          updatedData.set(data.mint, data); // Atualiza apenas esse mint
+          return updatedData;
+        });
       }
     };
 
-    ws.onerror = (error) => console.error("⚠️ Erro no WebSocket:", error);
-    ws.onclose = () => console.log("🔌 Conexão WebSocket fechada.");
+    ws.onerror = (error) => console.error("⚠️ WebSocket error:", error);
+    ws.onclose = () => console.log(`🔌 WebSocket closed for ${launch.mint}`);
 
     return () => {
       ws.close();
     };
-  }, [launch.mint]);
+  }, []);
 
   useEffect(() => {
     if (launch.uri) {
@@ -77,9 +87,16 @@ export default function TokenLaunchCard({ launch }: TokenLaunchCardProps) {
             website: data.website || "",
           });
         })
-        .catch((error) => console.error("❌ Falha ao buscar detalhes do token:", error));
+        .catch((error) =>
+          console.error(
+            `❌ Error fetching token details for ${launch.mint}:`,
+            error
+          )
+        );
     }
-  }, [launch.uri, launch.name, launch.symbol]);
+  }, [launch.uri]);
+
+  const currentData = liveData.get(launch.mint) || launch; // Pegando os dados apenas do token correto
 
   return (
     <motion.div
@@ -103,10 +120,14 @@ export default function TokenLaunchCard({ launch }: TokenLaunchCardProps) {
         )}
       </div>
 
-      {/* 📌 Coluna 2: Dados Gerais e Detalhes */}
+      {/* 📌 Coluna 2: Informações principais */}
       <div className="flex-1">
-        <h3 className="text-2xl font-bold mb-2">{details?.name || launch.name}</h3>
-        <p className="text-sm text-gray-400 mb-2">Pool: {launch.pool || "Unknown"}</p>
+        <h3 className="text-2xl font-bold mb-2">
+          {details?.name || launch.name}
+        </h3>
+        <p className="text-sm text-gray-400 mb-2">
+          Pool: {launch.pool || "Unknown"}
+        </p>
         <p className="text-sm text-gray-400 mb-4">Mint: {launch.mint}</p>
         <p className="text-base text-gray-300 mb-4">{details?.description}</p>
 
@@ -137,29 +158,33 @@ export default function TokenLaunchCard({ launch }: TokenLaunchCardProps) {
         </div>
       </div>
 
-      {/* 📌 Coluna 3: Dados Principais */}
+      {/* 📌 Coluna 3: Dados Dinâmicos (Atualizados em tempo real) */}
       <div className="flex-1 grid grid-cols-1 gap-y-4">
         <p className="text-base flex items-center gap-2">
           <PiggyBank className="text-purple-500" />
-          <span className="font-bold">Initial Buy:</span> {liveData.initialBuy.toFixed(2)}
+          <span className="font-bold">Initial Buy:</span>{" "}
+          {formatCurrencyUSD(currentData.initialBuy)}
         </p>
+
         <p className="text-base flex items-center gap-2">
           <CircleDollarSign className="text-purple-500" />
-          <span className="font-bold">Market Cap:</span> {liveData.marketCapSol.toFixed(2)} SOL
+          <span className="font-bold">Market Cap:</span>{" "}
+          {currentData.marketCapSol.toFixed(2)} SOL
         </p>
         <p className="text-base flex items-center gap-2">
           <ChartCandlestick className="text-purple-500" />
           <span className="font-bold">Tokens in Bonding Curve:</span>{" "}
-          {liveData.vTokensInBondingCurve.toFixed(2)}
+          {currentData.vTokensInBondingCurve.toFixed(2)}
         </p>
         <p className="text-base flex items-center gap-2">
           <Activity className="text-purple-500" />
-          <span className="font-bold">SOL in Bonding Curve:</span> {liveData.vSolInBondingCurve.toFixed(2)}
+          <span className="font-bold">SOL in Bonding Curve:</span>{" "}
+          {currentData.vSolInBondingCurve.toFixed(2)}
         </p>
         <p className="text-base flex items-center gap-2">
           <Clock className="text-purple-500" />
           <span className="font-bold">Last Update:</span>{" "}
-          {new Date(liveData.timestamp).toLocaleString()}
+          {new Date(currentData.timestamp).toLocaleString()}
         </p>
       </div>
     </motion.div>
