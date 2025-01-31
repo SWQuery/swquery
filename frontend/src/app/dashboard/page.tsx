@@ -9,6 +9,7 @@ import {
   LinearScale,
   BarElement,
 } from "chart.js";
+import { useWallet } from "@solana/wallet-adapter-react";
 import { Bar } from "react-chartjs-2";
 import { Card, CardContent } from "@/components/Atoms/CardComponent";
 import { Navbar } from "@/components/Molecules/Navbar";
@@ -21,7 +22,7 @@ ChartJS.register(Tooltip, Legend, CategoryScale, LinearScale, BarElement);
 
 const Dashboard = () => {
   const [useMockData, setUseMockData] = useState(false);
-
+  const { publicKey } = useWallet();
   const [totalRequests, setTotalRequests] = useState(0);
   const [remainingRequests, setRemainingRequests] = useState(0);
   const [requestsPerDay, setRequestsPerDay] = useState<number[]>([]);
@@ -31,7 +32,7 @@ const Dashboard = () => {
   const totalTokens = totalRequests;
 
   const [selectedPeriod, setSelectedPeriod] = useState<7 | 30>(7);
-  const [apiKey, setApiKey] = useState("sk-abc123def456ghi789");
+  const [apiKey, setApiKey] = useState<string>("");
   const [isKeyVisible, setIsKeyVisible] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -50,25 +51,64 @@ const Dashboard = () => {
     setAlertOpen(true);
   };
 
-  const fetchDashboardData = async () => {
-    if (useMockData) return;
+  const fetchApiKey = async () => {
+    if (useMockData || !publicKey) return;
 
     try {
-      const response = await fetch(`${API_URL}/dashboard`);
-      const data = await response.json();
+      const response = await fetch(`${API_URL}/${publicKey.toBase58()}`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
 
-      console.log("📩 Dados recebidos:", data);
+      if (!response.ok) {
+        throw new Error(`Error req: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      console.log("Data received", data);
+
+      if (data.api_key) {
+        setApiKey(data.api_key);
+      } else {
+        console.warn("No responses found.");
+      }
+    } catch (error) {
+      console.error("Failed to load API Key:", error);
+      handleAlert("Failed to load API Key!", "error");
+    }
+  };
+
+  const fetchDashboardData = async () => {
+    if (useMockData || !apiKey) return;
+
+    try {
+      const response = await fetch(`${API_URL}/usage`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          "x-api-key": apiKey,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`Req error: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      console.log("📊 Dados recebidos:", data);
 
       setTotalRequests(data.total_requests || 0);
       setRemainingRequests(data.remaining_requests || 0);
 
-      const formattedData = data["chats _per_day"] || [];
+      const formattedData = data.chats_per_day || [];
       setRequestsPerDay(
-        formattedData.map((item: any) => item["chats_ per_day"] || 0)
+        formattedData.map((item: any) => item.chats_per_day || 0)
       );
-      setDates(formattedData.map((item: any) => item["chat _date"] || ""));
+      setDates(formattedData.map((item: any) => item.chat_date || ""));
     } catch (error) {
-      console.error("⚠️ Erro ao buscar dados da API:", error);
+      console.error("Api data not found:", error);
       handleAlert("Failed to load dashboard data!", "error");
     }
   };
@@ -81,6 +121,10 @@ const Dashboard = () => {
     );
     setDates(Array.from({ length: 30 }, (_, i) => `2025-02-${i + 1}`));
   };
+
+  useEffect(() => {
+    fetchApiKey();
+  }, [publicKey]);
 
   useEffect(() => {
     if (useMockData) {
