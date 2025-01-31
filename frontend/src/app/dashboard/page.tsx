@@ -17,6 +17,7 @@ import { Info, Eye, EyeOff, Copy } from "lucide-react";
 import Alert from "@mui/material/Alert";
 import Snackbar from "@mui/material/Snackbar";
 import { API_URL } from "@/utils/constants";
+import axios from "axios";
 
 ChartJS.register(Tooltip, Legend, CategoryScale, LinearScale, BarElement);
 
@@ -50,65 +51,48 @@ const Dashboard = () => {
     setAlertSeverity(severity);
     setAlertOpen(true);
   };
-
   const fetchApiKey = async () => {
     if (useMockData || !publicKey) return;
 
     try {
-      const response = await fetch(`${API_URL}/${publicKey.toBase58()}`, {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-        },
+      const response = await axios.get(`${API_URL}/${publicKey.toBase58()}`, {
+        headers: { "Content-Type": "application/json" },
       });
 
-      if (!response.ok) {
-        throw new Error(`Error req: ${response.statusText}`);
-      }
-
-      const data = await response.json();
-      console.log("Data received", data);
-
-      if (data.api_key) {
-        setApiKey(data.api_key);
+      if (response.data.api_key) {
+        setApiKey(response.data.api_key);
       } else {
-        console.warn("No responses found.");
+        console.warn("⚠️ No API Key found.");
       }
     } catch (error) {
-      console.error("Failed to load API Key:", error);
+      console.error("❌ Error fetching API Key:", error);
       handleAlert("Failed to load API Key!", "error");
     }
   };
 
-  const fetchDashboardData = async () => {
-    if (useMockData || !apiKey) return;
+  const fetchDashboardData = async (key: string) => {
+    if (useMockData || !key) return;
 
     try {
-      const response = await fetch(`${API_URL}/usage`, {
-        method: "GET",
+      const response = await axios.get(`${API_URL}/usage`, {
         headers: {
           "Content-Type": "application/json",
-          "x-api-key": apiKey,
+          "x-api-key": key,
         },
       });
 
-      if (!response.ok) {
-        throw new Error(`Req error: ${response.statusText}`);
-      }
+      console.log("📊 Data received:", response.data);
 
-      const data = await response.json();
-      console.log("📊 Dados recebidos:", data);
+      setTotalRequests(response.data.total_requests || 0);
+      setRemainingRequests(response.data.remaining_requests || 0);
 
-      setTotalRequests(data.total_requests || 0);
-      setRemainingRequests(data.remaining_requests || 0);
-
-      const formattedData = data.chats_per_day || [];
+      const formattedData = response.data.chats_per_day || [];
       setRequestsPerDay(
         formattedData.map((item: any) => item.chats_per_day || 0)
       );
       setDates(formattedData.map((item: any) => item.chat_date || ""));
     } catch (error) {
-      console.error("Api data not found:", error);
+      console.error("❌ Error fetching dashboard data:", error);
       handleAlert("Failed to load dashboard data!", "error");
     }
   };
@@ -126,13 +110,22 @@ const Dashboard = () => {
     fetchApiKey();
   }, [publicKey]);
 
+  // useEffect(() => {
+  //   if (useMockData) {
+  //     generateMockData();
+  //   } else {
+  //     fetchDashboardData();
+  //   }
+  // }, [useMockData]);
   useEffect(() => {
-    if (useMockData) {
-      generateMockData();
-    } else {
-      fetchDashboardData();
-    }
-  }, [useMockData]);
+    const loadData = async () => {
+      await fetchApiKey();
+      if (apiKey) {
+        fetchDashboardData(apiKey);
+      }
+    };
+    loadData();
+  }, [publicKey, useMockData]);
 
   const percentageUsed = (usedTokens / totalTokens) * 100 || 0;
 
