@@ -260,16 +260,14 @@ export const Navbar = () => {
 							)}
 						</WalletMultiButton>
 						{!isTokenLoading && pathname !== "/chatbot" && (
-							<>
-								{hasAccess && (
-									<Button
-										onClick={() => setIsModalOpen(true)}
-										className={buttonBaseClasses}
-									>
-										Join Chatbot Alpha
-									</Button>
-								)}
-							</>
+							<Button
+								asChild
+								className={buttonBaseClasses}
+							>
+								<Link href="/chatbot">
+									Join Chatbot
+								</Link>
+							</Button>
 						)}
 					</div>
 

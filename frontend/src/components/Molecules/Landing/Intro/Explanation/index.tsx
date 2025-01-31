@@ -2,12 +2,8 @@
 import { motion } from "framer-motion";
 import { Database, Layers, ZoomIn } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
-import { ChatModal } from "@/components/Atoms/ChatModal";
 
 export const Explanation = () => {
-  const [isModalOpen, setIsModalOpen] = useState(false);
-
   return (
     <>
       <motion.div
@@ -56,15 +52,16 @@ export const Explanation = () => {
           </div>
         </motion.div>
         <div className="mt-8 flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4">
-          <motion.button
-            initial={{ scale: 0.9, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            transition={{ duration: 0.4, delay: 0.3 }}
-            onClick={() => setIsModalOpen(true)}
-            className="bg-gradient-to-r from-[#9C88FF] to-[#6C5CE7] px-6 py-3 rounded-full hover:opacity-80 transition-all shadow-lg w-full sm:w-auto"
-          >
-            Explore Platform
-          </motion.button>
+          <Link href="/chatbot">
+            <motion.button
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ duration: 0.4, delay: 0.3 }}
+              className="bg-gradient-to-r from-[#9C88FF] to-[#6C5CE7] px-6 py-3 rounded-full hover:opacity-80 transition-all shadow-lg w-full sm:w-auto"
+            >
+              Join Chatbot
+            </motion.button>
+          </Link>
 
           <motion.button
             initial={{ scale: 0.9, opacity: 0 }}
@@ -92,8 +89,6 @@ export const Explanation = () => {
           </motion.button>
         </div>
       </motion.div>
-
-      <ChatModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
     </>
   );
 };

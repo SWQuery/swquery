@@ -68,7 +68,6 @@ CREATE INDEX idx_chats_user_id_created_at ON chats(user_id, created_at);
 --     );
 
 INSERT INTO packages (name, price_usdc, requests_amount, description) VALUES
-    ('Free', 0.01, 1, 'Single request package for testing'),
     ('Starter', 10, 20, 'Perfect for getting started with basic queries'),
     ('Basic', 30, 50, 'Great for regular usage with multiple queries'),
     ('Pro', 50, 80, 'Professional package for power users');
