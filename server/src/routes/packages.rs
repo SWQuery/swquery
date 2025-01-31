@@ -146,7 +146,7 @@ async fn verify_solana_transaction(
     signature: &str,
     expected_amount: DecimalType,
 ) -> Result<bool, (StatusCode, String)> {
-    const MAX_RETRIES: u32 = 10;
+    const MAX_RETRIES: u32 = 20;
     const RETRY_DELAY_MS: u64 = 2000; // 2 seconds
 
     // Parse the signature
@@ -164,7 +164,7 @@ async fn verify_solana_transaction(
     ));
 
     // The official SWQuery USDC receiving wallet
-    let expected_recipient = Pubkey::from_str("5xTzJevG6oR7KhoraFzypzXWYHxuhuEJruSVc3A2Zz2p")
+    let expected_recipient = Pubkey::from_str("BXVjUeXZ5GgbPvqCsUXdGz2G7zsg436GctEC3HkNLABK")
         .map_err(|_| {
             (
                 StatusCode::INTERNAL_SERVER_ERROR,

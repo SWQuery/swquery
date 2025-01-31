@@ -67,6 +67,7 @@ VALUES (
     );
 
 INSERT INTO packages (name, price_usdc, requests_amount) VALUES
+    ('Free', 0.01, 1),
     ('Starter', 10, 3),
     ('Basic', 20, 10),
     ('Pro', 50, 30);

@@ -52,7 +52,7 @@ run-watch:
 # Run Frontend
 run-frontend:
     @echo "Running Frontend..."
-    cd frontend && yarn dev
+    cd frontend && yarn && yarn dev
 
 # Run All
 run-all:

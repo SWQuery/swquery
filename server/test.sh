@@ -75,6 +75,12 @@ response=$(curl -s -w "\n%{http_code}" -H "Content-Type: application/json" -X PO
 status=$(echo "$response" | tail -n1)
 check_response "$response" "$status" 200
 
+# Test get user usage
+echo "Fetching user usage..."
+response=$(curl -s -w "\n%{http_code}" -X GET "$BASE_URL/users/9unenHYtwUowNkWdZmSYTwzGxxdzKVJh7npk6W6uqRF3/usage")
+status=$(echo "$response" | tail -n1)
+check_response "$response" "$status" 200
+
 # Test chatbot interaction with new API key system
 echo "Chatbot interaction..."
 response=$(curl -s -w "\n%{http_code}" -H "Content-Type: application/json" -H "x-api-key: $TEST_API" -X POST -d '{
