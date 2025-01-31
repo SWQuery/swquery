@@ -24,20 +24,6 @@ pub struct ValidateCreditsResponse {
     pub remaining_balance: i64,
 }
 
-// Add function to generate API key
-fn generate_api_key() -> String {
-    use rand::{thread_rng, Rng};
-    const CHARSET: &[u8] = b"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-    let mut rng = thread_rng();
-    let key: String = (0..32)
-        .map(|_| {
-            let idx = rng.gen_range(0..CHARSET.len());
-            CHARSET[idx] as char
-        })
-        .collect();
-    key
-}
-
 // Modify buy_credits to handle API key
 pub async fn buy_credits(
     State(pool): State<PgPool>,
@@ -55,7 +41,7 @@ pub async fn buy_credits(
 
     match user {
         Some(user) => {
-            let api_key = generate_api_key();
+            let api_key = crate::utils::generate_api_key();
             match update_or_insert_credits(&pool, user.id, payload.amount, &api_key).await {
                 Ok(credit) => Ok((
                     StatusCode::CREATED,

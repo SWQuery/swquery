@@ -17,6 +17,7 @@ import { useConnection, useWallet } from "@solana/wallet-adapter-react";
 import {
 	createTransferCheckedInstruction,
 	getAssociatedTokenAddressSync,
+	createAssociatedTokenAccountInstruction,
 } from "@solana/spl-token";
 import {
 	PublicKey,
@@ -41,7 +42,6 @@ interface Package {
 	requests_amount: number;
 }
 
-// Add interface for the verify response
 interface VerifyResponse {
 	message: string;
 	remaining_requests: number;
@@ -79,7 +79,9 @@ const PricingModal = ({
 	useEffect(() => {
 		const fetchPackages = async () => {
 			try {
-				const response = await axios.get(`${API_URL}/packages`);
+				const response = await axios.get(
+					`${API_URL}/packages/${publicKey?.toString()}`
+				);
 				setPackages(response.data);
 			} catch (error: any) {
 				setAlertMessage("Failed to fetch packages");
@@ -93,7 +95,7 @@ const PricingModal = ({
 		if (isOpen) {
 			fetchPackages();
 		}
-	}, [isOpen]);
+	}, [isOpen, publicKey]);
 
 	const handlePlanSelection = (plan: Package) => {
 		setSelectedPlan(plan);
@@ -115,7 +117,27 @@ const PricingModal = ({
 				RECIPIENT_WALLET
 			);
 
-			// Create transfer instruction
+			// Create new transaction
+			const transaction = new Transaction();
+
+			// Check if user's USDC account exists
+			const userUsdcAccountInfo = await connection.getAccountInfo(
+				userUsdcAccount
+			);
+
+			if (!userUsdcAccountInfo) {
+				// If account doesn't exist, add create account instruction
+				const createAccountInstruction =
+					createAssociatedTokenAccountInstruction(
+						publicKey, // payer
+						userUsdcAccount, // associated token account address
+						publicKey, // owner
+						USDC_MINT // mint
+					);
+				transaction.add(createAccountInstruction);
+			}
+
+			// Add transfer instruction
 			const transferInstruction = createTransferCheckedInstruction(
 				userUsdcAccount,
 				USDC_MINT,
@@ -124,9 +146,9 @@ const PricingModal = ({
 				BigInt(selectedPlan.price_usdc * 1_000_000),
 				6
 			);
+			transaction.add(transferInstruction);
 
-			// Create and send transaction
-			const transaction = new Transaction().add(transferInstruction);
+			// Get latest blockhash and sign transaction
 			const { blockhash } = await connection.getLatestBlockhash();
 			transaction.recentBlockhash = blockhash;
 			transaction.feePayer = publicKey;

@@ -2,7 +2,7 @@ use {
     crate::models::{
         Package, PackageResponse, VerifyTransactionRequest, VerifyTransactionResponse, GetUserUsageRequest, GetUserUsageResponse, ChatQuantity
     },
-    axum::{extract::State, http::{StatusCode, HeaderMap}, Json},
+    axum::{extract::State, http::{StatusCode, HeaderMap}, Json, extract::Path},
     rust_decimal::Decimal as DecimalType,
     solana_client::rpc_client::RpcClient,
     solana_sdk::{pubkey::Pubkey, signature::Signature},
@@ -13,16 +13,53 @@ use {
 };
 
 pub async fn get_packages(
+    Path(pubkey): Path<String>,
     State(pool): State<PgPool>,
 ) -> Result<Json<Vec<PackageResponse>>, (StatusCode, String)> {
-    let packages = sqlx::query_as::<_, Package>("SELECT * FROM packages")
+    let mut packages = sqlx::query_as::<_, Package>("SELECT * FROM packages")
         .fetch_all(&pool)
         .await
         .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
 
-    Ok(Json(
-        packages.into_iter().map(PackageResponse::from).collect(),
-    ))
+    // If this is the free trial package, check if user has any transactions
+    if packages.iter().any(|p| p.name == "Free Trial") {
+        // First get the user_id from the pubkey
+        let user_id = sqlx::query_scalar::<_, i32>("SELECT id FROM users WHERE pubkey = $1")
+            .bind(&pubkey)
+            .fetch_optional(&pool)
+            .await
+            .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+
+        if let Some(user_id) = user_id {
+            let has_transactions = sqlx::query_scalar::<_, bool>(
+                "SELECT EXISTS (SELECT 1 FROM transactions WHERE user_id = $1)",
+            )
+            .bind(user_id)
+            .fetch_one(&pool)
+            .await
+            .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+
+            if has_transactions {
+                // find where in the list the free trial package is and remove it
+                if let Some(index) = packages.iter().position(|p| p.name == "Free Trial") {
+                    packages.remove(index);
+                }
+            }
+        }
+    }
+
+    // Convert Package to PackageResponse
+    let package_responses = packages.into_iter()
+        .map(|p| PackageResponse {
+            id: p.id,
+            name: p.name,
+            description: p.description,
+            price_usdc: p.price_usdc,
+            requests_amount: p.requests_amount,
+        })
+        .collect::<Vec<PackageResponse>>();
+
+    Ok(Json(package_responses))
 }
 
 pub async fn verify_transaction(

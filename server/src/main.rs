@@ -2,6 +2,7 @@ mod db;
 mod middlewares;
 mod models;
 mod routes;
+mod utils;
 
 use {
     axum::{
@@ -58,7 +59,7 @@ async fn main() {
         .route("/health", get(|| async { "ok" }))
         // .route("/credits/buy", post(buy_credits))
         // .route("/credits/refund", post(refund_credits))
-        .route("/packages", get(get_packages))
+        .route("/packages/:pubkey", get(get_packages))
         .route("/packages/verify", post(verify_transaction))
         .nest("/agent", agent_router)
         .nest("/chatbot", chatbot_router)
