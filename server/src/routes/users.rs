@@ -232,7 +232,7 @@ pub async fn get_usage(
     State(pool): State<PgPool>,
     Path(pubkey): Path<String>,
 ) -> Result<Json<UsageResponse>, (StatusCode, String)> {
-    // Fetch the user by pubkey
+    // First try to get the user, if not exists, create it
     let user = sqlx::query_as::<_, User>("SELECT id, pubkey, subscriptions FROM users WHERE pubkey = $1")
         .bind(&pubkey)
         .fetch_optional(&pool)
@@ -244,65 +244,164 @@ pub async fn get_usage(
             )
         })?;
 
-    if let Some(user) = user {
-        let remaining_credits = sqlx::query_scalar::<_, i32>(
-            "SELECT COALESCE(remaining_requests, 0) FROM credits WHERE user_id = $1",
+    let user = match user {
+        Some(user) => user,
+        None => {
+            // Insert new user
+            sqlx::query_as::<_, User>(
+                "INSERT INTO users (pubkey) VALUES ($1) RETURNING id, pubkey, subscriptions",
+            )
+            .bind(&pubkey)
+            .fetch_one(&pool)
+            .await
+            .map_err(|e| {
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    format!("Failed to insert user: {}", e),
+                )
+            })?
+        }
+    };
+
+    // Check if user has any credits or transactions
+    let has_activity = sqlx::query_scalar::<_, bool>(
+        "SELECT EXISTS (
+            SELECT 1 FROM credits WHERE user_id = $1
+            UNION
+            SELECT 1 FROM transactions WHERE user_id = $1
+        )",
+    )
+    .bind(user.id)
+    .fetch_one(&pool)
+    .await
+    .map_err(|e| {
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            format!("Error checking user activity: {}", e),
         )
-        .bind(user.id)
-        .fetch_one(&pool)
-        .await
-        .map_err(|e| {
+    })?;
+
+    // If first time user, create credits entry with 3 trial credits and record the transaction
+    if !has_activity {
+        let mut tx = pool.begin().await.map_err(|e| {
             (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                format!("Error querying remaining credits: {}", e),
+                format!("Error starting transaction: {}", e),
             )
         })?;
 
-        let last_transaction = sqlx::query_as::<_, Transaction>(
-            "SELECT 
-                t.id::INT4 as id, 
-                t.package_id::INT4 as package_id, 
-                p.price_usdc as amount_usdc, 
-                t.created_at 
-             FROM transactions t
-             JOIN packages p ON t.package_id = p.id
-             WHERE t.user_id = $1
-             ORDER BY t.created_at DESC
-             LIMIT 1",
+        // Insert free trial package if it doesn't exist
+        let free_trial_package = sqlx::query_scalar!(
+            "INSERT INTO packages (name, price_usdc, requests_amount, description)
+             VALUES ('Free Trial', 0, 3, 'Free trial credits for new users')
+             ON CONFLICT (name) DO UPDATE SET name = EXCLUDED.name
+             RETURNING id",
         )
-        .bind(user.id)
-        .fetch_optional(&pool)
+        .fetch_one(&mut *tx)
         .await
         .map_err(|e| {
             (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                format!("Error querying last transaction: {}", e),
+                format!("Error inserting/getting free trial package: {}", e),
             )
         })?;
 
-        let total_spent_usdc = sqlx::query_scalar::<_, Option<Decimal>>(
-            "SELECT COALESCE(SUM(p.price_usdc), 0) as total_spent_usdc
-             FROM transactions t
-             JOIN packages p ON t.package_id = p.id
-             WHERE t.user_id = $1",
+        // Insert credits
+        sqlx::query(
+            "INSERT INTO credits (user_id, remaining_requests, api_key) 
+             VALUES ($1, 3, $2)",
         )
         .bind(user.id)
-        .fetch_one(&pool)
+        .bind(crate::utils::generate_api_key())
+        .execute(&mut *tx)
         .await
         .map_err(|e| {
             (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                format!("Error querying total spent USDC: {}", e),
+                format!("Error inserting trial credits: {}", e),
             )
-        })?
-        .unwrap_or_else(|| Decimal::new(0, 0));
+        })?;
 
-        Ok(Json(UsageResponse {
-            remaining_credits: remaining_credits as i64,
-            last_transaction,
-            total_spent_usdc,
-        }))
-    } else {
-        Err((StatusCode::NOT_FOUND, "User not found".to_string()))
+        // Record free trial transaction
+        sqlx::query(
+            "INSERT INTO transactions (user_id, package_id, signature, status)
+             VALUES ($1, $2, 'FREE_TRIAL', 'completed')",
+        )
+        .bind(user.id)
+        .bind(free_trial_package)
+        .execute(&mut *tx)
+        .await
+        .map_err(|e| {
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                format!("Error recording trial transaction: {}", e),
+            )
+        })?;
+
+        tx.commit().await.map_err(|e| {
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                format!("Error committing transaction: {}", e),
+            )
+        })?;
     }
+
+    // Rest of the existing code for fetching usage data
+    let remaining_credits = sqlx::query_scalar::<_, i32>(
+        "SELECT COALESCE(remaining_requests, 0) FROM credits WHERE user_id = $1",
+    )
+    .bind(user.id)
+    .fetch_one(&pool)
+    .await
+    .map_err(|e| {
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            format!("Error querying remaining credits: {}", e),
+        )
+    })?;
+
+    let last_transaction = sqlx::query_as::<_, Transaction>(
+        "SELECT 
+            t.id::INT4 as id, 
+            t.package_id::INT4 as package_id, 
+            p.price_usdc as amount_usdc, 
+            t.created_at 
+         FROM transactions t
+         JOIN packages p ON t.package_id = p.id
+         WHERE t.user_id = $1
+         ORDER BY t.created_at DESC
+         LIMIT 1",
+    )
+    .bind(user.id)
+    .fetch_optional(&pool)
+    .await
+    .map_err(|e| {
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            format!("Error querying last transaction: {}", e),
+        )
+    })?;
+
+    let total_spent_usdc = sqlx::query_scalar::<_, Option<Decimal>>(
+        "SELECT COALESCE(SUM(p.price_usdc), 0) as total_spent_usdc
+         FROM transactions t
+         JOIN packages p ON t.package_id = p.id
+         WHERE t.user_id = $1",
+    )
+    .bind(user.id)
+    .fetch_one(&pool)
+    .await
+    .map_err(|e| {
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            format!("Error querying total spent USDC: {}", e),
+        )
+    })?
+    .unwrap_or_else(|| Decimal::new(0, 0));
+
+    Ok(Json(UsageResponse {
+        remaining_credits: remaining_credits as i64,
+        last_transaction,
+        total_spent_usdc,
+    }))
 }

@@ -24,9 +24,10 @@ CREATE TABLE IF NOT EXISTS chats (
 
 CREATE TABLE IF NOT EXISTS packages (
     id SERIAL PRIMARY KEY,
-    name VARCHAR NOT NULL,
+    name VARCHAR NOT NULL UNIQUE,
     price_usdc NUMERIC(10,2) NOT NULL,
-    requests_amount INTEGER NOT NULL
+    requests_amount INTEGER NOT NULL,
+    description TEXT
 );
 
 CREATE TABLE IF NOT EXISTS transactions (
@@ -66,8 +67,8 @@ VALUES (
         1
     );
 
-INSERT INTO packages (name, price_usdc, requests_amount) VALUES
-    ('Free', 0.01, 1),
-    ('Starter', 10, 3),
-    ('Basic', 20, 10),
-    ('Pro', 50, 30);
+INSERT INTO packages (name, price_usdc, requests_amount, description) VALUES
+    ('Free', 0.01, 1, 'Single request package for testing'),
+    ('Starter', 10, 20, 'Perfect for getting started with basic queries'),
+    ('Basic', 30, 50, 'Great for regular usage with multiple queries'),
+    ('Pro', 50, 80, 'Professional package for power users');

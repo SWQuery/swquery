@@ -1,5 +1,5 @@
 use {
-    chrono::{NaiveDateTime, DateTime, Utc, NaiveDate},
+    chrono::{DateTime, NaiveDate, NaiveDateTime, Utc},
     rust_decimal::Decimal,
     serde::{Deserialize, Serialize},
     sqlx::types::Decimal as DecimalType,
@@ -11,6 +11,7 @@ pub struct Package {
     pub name: String,
     pub price_usdc: DecimalType,
     pub requests_amount: i32,
+    pub description: String,
 }
 
 #[derive(sqlx::FromRow, Serialize)]
@@ -36,6 +37,7 @@ pub struct PackageResponse {
     pub name: String,
     #[serde(with = "rust_decimal::serde::float")]
     pub price_usdc: Decimal,
+    pub description: String,
     pub requests_amount: i32,
 }
 
@@ -70,6 +72,7 @@ impl From<Package> for PackageResponse {
             id: package.id,
             name: package.name,
             price_usdc: package.price_usdc,
+            description: package.description,
             requests_amount: package.requests_amount,
         }
     }
