@@ -90,32 +90,6 @@ export const Navbar = () => {
 		}
 	}, [hasAccess, isTokenLoading, pathname]);
 
-	useEffect(() => {
-		const fetchBalance = async () => {
-			if (!connected || !publicKey) {
-				setSwqueryBalance(null);
-				return;
-			}
-
-			try {
-				const connection = new Connection(RPC_URL, "confirmed");
-				const mintPublicKey = new PublicKey(SWQUERY_MINT_ADDRESS);
-				const associatedTokenAddress = await getAssociatedTokenAddress(
-					mintPublicKey,
-					publicKey
-				);
-				const accountInfo = await getAccount(
-					connection,
-					associatedTokenAddress
-				);
-				setSwqueryBalance(Number(accountInfo.amount));
-			} catch (error) {
-				setSwqueryBalance(null);
-			}
-		};
-
-		fetchBalance();
-	}, [connected, publicKey]);
 
 	useEffect(() => {
 		const openai_key = getCookie("openai_key") as string;
