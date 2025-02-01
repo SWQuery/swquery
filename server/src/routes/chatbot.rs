@@ -120,8 +120,6 @@ pub async fn get_chat_by_id(
 pub struct ChatRequest {
     pub input_user: String,
     pub address: String,
-    pub helius_key: String,
-    pub openai_key: String,
 }
 
 #[derive(Serialize)]
@@ -145,34 +143,28 @@ pub async fn chatbot_interact(
         .and_then(|v| v.to_str().ok())
         .ok_or((StatusCode::UNAUTHORIZED, "Missing API key".to_string()))?;
 
-    if payload.helius_key.trim().is_empty() {
-        return Err((
-            StatusCode::BAD_REQUEST,
-            "Missing Helius API key".to_string(),
-        ));
-    }
-
-    if payload.openai_key.trim().is_empty() {
-        return Err((
-            StatusCode::BAD_REQUEST,
-            "Missing OpenAI API key".to_string(),
-        ));
-    }
-
-    println!(
-        "API keys: Helius: {}, OpenAI: {}",
-        payload.helius_key, payload.openai_key
-    );
+    // Fetch credit info first to verify user has access
     let (status, credit, remaining_credits, api_key_str) =
         fetch_credit_info(&pool, api_key).await?;
-    // if status != StatusCode::OK {
-    // return Err((status, credit.to_string()));
-    // }
+
+    // Load environment variables
+    let helius_api_key = std::env::var("HELIUS_API_KEY").map_err(|_| {
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            "Helius API key not configured".to_string(),
+        )
+    })?;
+
+    let openai_api_key = std::env::var("OPENAI_API_KEY").map_err(|_| {
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            "OpenAI API key not configured".to_string(),
+        )
+    })?;
 
     let swquery_client = SWqueryClient::new(
-        payload.openai_key.clone(),
-        payload.helius_key.clone(),
         api_key.to_string(),
+        Some(helius_api_key),
         Some(Duration::from_secs(30)),
         Some(Network::Mainnet),
     );
@@ -194,7 +186,7 @@ pub async fn chatbot_interact(
         input_user: query_result.response.clone().to_string(),
         address: payload.address.clone(),
         chatted: payload.input_user.clone(),
-        openai_key: payload.openai_key.clone(),
+        openai_key: openai_api_key.clone(),
     };
 
     let report = generate_report_service(pool.clone(), headers, axum::Json(report_input)).await?;
@@ -212,12 +204,12 @@ pub async fn chatbot_interact(
             )
         })?;
 
-    //Create a chat record
+    // Create a chat record
     sqlx::query(
         "INSERT INTO chats (user_id, input_user, response, tokens_used) 
          VALUES ($1, $2, $3, $4) RETURNING id",
     )
-    .bind(user_id.clone())
+    .bind(user_id)
     .bind(&payload.input_user)
     .bind(query_result.response.to_string())
     .bind(1000)
@@ -231,12 +223,29 @@ pub async fn chatbot_interact(
         )
     })?;
 
+    // Update remaining credits
+    sqlx::query(
+        "UPDATE credits 
+         SET remaining_requests = remaining_requests - 1 
+         WHERE user_id = $1",
+    )
+    .bind(user_id)
+    .execute(&pool)
+    .await
+    .map_err(|e| {
+        eprintln!("Database error: {}", e);
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            "Failed to update credits".to_string(),
+        )
+    })?;
+
     Ok((
         StatusCode::OK,
         Json(ChatResponse {
-            credits: remaining_credits,
+            credits: remaining_credits - 1,
             response: query_result.response,
-            response_type: "text".to_string(), // Default to text type
+            response_type: "text".to_string(),
             metadata,
             report: report.1.result.clone(),
         }),

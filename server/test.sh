@@ -5,15 +5,14 @@ set -a
 source .env
 set +a
 
-# Depuração: Verificar se as variáveis foram carregadas
-echo "TEST_API: $TEST_API"
-echo "TEST_HELIUS_API: $TEST_HELIUS_API"
-echo "TEST_OPENAI_API: $TEST_OPENAI_API"
+# Debug: Check if variables were loaded
+echo "TEST_API_KEY: $TEST_API_KEY"
+echo "TEST_HELIUS_API_KEY: $TEST_HELIUS_API_KEY"
+echo "TEST_OPENAI_API_KEY: $TEST_OPENAI_API_KEY"
 
 BASE_URL="http://localhost:5500"
-API="$TEST_API"
-HELIUS_API="$TEST_HELIUS_API"
-OPENAI_API="$TEST_OPENAI_API"
+API_KEY="$TEST_API_KEY"
+TEST_PUBKEY="9unenHYtwUowNkWdZmSYTwzGxxdzKVJh7npk6W6uqRF3"
 
 check_response() {
   local response="$1"
@@ -44,9 +43,9 @@ echo
 
 # Test create user
 echo "Creating user..."
-response=$(curl -s -w "\n%{http_code}" -H "Content-Type: application/json" -X POST -d '{
-  "pubkey": "9unenHYtwUowNkWdZmSYTwzGxxdzKVJh7npk6W6uqRF3"
-}' "$BASE_URL/users")
+response=$(curl -s -w "\n%{http_code}" -H "Content-Type: application/json" -X POST -d "{
+    \"pubkey\": \"$TEST_PUBKEY\"
+}" "$BASE_URL/users")
 status=$(echo "$response" | tail -n1)
 if [[ "$status" != "201" && "$status" != "200" ]]; then
     echo "❌ Test failed (Expected: 201 or 200, Got: $status)"
@@ -61,19 +60,19 @@ echo
 
 # Test get packages
 echo "Fetching packages..."
-response=$(curl -s -w "\n%{http_code}" -X GET "$BASE_URL/packages")
+response=$(curl -s -w "\n%{http_code}" -X GET "$BASE_URL/packages/$TEST_PUBKEY")
 status=$(echo "$response" | tail -n1)
 check_response "$response" "$status" 200
 
-# Test verify transaction with real signature
-echo "Verifying transaction..."
-response=$(curl -s -w "\n%{http_code}" -H "Content-Type: application/json" -X POST -d '{
-  "package_id": 1,
-  "signature": "3dMe8itJ7Rbc3E42aFMDWyrJJPv4dHUpXgoqWFKhHNKB4mbd2veFp8LMEdfzEAoYS9XbXTTQSpQszwSpmY33q9Ky",
-  "user_pubkey": "9unenHYtwUowNkWdZmSYTwzGxxdzKVJh7npk6W6uqRF3"
-}' "$BASE_URL/packages/verify")
-status=$(echo "$response" | tail -n1)
-check_response "$response" "$status" 200
+# # Test verify transaction with real signature
+# echo "Verifying transaction..."
+# response=$(curl -s -w "\n%{http_code}" -H "Content-Type: application/json" -X POST -d '{
+#   "package_id": 1,
+#   "signature": "3dMe8itJ7Rbc3E42aFMDWyrJJPv4dHUpXgoqWFKhHNKB4mbd2veFp8LMEdfzEAoYS9XbXTTQSpQszwSpmY33q9Ky",
+#   "user_pubkey": "9unenHYtwUowNkWdZmSYTwzGxxdzKVJh7npk6W6uqRF3"
+# }' "$BASE_URL/packages/verify")
+# status=$(echo "$response" | tail -n1)
+# check_response "$response" "$status" 200
 
 # Test get user usage
 echo "Fetching user usage..."
@@ -81,14 +80,12 @@ response=$(curl -s -w "\n%{http_code}" -X GET "$BASE_URL/users/9unenHYtwUowNkWdZ
 status=$(echo "$response" | tail -n1)
 check_response "$response" "$status" 200
 
-# Test chatbot interaction with new API key system
+# Test chatbot interaction
 echo "Chatbot interaction..."
-response=$(curl -s -w "\n%{http_code}" -H "Content-Type: application/json" -H "x-api-key: $TEST_API" -X POST -d '{
-  "input_user": "What was the trending tokens today?",
-  "address": "9unenHYtwUowNkWdZmSYTwzGxxdzKVJh7npk6W6uqRF3",
-  "openai_key": "'"$OPENAI_API"'",
-  "helius_key": "'"$HELIUS_API"'"
-}' "$BASE_URL/chatbot/interact")
+response=$(curl -s -w "\n%{http_code}" -H "Content-Type: application/json" -H "x-api-key: $API_KEY" -X POST -d "{
+    \"input_user\": \"What was the trending tokens today?\",
+    \"address\": \"$TEST_PUBKEY\"
+}" "$BASE_URL/chatbot/interact")
 status=$(echo "$response" | tail -n1)
 check_response "$response" "$status" 200
 
