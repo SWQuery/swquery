@@ -17,7 +17,6 @@ use {
         agent::{generate_query, generate_report},
         chatbot::{chatbot_interact, get_chat_by_id, get_chats_for_user},
         credits::{buy_credits, refund_credits},
-        packages::{get_packages, verify_transaction},
         packages::{get_packages, get_user_usage, verify_transaction},
         users::{create_user, get_usage, get_user_by_pubkey, get_users, manage_subscription},
     },
@@ -52,7 +51,7 @@ async fn main() {
     let users_router = Router::new()
         .route("/", get(get_users).post(create_user))
         .route("/:pubkey", get(get_user_by_pubkey))
-        .route("/:pubkey/subscriptions", post(manage_subscription)); 
+        .route("/:pubkey/subscriptions", post(manage_subscription))
         .route("/usage", post(get_user_usage))
         .route("/:pubkey/usage", get(get_usage));
 
