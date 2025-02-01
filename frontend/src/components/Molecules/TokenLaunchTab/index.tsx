@@ -1,53 +1,24 @@
-import { useState } from "react";
+"use client";
+
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import TokenLaunchCard from "@/components/Atoms/TokenLaunchCard";
+import { Loader } from "lucide-react"; // Ícone de loading
 
-const mockTokenLaunches = [
-  {
-    signature: "4ikuYPcK75jWMDoqMqrb2qyBjYG26ZtD5CZyS2D2sXBmzheTotV1EWe6cXmsyHncQdzTea9jiNUnKUzTp2zAsvye",
-    mint: "3acpPNa9CJt8Grne5grf6e3Dej8oZkHTtCtB3hugXYRf",
-    traderPublicKey: "ELdfNbHR4HgmiaQ44UyRxGWTjFpTuwqfCyy6oq8CMDaJ",
-    txType: "create",
-    initialBuy: 2000000.45,
-    solAmount: 10.25,
-    bondingCurveKey: "DYRDgYy7JYYvKGu7xDMuQA6K4zo8PnJWcjPQHAJTf3yo",
-    vTokensInBondingCurve: 500000.34,
-    vSolInBondingCurve: 25.45,
-    marketCapSol: 50.2,
-    name: "DeepDive",
-    symbol: "DeepGPT",
-    uri: "https://ipfs.io/ipfs/QmYaA88yjqyXU7c4D3cYUBwPkZym7QhZiayQeDrvZNXZuW",
-    pool: "pump",
-    timestamp: 1672531200000,
-  },
-  {
-    signature: "2mktXPfC12345DoqMqrb2qyBjYG26ZtD5CZyS2D2sXBmzheTovWE6cXmsyHncQdzTea9jiNUnKUzTp2zAsvye",
-    mint: "1bcpPQ3Jt9CJt8Grne5grf6e3Dej8oZkHTtCtB3hugXYRf",
-    traderPublicKey: "VLdfNbHR4HgmiaQ44UyRxGWTjFpTuwqfCyy6oq8CMDaL",
-    txType: "buy",
-    initialBuy: 1500000.67,
-    solAmount: 5.8,
-    bondingCurveKey: "JTYRgXrY7JYYvKGu7xDMuQA6K4zo8PnJWcjPQHAJTf3yo",
-    vTokensInBondingCurve: 800000.99,
-    vSolInBondingCurve: 30.65,
-    marketCapSol: 35.89,
-    name: "MoonToken",
-    symbol: "MOON",
-    uri: "https://ipfs.io/ipfs/QmYaC79Djz4HgmG4YQUkZYAYfRNfCqAukDrLyRkmBZL3Qo",
-    pool: "pump",
-    timestamp: 1672617600000,
-  },
-];
-
-type FilterKey = "initialBuy" | "marketCapSol" | "vTokensInBondingCurve" | "vSolInBondingCurve";
-
+// Configuração inicial dos filtros
+type FilterKey =
+  | "initialBuy"
+  | "marketCapSol"
+  | "vTokensInBondingCurve"
+  | "vSolInBondingCurve";
 interface Filter {
   min: number;
   max: number;
 }
 
 export default function TokenLaunchTab() {
-  const [tokenLaunches] = useState(mockTokenLaunches);
+  const [tokenLaunches, setTokenLaunches] = useState<any[]>([]);
+  const [ws, setWs] = useState<WebSocket | null>(null);
   const [filters, setFilters] = useState<Record<FilterKey, Filter>>({
     initialBuy: { min: 0, max: Infinity },
     marketCapSol: { min: 0, max: Infinity },
@@ -55,21 +26,67 @@ export default function TokenLaunchTab() {
     vSolInBondingCurve: { min: 0, max: Infinity },
   });
   const [appliedFilters, setAppliedFilters] = useState(filters);
+  const [isMonitoring, setIsMonitoring] = useState(false);
+  const [isLoading, setIsLoading] = useState(false); // Estado de loading
 
-  const handleFilterChange = (key: FilterKey, type: "min" | "max", value: number) => {
-    setFilters((prevFilters) => ({
-      ...prevFilters,
-      [key]: {
-        ...prevFilters[key],
-        [type]: value,
-      },
-    }));
+  // Função para conectar ao WebSocket e receber dados em tempo real
+  const startWebSocket = () => {
+    if (ws || isLoading) {
+      console.warn("WebSocket already running or loading!");
+      return;
+    }
+
+    setIsLoading(true); // Ativa o loading
+
+    const socket = new WebSocket("wss://pumpportal.fun/api/data");
+
+    socket.onopen = () => {
+      console.log("✅ WebSocket connected!");
+      setIsMonitoring(true);
+      setIsLoading(false); // Remove o loading
+
+      // Enviar "a" para iniciar o rastreamento
+      const payload = {
+        method: "subscribeNewToken",
+        keys: ["a"],
+      };
+      socket.send(JSON.stringify(payload));
+      console.log(`📤 Sent to WebSocket: ${JSON.stringify(payload)}`);
+    };
+
+    socket.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+      console.log("📩 New update received:", data);
+
+      setTokenLaunches((prevLaunches) => {
+        const alreadyExists = prevLaunches.some(
+          (launch) => launch.mint === data.mint
+        );
+        return alreadyExists ? prevLaunches : [data, ...prevLaunches];
+      });
+    };
+
+    socket.onerror = (error) => {
+      console.error("⚠️ WebSocket error:", error);
+      setIsLoading(false);
+    };
+
+    socket.onclose = () => {
+      console.log("🔌 WebSocket connection closed.");
+      setIsMonitoring(false);
+      setWs(null);
+      setIsLoading(false);
+    };
+
+    setWs(socket);
   };
 
+  // Aplica os filtros ao apertar o botão "Apply Filters"
   const handleApplyFilters = () => {
     setAppliedFilters(filters);
   };
 
+  // Reseta os filtros ao apertar o botão "Reset Filters"
   const handleResetFilters = () => {
     const defaultFilters = {
       initialBuy: { min: 0, max: Infinity },
@@ -81,14 +98,17 @@ export default function TokenLaunchTab() {
     setAppliedFilters(defaultFilters);
   };
 
+  // Filtro dos tokens
   const filteredLaunches = tokenLaunches.filter((launch) => {
     return (
       launch.initialBuy >= appliedFilters.initialBuy.min &&
       launch.initialBuy <= appliedFilters.initialBuy.max &&
       launch.marketCapSol >= appliedFilters.marketCapSol.min &&
       launch.marketCapSol <= appliedFilters.marketCapSol.max &&
-      launch.vTokensInBondingCurve >= appliedFilters.vTokensInBondingCurve.min &&
-      launch.vTokensInBondingCurve <= appliedFilters.vTokensInBondingCurve.max &&
+      launch.vTokensInBondingCurve >=
+        appliedFilters.vTokensInBondingCurve.min &&
+      launch.vTokensInBondingCurve <=
+        appliedFilters.vTokensInBondingCurve.max &&
       launch.vSolInBondingCurve >= appliedFilters.vSolInBondingCurve.min &&
       launch.vSolInBondingCurve <= appliedFilters.vSolInBondingCurve.max
     );
@@ -98,28 +118,69 @@ export default function TokenLaunchTab() {
     <div className="flex">
       {/* Sidebar de Filtros */}
       <div className="w-64 bg-gray-900 text-white p-4 rounded-lg">
-        <h2 className="text-lg font-semibold mb-4">Filters</h2>
-        <div className="space-y-4">
-          {(["initialBuy", "marketCapSol", "vTokensInBondingCurve", "vSolInBondingCurve"] as FilterKey[]).map((key) => (
-            <div key={key}>
-              <label className="text-sm font-bold capitalize">{key.replace(/([A-Z])/g, " $1")}:</label>
-              <div className="flex space-x-2 mt-1">
-                <input
-                  type="number"
-                  className="w-full p-2 bg-gray-800 rounded-lg"
-                  placeholder="Min"
-                  onChange={(e) => handleFilterChange(key, "min", Number(e.target.value))}
-                />
-                <input
-                  type="number"
-                  className="w-full p-2 bg-gray-800 rounded-lg"
-                  placeholder="Max"
-                  onChange={(e) => handleFilterChange(key, "max", Number(e.target.value))}
-                />
-              </div>
-            </div>
-          ))}
+        {/* Botão para iniciar o WebSocket */}
+        <div className="mt-4">
+          <button
+            className={`w-full py-2 rounded-lg flex items-center justify-center gap-2 ${
+              isMonitoring
+                ? "bg-gray-600 cursor-not-allowed"
+                : "bg-green-600 hover:bg-green-700"
+            } text-white`}
+            onClick={startWebSocket}
+            disabled={isMonitoring || isLoading}
+          >
+            {isLoading ? (
+              <>
+                <Loader className="w-5 h-5 animate-spin" />
+                Starting...
+              </>
+            ) : isMonitoring ? (
+              "Monitoring Active"
+            ) : (
+              "Start Launches Monitor"
+            )}
+          </button>
         </div>
+        <h2 className="text-lg font-semibold my-4">Filters</h2>
+        {(
+          [
+            "initialBuy",
+            "marketCapSol",
+            "vTokensInBondingCurve",
+            "vSolInBondingCurve",
+          ] as FilterKey[]
+        ).map((key) => (
+          <div key={key}>
+            <label className="text-sm font-bold capitalize">
+              {key.replace(/([A-Z])/g, " $1")}:
+            </label>
+            <div className="flex space-x-2 mt-1">
+              <input
+                type="number"
+                className="w-full p-2 bg-gray-800 rounded-lg"
+                placeholder="Min"
+                onChange={(e) =>
+                  setFilters((prev) => ({
+                    ...prev,
+                    [key]: { ...prev[key], min: Number(e.target.value) },
+                  }))
+                }
+              />
+              <input
+                type="number"
+                className="w-full p-2 bg-gray-800 rounded-lg"
+                placeholder="Max"
+                onChange={(e) =>
+                  setFilters((prev) => ({
+                    ...prev,
+                    [key]: { ...prev[key], max: Number(e.target.value) },
+                  }))
+                }
+              />
+            </div>
+          </div>
+        ))}
+
         <button
           className="w-full mt-4 bg-purple-600 hover:bg-purple-700 text-white py-2 rounded-lg"
           onClick={handleApplyFilters}

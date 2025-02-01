@@ -2,6 +2,7 @@ mod db;
 mod middlewares;
 mod models;
 mod routes;
+mod utils;
 
 use {
     axum::{
@@ -16,8 +17,9 @@ use {
         agent::{generate_query, generate_report},
         chatbot::{chatbot_interact, get_chat_by_id, get_chats_for_user},
         credits::{buy_credits, refund_credits},
-        users::{create_user, get_user_by_pubkey, get_users, manage_subscription},
         packages::{get_packages, verify_transaction},
+        packages::{get_packages, get_user_usage, verify_transaction},
+        users::{create_user, get_usage, get_user_by_pubkey, get_users, manage_subscription},
     },
     std::time::Duration,
     tower_http::cors::{Any, CorsLayer},
@@ -51,12 +53,14 @@ async fn main() {
         .route("/", get(get_users).post(create_user))
         .route("/:pubkey", get(get_user_by_pubkey))
         .route("/:pubkey/subscriptions", post(manage_subscription)); 
+        .route("/usage", post(get_user_usage))
+        .route("/:pubkey/usage", get(get_usage));
 
     let app = Router::new()
         .route("/health", get(|| async { "ok" }))
-        .route("/credits/buy", post(buy_credits))
-        .route("/credits/refund", post(refund_credits))
-        .route("/packages", get(get_packages))
+        // .route("/credits/buy", post(buy_credits))
+        // .route("/credits/refund", post(refund_credits))
+        .route("/packages/:pubkey", get(get_packages))
         .route("/packages/verify", post(verify_transaction))
         .nest("/agent", agent_router)
         .nest("/chatbot", chatbot_router)

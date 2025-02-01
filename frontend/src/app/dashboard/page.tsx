@@ -1,6 +1,9 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { API_URL } from "@/utils/constants";
+import axios from "axios";
 import {
   Chart as ChartJS,
   Tooltip,
@@ -9,6 +12,7 @@ import {
   LinearScale,
   BarElement,
 } from "chart.js";
+import { useWallet } from "@solana/wallet-adapter-react";
 import { Bar } from "react-chartjs-2";
 import { Card, CardContent } from "@/components/Atoms/CardComponent";
 import { Navbar } from "@/components/Molecules/Navbar";
@@ -16,21 +20,30 @@ import { Info, Eye, EyeOff, Copy } from "lucide-react";
 import Alert from "@mui/material/Alert";
 import Snackbar from "@mui/material/Snackbar";
 
+interface ChatQuantity {
+  chat_date: string;
+  chats_per_day: number;
+}
+
+interface UsageResponse {
+  remaining_credits: number;
+  total_requests: number;
+  chats_per_day: ChatQuantity[];
+}
+
 ChartJS.register(Tooltip, Legend, CategoryScale, LinearScale, BarElement);
 
 const Dashboard = () => {
-  //mock data
-  const totalTokens = 1000;
-  const usedTokens = 600;
-  const remainingTokens = totalTokens - usedTokens;
-  const percentageUsed = (usedTokens / totalTokens) * 100;
-  const requestData = {
-    7: [20, 30, 25, 40, 35, 50, 45],
-    30: new Array(30).fill(0).map(() => Math.floor(Math.random() * 50 + 10)),
-  };
+  const { publicKey } = useWallet();
+  const [totalRequests, setTotalRequests] = useState(0);
+  const [remainingRequests, setRemainingRequests] = useState(0);
+  const [requestsPerDay, setRequestsPerDay] = useState<number[]>([]);
+  const [dates, setDates] = useState<string[]>([]);
+
+  const usedRequests = totalRequests - remainingRequests;
 
   const [selectedPeriod, setSelectedPeriod] = useState<7 | 30>(7);
-  const [apiKey, setApiKey] = useState("sk-abc123def456ghi789");
+  const [apiKey, setApiKey] = useState<string>("");
   const [isKeyVisible, setIsKeyVisible] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -48,12 +61,64 @@ const Dashboard = () => {
     setAlertSeverity(severity);
     setAlertOpen(true);
   };
+  const fetchApiKey = async () => {
+    if (!publicKey) return;
 
-  const handleChangeApiKey = () => {
-    const newKey = "sk-new1234567890abc"; // Mocked new key
-    setApiKey(newKey);
-    setIsModalOpen(false);
-    handleAlert("API Key updated successfully!", "success");
+    try {
+      const response = await axios.get(`${API_URL}/users/${publicKey.toBase58()}`, {
+        headers: { "Content-Type": "application/json" },
+      });
+
+      if (response.data.api_key) {
+        setApiKey(response.data.api_key);
+      } else {
+        console.warn("⚠️ No API Key found.");
+      }
+    } catch (error) {
+      console.error("❌ Error fetching API Key:", error);
+      handleAlert("Failed to load API Key!", "error");
+    }
+  };
+
+  const fetchDashboardData = async () => {
+    try {
+      const response = await axios.get<UsageResponse>(
+        `${API_URL}/users/${publicKey?.toBase58()}/usage`
+      );
+      
+      console.log("📊 Data received:", response.data);
+      
+      setTotalRequests(response.data.total_requests);
+      setRemainingRequests(response.data.remaining_credits);
+
+      const formattedData = response.data.chats_per_day || [];
+      setRequestsPerDay(formattedData.map((item) => item.chats_per_day));
+      setDates(formattedData.map((item) => item.chat_date));
+    } catch (error) {
+      console.error("Error fetching usage data:", error);
+      handleAlert("Failed to load dashboard data!", "error");
+    }
+  };
+
+  useEffect(() => {
+    fetchApiKey();
+  }, [publicKey]);
+
+  useEffect(() => {
+    if (publicKey) {
+      fetchDashboardData();
+    }
+  }, [publicKey]);
+
+  const requestsChartData = {
+    labels: dates.slice(-selectedPeriod).reverse(),
+    datasets: [
+      {
+        label: "Requests per Day",
+        data: requestsPerDay.slice(-selectedPeriod).reverse(),
+        backgroundColor: "#4F46E5",
+      },
+    ],
   };
 
   const handleCopyApiKey = () => {
@@ -61,15 +126,11 @@ const Dashboard = () => {
     handleAlert("API Key copied to clipboard!", "info");
   };
 
-  const requestsChartData = {
-    labels: Array.from({ length: selectedPeriod }, (_, i) => `Day ${i + 1}`),
-    datasets: [
-      {
-        label: "Requests",
-        data: requestData[selectedPeriod],
-        backgroundColor: "#4F46E5",
-      },
-    ],
+  const handleChangeApiKey = () => {
+    const newKey = "sk-new1234567890abc";
+    setApiKey(newKey);
+    setIsModalOpen(false);
+    handleAlert("API Key updated successfully!", "success");
   };
 
   return (
@@ -119,30 +180,29 @@ const Dashboard = () => {
                 Copy
               </button>
             </div>
-            <button
+            {/* <button
               onClick={() => setIsModalOpen(true)}
               className="mt-4 px-4 py-2 bg-gradient-to-r from-purple-600 to-blue-500 text-white rounded-lg hover:opacity-90"
             >
               Change My API Key
-            </button>
+            </button> */}
           </CardContent>
         </Card>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Tokens Overview */}
+          {/* Requests Overview */}
           <Card>
             <CardContent>
               <div className="flex justify-between items-center mb-4 p-6">
                 <h2 className="text-xl font-semibold text-gray-300">
-                  Tokens Overview
+                  Requests Overview
                 </h2>
                 <Info
                   size={20}
                   className="text-gray-400 cursor-pointer hover:text-white"
                 >
                   <title>
-                    This chart shows the percentage of used and remaining
-                    tokens.
+                    This chart shows the percentage of used and remaining requests.
                   </title>
                 </Info>
               </div>
@@ -171,7 +231,7 @@ const Dashboard = () => {
                     fill="none"
                     stroke="url(#gradient)"
                     strokeWidth="2"
-                    strokeDasharray={`${percentageUsed}, 100`}
+                    strokeDasharray={`${(usedRequests / totalRequests) * 100}, 100`}
                     strokeLinecap="round"
                   />
                   <defs>
@@ -189,34 +249,33 @@ const Dashboard = () => {
                 </svg>
                 <div className="absolute inset-0 flex flex-col items-center justify-center text-white font-semibold">
                   <span className="text-lg">
-                    {usedTokens}/{totalTokens}
+                    {Number.isNaN(usedRequests) ? 0 : usedRequests}/{remainingRequests}
                   </span>
-                  <span className="text-sm">Tokens Used</span>
+                  <span className="text-sm">Requests Used</span>
                 </div>
               </div>
               <p className="text-gray-400 mt-2 text-center">
-                Remaining Tokens:{" "}
+                Remaining Requests:{" "}
                 <span className="text-white font-semibold">
-                  {remainingTokens}
+                  {remainingRequests}
                 </span>
               </p>
             </CardContent>
           </Card>
 
-          {/* Requests Overview */}
+          {/* Daily Requests Chart */}
           <Card>
             <CardContent>
               <div className="flex justify-between items-center mb-4 p-6">
                 <h2 className="text-xl font-semibold text-gray-300">
-                  Requests Overview
+                  Daily Requests
                 </h2>
                 <Info
                   size={20}
                   className="text-gray-400 cursor-pointer hover:text-white"
                 >
                   <title>
-                    This chart displays the number of requests made in the
-                    selected period.
+                    This chart displays the number of requests made per day in the selected period.
                   </title>
                 </Info>
               </div>
@@ -232,7 +291,17 @@ const Dashboard = () => {
                   <option value={30}>Last 30 Days</option>
                 </select>
               </div>
-              <Bar data={requestsChartData} />
+              <Bar 
+                data={requestsChartData} 
+                options={{
+                  scales: {
+                    y: {
+                      suggestedMax: 10,
+                      suggestedMin: 0
+                    }
+                  }
+                }}
+              />
             </CardContent>
           </Card>
         </div>

@@ -24,26 +24,13 @@ pub struct ValidateCreditsResponse {
     pub remaining_balance: i64,
 }
 
-// Add function to generate API key
-fn generate_api_key() -> String {
-    use rand::{thread_rng, Rng};
-    const CHARSET: &[u8] = b"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-    let mut rng = thread_rng();
-    let key: String = (0..32)
-        .map(|_| {
-            let idx = rng.gen_range(0..CHARSET.len());
-            CHARSET[idx] as char
-        })
-        .collect();
-    key
-}
-
 // Modify buy_credits to handle API key
 pub async fn buy_credits(
     State(pool): State<PgPool>,
     Json(payload): Json<BuyCredits>,
 ) -> Result<(StatusCode, Json<CreditResponse>), (StatusCode, String)> {
-    let user = sqlx::query_as::<_, User>("SELECT id, pubkey, pump_portal_payload FROM users WHERE pubkey = $1")
+    // let user = sqlx::query_as::<_, User>("SELECT id, pubkey, pump_portal_payload FROM users WHERE pubkey = $1")
+    let user = sqlx::query_as::<_, User>("SELECT id, pubkey, subscriptions FROM users WHERE pubkey = $1")
         .bind(&payload.user_pubkey)
         .fetch_optional(&pool)
         .await
@@ -54,7 +41,7 @@ pub async fn buy_credits(
 
     match user {
         Some(user) => {
-            let api_key = generate_api_key();
+            let api_key = crate::utils::generate_api_key();
             match update_or_insert_credits(&pool, user.id, payload.amount, &api_key).await {
                 Ok(credit) => Ok((
                     StatusCode::CREATED,
@@ -84,31 +71,16 @@ async fn update_or_insert_credits(
     amount: i64,
     api_key: &str,
 ) -> Result<CreditModel, (StatusCode, String)> {
-    let current_balance =
-        sqlx::query_scalar::<_, i64>("SELECT balance FROM credits WHERE user_id = $1 FOR UPDATE")
-            .bind(user_id)
-            .fetch_one(pool)
-            .await
-            .map_err(|e| {
-                eprintln!("Credits operation error: {}", e);
-                (
-                    StatusCode::INTERNAL_SERVER_ERROR,
-                    "Failed to fetch credits".to_string(),
-                )
-            })?;
-
-    let new_amount = current_balance + amount;
-
     let credit = sqlx::query_as::<_, CreditModel>(
         "INSERT INTO credits (user_id, balance, api_key) 
          VALUES ($1, $2, $3)
          ON CONFLICT (user_id) 
-         DO UPDATE SET balance = EXCLUDED.balance,
-                     api_key = COALESCE(credits.api_key, EXCLUDED.api_key)
+         DO UPDATE SET balance = credits.balance + EXCLUDED.balance,
+                      api_key = COALESCE(credits.api_key, EXCLUDED.api_key)
          RETURNING *",
     )
     .bind(user_id)
-    .bind(new_amount)
+    .bind(amount)
     .bind(api_key)
     .fetch_one(pool)
     .await
