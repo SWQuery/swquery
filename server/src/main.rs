@@ -16,7 +16,7 @@ use {
         agent::{generate_query, generate_report},
         chatbot::{chatbot_interact, get_chat_by_id, get_chats_for_user},
         credits::{buy_credits, refund_credits},
-        users::{create_user, get_user_by_pubkey, get_users},
+        users::{create_user, get_user_by_pubkey, get_users, manage_subscription},
         packages::{get_packages, verify_transaction},
     },
     std::time::Duration,
@@ -49,8 +49,8 @@ async fn main() {
         .route("/chats/:id", get(get_chat_by_id));
     let users_router = Router::new()
         .route("/", get(get_users).post(create_user))
-        .route("/:pubkey", get(get_user_by_pubkey));
-        // .route("/:pubkey/subscriptions", post(manage_subscription)); 
+        .route("/:pubkey", get(get_user_by_pubkey))
+        .route("/:pubkey/subscriptions", post(manage_subscription)); 
 
     let app = Router::new()
         .route("/health", get(|| async { "ok" }))

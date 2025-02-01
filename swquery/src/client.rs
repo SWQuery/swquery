@@ -12,6 +12,9 @@ const AGENT_API_URL: &str =
     "http://0.0.0.0:5500/agent/generate-query";
     // "https://api.swquery.xyz/agent/generate-query";
 
+const API_URL: &str = 
+    "http://0.0.0.0:5500";
+
 /// Enum to represent the Solana network.
 #[derive(Debug, Clone, Copy, Default)]
 pub enum Network {
@@ -838,24 +841,73 @@ impl SWqueryClient {
             .send()
             .await
             .map_err(|e| {
-                error!("Falha ao enviar requisição para Phantom: {:?}", e);
+                error!("Failed to send request to Phantom: {:?}", e);
                 SdkError::RequestFailed
             })?;
 
         println!("Phantom status: {}", response.status());
 
         if !response.status().is_success() {
-            error!("Requisição falhou com status: {}", response.status());
+            error!("Request failed with status: {}", response.status());
             return Err(SdkError::RequestFailed);
         }
 
         let trending_tokens_response: GetTrendingTokensResponse = response.json().await.map_err(|e| {
-            error!("Falha ao desserializar resposta da Phantom: {:?}", e);
+            error!("Failed deserializing Phantom response: {:?}", e);
             SdkError::ParseError(e.to_string())
         })?;
 
         let top_tokens = trending_tokens_response.tokens.into_iter().take(5).collect();
 
         Ok(top_tokens)
+    }
+
+    async fn send_subscription_request(pubkey: &str, payload: Value) -> Result<Value, SdkError> {
+        let client = Client::new();
+        let url = format!("{}/users/{}/subscriptions", API_URL, pubkey);
+    
+        let response = client
+            .post(&url)
+            .json(&payload)
+            .send()
+            .await?
+            .json::<Value>()
+            .await?;
+    
+        Ok(response)
+    }
+
+    pub async fn account_transaction_subscription(pubkey: &str, keys: Vec<String>) -> Result<Value, SdkError> {
+        if keys.is_empty() {
+            return Err(SdkError::InvalidInput("The addresses cannot be empty".to_string()));
+        }
+    
+        let payload = serde_json::json!({
+            "method": "subscribeAccountTrade",
+            "keys": keys.clone()
+        });
+    
+        Self::send_subscription_request(pubkey, payload).await
+    }
+    
+    pub async fn token_transaction_subscription(pubkey: &str, keys: Vec<String>) -> Result<Value, SdkError> {
+        if keys.is_empty() {
+            return Err(SdkError::InvalidInput("The addresses cannot be empty".to_string()));
+        }
+    
+        let payload = serde_json::json!({
+            "method": "subscribeTokenTrade",
+            "keys": keys
+        });
+    
+        Self::send_subscription_request(pubkey, payload).await
+    }
+    
+    pub async fn new_token_subscriptions(pubkey: &str) -> Result<Value, SdkError> {
+        let payload = serde_json::json!({
+            "method": "subscribeNewToken"
+        });
+    
+        Self::send_subscription_request(pubkey, payload).await
     }
 }

@@ -133,7 +133,6 @@ pub async fn manage_subscription(
             if payload.method.starts_with("subscribe") {
                 let method_key = payload.method.strip_prefix("subscribe").unwrap();
         
-                // Se a chave não existir, inicializa como um array vazio
                 if !subscriptions.get(method_key).is_some() {
                     subscriptions[method_key] = serde_json::json!([]);
                 }
