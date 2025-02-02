@@ -209,6 +209,55 @@ impl SWqueryClient {
                 response = to_value_response(response_unparsed).unwrap();
                 res_type = "tokens";
             }
+            "accountTransactionSubscription" => {
+                let address = get_optional_str_param(params, "address").unwrap_or_default();
+                if address.is_empty() {
+                    return Err(SdkError::InvalidInput(
+                        "Missing address parameter".to_string(),
+                    ));
+                }
+
+                let account_address = get_optional_str_param(params, "account_address").unwrap_or_default();
+                if account_address.is_empty() {
+                    return Err(SdkError::InvalidInput(
+                        "Missing address parameter".to_string(),
+                    ));
+                }
+
+                let account_addresses = vec![token_address.clone()];
+                self.account_transaction_subscription(address, account_addresses);
+                res_type = "payload";
+            }
+            "tokenTransactionSubscription" => {
+                let address = get_optional_str_param(params, "address").unwrap_or_default();
+                if address.is_empty() {
+                    return Err(SdkError::InvalidInput(
+                        "Missing address parameter".to_string(),
+                    ));
+                }
+
+                let token_address = get_optional_str_param(params, "token_address").unwrap_or_default();
+                if token_address.is_empty() {
+                    return Err(SdkError::InvalidInput(
+                        "Missing address parameter".to_string(),
+                    ));
+                }
+
+                let token_addresses = vec![token_address.clone()];
+                self.token_transaction_subscription(address, token_addresses);
+                res_type = "payload"
+            }
+            "newTokenSubscriptions" => {
+                let address = get_optional_str_param(params, "address").unwrap_or_default();
+                if address.is_empty() {
+                    return Err(SdkError::InvalidInput(
+                        "Missing address parameter".to_string(),
+                    ));
+                }
+
+                self.new_token_subscriptions(address);
+                res_type = "payload"
+            }
             // "getAssetsByOwner" => {
             //     let owner = get_required_str_param(params, "owner")?;
             //     let response = self.get_assets_by_owner(owner).await?;
