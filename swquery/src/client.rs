@@ -202,6 +202,7 @@ impl SWqueryClient {
 
                 let transactions = self.get_recent_transactions(address, days).await?;
                 let filtered_transactions = apply_filters(transactions, &filters)?;
+                println!("Filtered transactions: {:#?}", filtered_transactions);
                 response = json!({
                     "result": filtered_transactions,
                     "status": "success"
