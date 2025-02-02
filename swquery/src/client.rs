@@ -239,8 +239,8 @@ impl SWqueryClient {
                 res_type = "tokens";
             }
             "accountTransactionSubscription" => {
-                let address = get_optional_str_param(params, "address").unwrap_or_default();
-                if address.is_empty() {
+                let user_address = get_optional_str_param(params, "user_address").unwrap_or_default();
+                if user_address.is_empty() {
                     return Err(SdkError::InvalidInput(
                         "Missing address parameter".to_string(),
                     ));
@@ -253,13 +253,13 @@ impl SWqueryClient {
                     ));
                 }
 
-                let account_addresses = vec![token_address.clone()];
-                self.account_transaction_subscription(address, account_addresses);
+                let account_addresses = vec![account_address.clone()];
+                self.account_transaction_subscription(user_address, account_addresses);
                 res_type = "payload";
             }
             "tokenTransactionSubscription" => {
-                let address = get_optional_str_param(params, "address").unwrap_or_default();
-                if address.is_empty() {
+                let user_address = get_optional_str_param(params, "user_address").unwrap_or_default();
+                if user_address.is_empty() {
                     return Err(SdkError::InvalidInput(
                         "Missing address parameter".to_string(),
                     ));
@@ -273,18 +273,19 @@ impl SWqueryClient {
                 }
 
                 let token_addresses = vec![token_address.clone()];
-                self.token_transaction_subscription(address, token_addresses);
+                self.token_transaction_subscription(user_address, token_addresses);
                 res_type = "payload"
             }
             "newTokenSubscriptions" => {
-                let address = get_optional_str_param(params, "address").unwrap_or_default();
-                if address.is_empty() {
+                let user_address = get_optional_str_param(params, "user_address").unwrap_or_default();
+                if user_address.is_empty() {
                     return Err(SdkError::InvalidInput(
                         "Missing address parameter".to_string(),
                     ));
                 }
 
-                self.new_token_subscriptions(address);
+                self.new_token_subscriptions(user_address);
+                println!("New token subscriptions created for {}", user_address);
                 res_type = "payload"
             }
             // "getAssetsByOwner" => {
@@ -956,12 +957,14 @@ impl SWqueryClient {
             .json::<Value>()
             .await?;
 
+        println!("Subscription response: {:#?}", response);
         Ok(response)
     }
 
     pub async fn account_transaction_subscription(
+        &self,
         pubkey: &str,
-        keys: Vec<String>,
+        keys: Vec<&str>,
     ) -> Result<Value, SdkError> {
         if keys.is_empty() {
             return Err(SdkError::InvalidInput(
@@ -978,8 +981,9 @@ impl SWqueryClient {
     }
 
     pub async fn token_transaction_subscription(
+        &self,
         pubkey: &str,
-        keys: Vec<String>,
+        keys: Vec<&str>,
     ) -> Result<Value, SdkError> {
         if keys.is_empty() {
             return Err(SdkError::InvalidInput(
@@ -995,10 +999,12 @@ impl SWqueryClient {
         Self::send_subscription_request(pubkey, payload).await
     }
 
-    pub async fn new_token_subscriptions(pubkey: &str) -> Result<Value, SdkError> {
+    pub async fn new_token_subscriptions(&self, pubkey: &str) -> Result<Value, SdkError> {
         let payload = serde_json::json!({
             "method": "subscribeNewToken"
         });
+
+        println!("Payload: {:#?}", payload);
 
         Self::send_subscription_request(pubkey, payload).await
     }
