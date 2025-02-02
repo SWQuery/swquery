@@ -1,5 +1,7 @@
 "use client";
 
+export const dynamic = "force-dynamic";
+
 import { motion, AnimatePresence } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
