@@ -153,8 +153,6 @@ pub async fn manage_subscription(
     Path(pubkey): Path<String>,
     Json(payload): Json<SubscriptionPayload>,
 ) -> Result<(StatusCode, String), (StatusCode, String)> {
-    println!("Pubkey: {:?}", pubkey);
-    println!("Payload: {:?}", payload);
     let user =
         sqlx::query_as::<_, User>("SELECT id, pubkey, subscriptions FROM users WHERE pubkey = $1")
             .bind(&pubkey)

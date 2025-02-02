@@ -3,7 +3,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { X, Check, Loader2 } from "lucide-react";
+import { X, Check, Loader2, XIcon } from "lucide-react";
 import { Card, CardContent } from "@/components/Atoms/CardComponent";
 import Alert from "@mui/material/Alert";
 import Snackbar from "@mui/material/Snackbar";
@@ -199,17 +199,16 @@ const PricingModal = ({
 					</button>
 					<CardContent className="space-y-8">
 						<h2 className="text-3xl font-semibold text-white text-center mb-0">
-							Oops, your free trial credits have ended!
+							Unlock More Possibilities
 						</h2>
 						<p className="text-lg text-gray-300 text-center mt-0">
-							But don&apos;t worry, we&apos;ve got you covered
-							with the best plans to keep you querying seamlessly.
+							Choose the perfect plan to power your blockchain queries
 						</p>
-						<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+						<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
 							{loading ? (
 								<div>Loading packages...</div>
 							) : (
-								packages.map((pkg) => (
+								packages.map((pkg, i) => (
 									<div
 										key={pkg.id}
 										className="flex flex-col bg-gradient-to-br from-indigo-500/10 to-purple-600/10 rounded-xl p-6 border border-gray-700"
@@ -230,11 +229,21 @@ const PricingModal = ({
 												{pkg.requests_amount} requests
 											</li>
 											<li className="flex items-center">
-												<Check
-													size={20}
-													className="text-purple-500 mr-2"
-													strokeWidth={2}
-												/>
+												{
+													i === 0 ?  (
+														<XIcon
+															size={20}
+															className="text-purple-500 mr-2"
+															strokeWidth={2}
+														/>
+													) : (
+														<Check
+															size={20}
+															className="text-purple-500 mr-2"
+															strokeWidth={2}
+														/>
+													)
+												}
 												Priority Support
 											</li>
 										</ul>

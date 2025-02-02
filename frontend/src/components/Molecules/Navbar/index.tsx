@@ -6,7 +6,7 @@ import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { PublicKey, Connection } from "@solana/web3.js";
 import { getAccount, getAssociatedTokenAddress } from "@solana/spl-token";
-import { Book, Wallet, Menu, X, Cog } from "lucide-react";
+import { Book, Wallet, Menu, X, Cog, LayoutDashboard, Activity, MessageCircle } from "lucide-react";
 import { motion } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
@@ -204,7 +204,30 @@ export const Navbar = () => {
                 Docs
               </a>
             </Button>
-
+            {pathname !== "/chatbot" && (
+              <Button asChild className={buttonBaseClasses}>
+                <Link href="/chatbot">
+                  <MessageCircle className="mr-2 h-4 w-4" />
+                  Join Chatbot
+                </Link>
+              </Button>
+            )}
+            {pathname !== "/real-time-monitor" && (
+              <Button asChild className={buttonBaseClasses}>
+                <Link href="/real-time-monitor">
+                  <Activity className="mr-2 h-4 w-4" />
+                  Real Time Monitor
+                </Link>
+              </Button>
+            )}
+            {pathname !== "/dashboard" && (
+              <Button asChild className={buttonBaseClasses}>
+                <Link href="/dashboard">
+                  <LayoutDashboard className="mr-2 h-4 w-4" />
+                  Dashboard
+                </Link>
+              </Button>
+            )}
             <WalletMultiButton
               startIcon={<Wallet className="mr-2 h-5 w-5" />}
               style={walletButtonStyle}
@@ -226,25 +249,6 @@ export const Navbar = () => {
                 "Connect Wallet"
               )}
             </WalletMultiButton>
-            {!isTokenLoading && pathname !== "/chatbot" && (
-              <Button asChild className={buttonBaseClasses}>
-                <Link href="/chatbot">Join Chatbot</Link>
-              </Button>
-            )}
-            {!isTokenLoading && pathname !== "/real-time-monitor" && (
-              <Button asChild className={buttonBaseClasses}>
-                <Link href="/real-time-monitor">Real Time Monitor</Link>
-              </Button>
-            )}
-          </div>
-
-          <div className="md:hidden">
-            <Button
-              className={buttonBaseClasses}
-              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            >
-              {isMobileMenuOpen ? <X size={28} /> : <Menu size={28} />}
-            </Button>
           </div>
         </div>
       </nav>

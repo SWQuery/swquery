@@ -14,7 +14,6 @@ import { toast } from "react-hot-toast";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { useForm } from "react-hook-form";
-import Link from "next/link";
 import PricingModal from "@/components/Atoms/PricingModal";
 import { API_URL } from "@/utils/constants";
 import axios from "axios";
@@ -104,7 +103,7 @@ export default function ChatInterface() {
 		return fullTransactions;
 	}
 
-	const fetchApiKey = async () => {
+	const fetchApiKey = useCallback(async () => {
 		if (!publicKey) return;
 
 		try {
@@ -126,7 +125,7 @@ export default function ChatInterface() {
 			console.error("❌ Error fetching API Key:", error);
 			toast.error("Failed to load API Key!");
 		}
-	};
+	}, [publicKey]);
 
 	const [apiKey, setApiKey] = useState<string>("");
 
@@ -287,7 +286,7 @@ export default function ChatInterface() {
 						/>
 					)}
 
-					<div className="flex-1 flex flex-col bg-gradient-to-br from-zinc-900 to-black">
+					<div className="flex-1 flex flex-col bg-gradient-to-br from-zinc-900 to-black pt-20">
 						<div className="flex-1 overflow-hidden">
 							<AnimatePresence mode="wait">
 								{currentChat ? (
@@ -708,12 +707,15 @@ export default function ChatInterface() {
 												</div>
 												<div className="flex justify-center mt-6">
 													<Button
-														asChild
+														onClick={() =>
+															setPricingModalOpen(
+																true
+															)
+														}
+														
 														className="bg-gradient-to-r from-[#9C88FF] to-[#6C5CE7] hover:scale-105 text-white px-6 py-2 rounded-lg transition-transform"
-													>
-														<Link href="/dashboard">
+														>		
 															Manage Your Credits
-														</Link>
 													</Button>
 												</div>
 											</div>

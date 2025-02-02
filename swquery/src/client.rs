@@ -524,6 +524,9 @@ impl SWqueryClient {
                 }
             }
         }
+        if filters.is_null() && res_type == "transactions" {
+            response = response["result"].clone();
+        }
 
         Ok(SWqueryResponse {
             response,
