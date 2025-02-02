@@ -1,8 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-export const dynamic = "force-dynamic";
-
 import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/Atoms/Buttons/button";
 import { cn } from "@/lib/utils";

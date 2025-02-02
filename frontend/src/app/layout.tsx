@@ -4,7 +4,6 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import SolanaWalletProvider from "@/providers/SolanaWalletProvider";
 import { Toaster } from "react-hot-toast";
-import Maintenance from "@/components/Organisms/Maintence";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -26,19 +25,14 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const isMaintenanceMode = process.env.NEXT_PUBLIC_MAINTENANCE === "true"
 
   return (
     <html lang="en">
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-        {isMaintenanceMode ? (
-          <Maintenance />
-        ) : (
-          <>
-            <SolanaWalletProvider>{children}</SolanaWalletProvider>
-            <Toaster position="top-center" reverseOrder={false} />
-          </>
-        )}
+        <>
+          <SolanaWalletProvider>{children}</SolanaWalletProvider>
+          <Toaster position="top-center" reverseOrder={false} />
+        </>
       </body>
     </html>
   )

@@ -3,8 +3,6 @@ import React, { useState } from "react";
 import { Keypair, PublicKey } from "@solana/web3.js";
 import { buyCredits } from "../../services/program";
 
-export const dynamic = "force-dynamic";
-
 const BuyCredits = () => {
   const [status, setStatus] = useState<string | null>(null);
 
