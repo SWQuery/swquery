@@ -1,5 +1,7 @@
 "use client";
 
+export const dynamic = "force-dynamic";
+
 // import { useState } from "react";
 // import { Tab } from "@headlessui/react";
 // import { Navbar } from "@/components/Molecules/Navbar";
