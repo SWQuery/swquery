@@ -3,12 +3,14 @@ from openai import OpenAI
 from configs.settings import settings
 import json
 
+
 def query_generator(input: str):
     return input + " generated"
 
-def query_generator_openai(user_input: str, wallet: str, key_openai: str):
+
+def query_generator_openai(user_input: str, wallet: str):
     openAIClient = OpenAI(
-        api_key=key_openai,
+        api_key=settings.openai_key_secret,
     )
 
     system_prompt = (
@@ -84,6 +86,10 @@ def query_generator_openai(user_input: str, wallet: str, key_openai: str):
         "   - `getTransaction(signature: String)`\n"
         "   - `getBalance(address: String)`\n"
         "   - `getAssetsByOwner(owner: String)`\n\n"
+        "   - `getTrendingTokens()`\n"
+        "   - `accountTransactionSubscription(user_address: String, account_address: String)`\n"
+        "   - `tokenTransactionSubscription(user_address: String, token_address: String)`\n"
+        "   - `newTokenSubscriptions(user_address: String)`\n"
         "7. Response Examples:\n\n"
         "   **Example 1:** Query: \"What were my successful transactions in the last 5 days?\"\n"
         "   {\n"
@@ -180,7 +186,6 @@ def generate_visualization(input_json: str, question: str, key_openai: str) -> D
         "- **If certain fields are missing or null, explicitly mention this in the response.**\n"
         "- **If the JSON contains nested or unstructured data, attempt to represent it in the most organized and readable format possible.**\n"
     )
-
 
     try:
         print(f"Generating visualization for JSON input...")

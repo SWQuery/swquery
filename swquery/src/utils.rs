@@ -336,184 +336,19 @@ pub fn extract_total_amount(details: &serde_json::Value) -> f64 {
         .sum()
 }
 
-// pub fn apply_filters(
-//     transactions: Vec<FullTransaction>,
-//     filters: &Value,
-// ) -> Result<Vec<FullTransaction>, SdkError> {
-//     if let Some(filter_list) = filters.as_array() {
-//         let mut filtered_transactions = vec![];
-
-//         'outer: for tx in &transactions {
-//             println!("Evaluating transaction: {}", tx.signature);
-
-//             if let Some(transfers) = tx.details.get("transfers").and_then(|t| t.as_array()) {
-//                 for transfer in transfers {
-//                     println!("  Checking transfer: {:?}", transfer);
-
-//                     let mut matches_all_filters = true;
-
-//                     for filter in filter_list {
-//                         let field = filter["field"].as_str().ok_or_else(|| {
-//                             SdkError::InvalidInput("Filter must have a 'field' key".to_string())
-//                         })?;
-//                         let operator = filter["operator"].as_str().ok_or_else(|| {
-//                             SdkError::InvalidInput("Filter must have an 'operator' key".to_string())
-//                         })?;
-//                         let value = &filter["value"];
-
-//                         // Extract and parse the field value
-//                         let field_value = transfer.get(field);
-//                         let numeric_field_value = field_value.and_then(|v| {
-//                             if let Some(s) = v.as_str() {
-//                                 s.parse::<f64>().ok()
-//                             } else {
-//                                 v.as_f64()
-//                             }
-//                         });
-
-//                         println!(
-//                             "    Field: {}, Value in Transfer: {:?}, Parsed Value: {:?}, Expected Value: {:?}",
-//                             field, field_value, numeric_field_value, value
-//                         );
-
-//                         let matches_filter = match operator {
-//                             "equals" => field_value
-//                                 .and_then(|v| v.as_str())
-//                                 .map_or(false, |v| v.to_lowercase() == value.as_str().unwrap_or("").to_lowercase()),
-
-//                             "contains" => field_value
-//                                 .and_then(|v| v.as_str())
-//                                 .map_or(false, |v| v.to_lowercase().contains(&value.as_str().unwrap_or("").to_lowercase())),
-
-//                             "starts_with" => field_value
-//                                 .and_then(|v| v.as_str())
-//                                 .map_or(false, |v| v.to_lowercase().starts_with(&value.as_str().unwrap_or("").to_lowercase())),
-
-//                             "ends_with" => field_value
-//                                 .and_then(|v| v.as_str())
-//                                 .map_or(false, |v| v.to_lowercase().ends_with(&value.as_str().unwrap_or("").to_lowercase())),
-
-//                             "greater_than" => {
-//                                 let threshold = value.as_f64().ok_or_else(|| {
-//                                     SdkError::InvalidInput(
-//                                         "Value must be a number for 'greater_than'".to_string(),
-//                                     )
-//                                 })?;
-//                                 numeric_field_value.map_or(false, |v| v > threshold)
-//                             }
-
-//                             "less_than" => {
-//                                 let threshold = value.as_f64().ok_or_else(|| {
-//                                     SdkError::InvalidInput(
-//                                         "Value must be a number for 'less_than'".to_string(),
-//                                     )
-//                                 })?;
-//                                 numeric_field_value.map_or(false, |v| v < threshold)
-//                             }
-
-//                             "between" => {
-//                                 let range = value.as_array().ok_or_else(|| {
-//                                     SdkError::InvalidInput(
-//                                         "Value must be an array for 'between'".to_string(),
-//                                     )
-//                                 })?;
-//                                 if range.len() != 2 {
-//                                     return Err(SdkError::InvalidInput(
-//                                         "Value for 'between' must have exactly two elements".to_string(),
-//                                     ));
-//                                 }
-//                                 let start = range[0].as_f64().ok_or_else(|| {
-//                                     SdkError::InvalidInput(
-//                                         "Start value for 'between' must be a number".to_string(),
-//                                     )
-//                                 })?;
-//                                 let end = range[1].as_f64().ok_or_else(|| {
-//                                     SdkError::InvalidInput(
-//                                         "End value for 'between' must be a number".to_string(),
-//                                     )
-//                                 })?;
-//                                 numeric_field_value.map_or(false, |v| v >= start && v <= end)
-//                             }
-
-//                             "biggest" => {
-//                                 let max_value = transfers
-//                                     .iter()
-//                                     .filter_map(|t| {
-//                                         t.get(field).and_then(|v| {
-//                                             if let Some(s) = v.as_str() {
-//                                                 s.parse::<f64>().ok()
-//                                             } else {
-//                                                 v.as_f64()
-//                                             }
-//                                         })
-//                                     })
-//                                     .max_by(|a, b| a.partial_cmp(b).unwrap_or(Ordering::Equal));
-//                                 max_value.map_or(false, |v| numeric_field_value == Some(v))
-//                             }
-
-//                             "smallest" => {
-//                                 let min_value = transfers
-//                                     .iter()
-//                                     .filter_map(|t| {
-//                                         t.get(field).and_then(|v| {
-//                                             if let Some(s) = v.as_str() {
-//                                                 s.parse::<f64>().ok()
-//                                             } else {
-//                                                 v.as_f64()
-//                                             }
-//                                         })
-//                                     })
-//                                     .min_by(|a, b| a.partial_cmp(b).unwrap_or(Ordering::Equal));
-//                                 min_value.map_or(false, |v| numeric_field_value == Some(v))
-//                             }
-
-//                             _ => {
-//                                 return Err(SdkError::InvalidInput(format!(
-//                                     "Unsupported operator: {}",
-//                                     operator
-//                                 )))
-//                             }
-//                         };
-
-//                         println!("    Matches Filter: {}", matches_filter);
-
-//                         if !matches_filter {
-//                             matches_all_filters = false;
-//                             break;
-//                         }
-//                     }
-
-//                     if matches_all_filters {
-//                         println!("  Match found, adding transaction: {}", tx.signature);
-//                         filtered_transactions.push(tx.clone());
-//                         continue 'outer;
-//                     }
-//                 }
-//             } else {
-//                 println!(
-//                     "Transaction {} has no 'transfers' or malformed 'details'.",
-//                     tx.signature
-//                 );
-//             }
-//         }
-
-//         println!("Filtered Transactions: {:?}", filtered_transactions);
-//         Ok(filtered_transactions)
-//     } else {
-//         Err(SdkError::InvalidInput(
-//             "Filters must be an array".to_string(),
-//         ))
-//     }
-// }
-
 pub fn apply_filters(
     transactions: Vec<FullTransaction>,
     filters: &Value,
 ) -> Result<Vec<FullTransaction>, SdkError> {
+    //If no filters are provided, return all transactions
+    if filters.is_null() {
+        return Ok(transactions);
+    }
+
     // Ensure filters is an array
-    let filter_list = filters.as_array().ok_or_else(|| {
-        SdkError::InvalidInput("Filters must be an array".to_string())
-    })?;
+    let filter_list = filters
+        .as_array()
+        .ok_or_else(|| SdkError::InvalidInput("Filters must be an array".to_string()))?;
 
     // Precompute global maximums for "biggest" filters
     let mut global_maxes: HashMap<String, f64> = HashMap::new();
@@ -526,7 +361,8 @@ pub fn apply_filters(
                 // Compute global maximum for this field across all transactions
                 let mut max_value: Option<f64> = None;
                 for tx in &transactions {
-                    if let Some(transfers) = tx.details.get("transfers").and_then(|t| t.as_array()) {
+                    if let Some(transfers) = tx.details.get("transfers").and_then(|t| t.as_array())
+                    {
                         for transfer in transfers {
                             if let Some(value) = transfer.get(field) {
                                 let numeric_value = if let Some(s) = value.as_str() {
@@ -589,35 +425,24 @@ pub fn apply_filters(
                     );
 
                     let matches_filter = match operator {
-                        "equals" => field_value
-                            .and_then(|v| v.as_str())
-                            .map_or(false, |v| {
-                                v.to_lowercase() == value.as_str().unwrap_or("").to_lowercase()
-                            }),
+                        "equals" => field_value.and_then(|v| v.as_str()).map_or(false, |v| {
+                            v.to_lowercase() == value.as_str().unwrap_or("").to_lowercase()
+                        }),
 
-                        "contains" => field_value
-                            .and_then(|v| v.as_str())
-                            .map_or(false, |v| {
-                                v.to_lowercase().contains(
-                                    &value.as_str().unwrap_or("").to_lowercase(),
-                                )
-                            }),
+                        "contains" => field_value.and_then(|v| v.as_str()).map_or(false, |v| {
+                            v.to_lowercase()
+                                .contains(&value.as_str().unwrap_or("").to_lowercase())
+                        }),
 
-                        "starts_with" => field_value
-                            .and_then(|v| v.as_str())
-                            .map_or(false, |v| {
-                                v.to_lowercase().starts_with(
-                                    &value.as_str().unwrap_or("").to_lowercase(),
-                                )
-                            }),
+                        "starts_with" => field_value.and_then(|v| v.as_str()).map_or(false, |v| {
+                            v.to_lowercase()
+                                .starts_with(&value.as_str().unwrap_or("").to_lowercase())
+                        }),
 
-                        "ends_with" => field_value
-                            .and_then(|v| v.as_str())
-                            .map_or(false, |v| {
-                                v.to_lowercase().ends_with(
-                                    &value.as_str().unwrap_or("").to_lowercase(),
-                                )
-                            }),
+                        "ends_with" => field_value.and_then(|v| v.as_str()).map_or(false, |v| {
+                            v.to_lowercase()
+                                .ends_with(&value.as_str().unwrap_or("").to_lowercase())
+                        }),
 
                         "greater_than" => {
                             let threshold = value.as_f64().ok_or_else(|| {
@@ -645,7 +470,8 @@ pub fn apply_filters(
                             })?;
                             if range.len() != 2 {
                                 return Err(SdkError::InvalidInput(
-                                    "Value for 'between' must have exactly two elements".to_string(),
+                                    "Value for 'between' must have exactly two elements"
+                                        .to_string(),
                                 ));
                             }
                             let start = range[0].as_f64().ok_or_else(|| {
