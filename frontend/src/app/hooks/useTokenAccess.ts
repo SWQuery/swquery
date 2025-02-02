@@ -3,6 +3,8 @@ import { useWallet } from "@solana/wallet-adapter-react";
 import { Connection, PublicKey } from "@solana/web3.js";
 import { useState, useMemo, useEffect } from "react";
 
+export const dynamic = "force-dynamic";
+
 export const useTokenAccess = (tokenMintAddress: string, rpcUrl: string) => {
 	const wallet = useWallet();
 	const [hasAccess, setHasAccess] = useState<boolean | null>(null);
