@@ -5,9 +5,9 @@ use {
         http::StatusCode,
         Json,
     },
+    rust_decimal::Decimal,
     serde::{Deserialize, Serialize},
     sqlx::PgPool,
-    rust_decimal::Decimal,
 };
 
 #[derive(Deserialize)]
@@ -175,7 +175,7 @@ pub async fn manage_subscription(
         if let Some(keys) = payload.keys {
             if payload.method.starts_with("subscribe") {
                 let method_key = payload.method.strip_prefix("subscribe").unwrap();
-        
+
                 if !subscriptions.get(method_key).is_some() {
                     subscriptions[method_key] = serde_json::json!([]);
                 }
@@ -230,16 +230,17 @@ pub async fn get_usage(
     Path(pubkey): Path<String>,
 ) -> Result<Json<UsageResponse>, (StatusCode, String)> {
     // First try to get the user, if not exists, create it
-    let user = sqlx::query_as::<_, User>("SELECT id, pubkey, subscriptions FROM users WHERE pubkey = $1")
-        .bind(&pubkey)
-        .fetch_optional(&pool)
-        .await
-        .map_err(|e| {
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                format!("Error querying user: {}", e),
-            )
-        })?;
+    let user =
+        sqlx::query_as::<_, User>("SELECT id, pubkey, subscriptions FROM users WHERE pubkey = $1")
+            .bind(&pubkey)
+            .fetch_optional(&pool)
+            .await
+            .map_err(|e| {
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    format!("Error querying user: {}", e),
+                )
+            })?;
 
     let user = match user {
         Some(user) => user,
@@ -288,7 +289,7 @@ pub async fn get_usage(
         })?;
 
         // Insert free trial package if it doesn't exist
-        let free_trial_package = sqlx::query_scalar!(
+        let free_trial_package = sqlx::query_scalar::<_, i32>(
             "INSERT INTO packages (name, price_usdc, requests_amount, description)
              VALUES ('Free Trial', 0, 3, 'Free trial credits for new users')
              ON CONFLICT (name) DO UPDATE SET name = EXCLUDED.name
