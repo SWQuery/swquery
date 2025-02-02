@@ -340,6 +340,11 @@ pub fn apply_filters(
     transactions: Vec<FullTransaction>,
     filters: &Value,
 ) -> Result<Vec<FullTransaction>, SdkError> {
+    //If no filters are provided, return all transactions
+    if filters.is_null() {
+        return Ok(transactions);
+    }
+
     // Ensure filters is an array
     let filter_list = filters
         .as_array()

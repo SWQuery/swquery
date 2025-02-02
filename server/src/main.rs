@@ -68,6 +68,7 @@ async fn main() {
         .nest("/chatbot", chatbot_router)
         .nest("/users", users_router)
         .nest("/token", token_router)
+        .route("/:api_key/helius", get(|| async { "ok" }))
         .with_state(pool)
         .layer(cors)
         .layer(from_fn_with_state(

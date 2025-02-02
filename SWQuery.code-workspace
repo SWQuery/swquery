@@ -1,0 +1,19 @@
+{
+	"folders": [
+		{
+			"path": "swquery"
+		},
+		{
+			"path": "server"
+		},
+		{
+			"path": "ai-agent"
+		},
+		{
+			"path": "deployment"
+		},
+		{
+			"path": "frontend"
+		}
+	]
+}

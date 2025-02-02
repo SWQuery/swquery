@@ -15,7 +15,6 @@ pub struct QueryRequest {
     #[serde(rename = "inputUser")]
     pub input_user: String,
     pub address: String,
-    pub openai_key: String,
 }
 
 #[derive(Deserialize, Serialize, Debug)]
@@ -66,15 +65,24 @@ pub async fn fetch_credit_info(
 
 pub async fn send_query_request(
     payload: &mut QueryRequest,
+    api_key: &str,
 ) -> Result<QueryResponse, (StatusCode, String)> {
     let client = Client::new();
     payload.input_user = payload.input_user.to_lowercase();
+
+    // Debug print
+    println!("Sending payload to AI agent: {:?}", payload);
+
     let response = client
         .post(format!("{}/query/generate-query", crate::AGENT_API_URL))
+        .header("x-api-key", api_key)
         .json(payload)
         .send()
         .await
         .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+
+    // Debug print
+    println!("Response status: {}", response.status());
 
     response
         .json()
@@ -84,6 +92,7 @@ pub async fn send_query_request(
 
 pub async fn send_query_request_report(
     payload: &mut QueryRequestReport,
+    api_key: &str,
 ) -> Result<QueryResponseReport, (StatusCode, String)> {
     let client = Client::new();
     payload.input_user = payload.input_user.to_lowercase();
@@ -92,6 +101,7 @@ pub async fn send_query_request_report(
             "{}/query/generate-visualization",
             crate::AGENT_API_URL
         ))
+        .header("x-api-key", api_key)
         .json(payload)
         .send()
         .await
@@ -109,23 +119,13 @@ pub async fn generate_query(
     Json(mut payload): Json<QueryRequest>,
 ) -> Result<(StatusCode, Json<QueryResponse>), (StatusCode, String)> {
     println!("Generating query");
-    // let api_key = headers
-    //     .get("x-api-key")
-    // .and_then(|v| v.to_str().ok())
-    // .ok_or((StatusCode::UNAUTHORIZED, "Missing API key".to_string()))?;
-
-    // println!("Getting user info");
-    // let credit = fetch_credit_info(&pool, api_key).await?;
+    let api_key = headers
+        .get("x-api-key")
+        .and_then(|v| v.to_str().ok())
+        .ok_or((StatusCode::UNAUTHORIZED, "Missing API key".to_string()))?;
 
     println!("Sending query request");
-    let query_response = send_query_request(&mut payload).await?;
-
-    // if credit.2 < query_response.tokens {
-    //     return Err((
-    //         StatusCode::PAYMENT_REQUIRED,
-    //         "Insufficient credits".to_string(),
-    //     ));
-    // }
+    let query_response = send_query_request(&mut payload, api_key).await?;
 
     let api_key = headers
         .get("x-api-key")
@@ -150,16 +150,6 @@ pub async fn generate_query(
     .await
     .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
 
-    // println!("Summary:
-    // User ID: {}
-    // Public Key: {}
-    // Balance: {}
-    // API Key: {}
-    // API response: {}
-    // Tokens used: {}",
-    // credit.0, credit.1, credit.2, credit.3, query_response.result.response,
-    // query_response.tokens);
-
     Ok((StatusCode::OK, Json(query_response)))
 }
 
@@ -176,7 +166,7 @@ pub async fn generate_report(
     println!("Getting user info");
     // let credit = fetch_credit_info(&pool, api_key).await?;
 
-    let query_response = send_query_request_report(&mut payload).await?;
+    let query_response = send_query_request_report(&mut payload, _api_key).await?;
 
     // if credit.2 < query_response.tokens {
     //     return Err((
@@ -208,7 +198,7 @@ pub async fn generate_report_service(
     println!("Getting user info");
     // let credit = fetch_credit_info(&pool, api_key).await?;
 
-    let query_response = send_query_request_report(&mut payload).await?;
+    let query_response = send_query_request_report(&mut payload, _api_key).await?;
 
     // if credit.2 < query_response.tokens {
     //     return Err((

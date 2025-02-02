@@ -5,8 +5,8 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    api_ai_key_name: str = "api-ai-key"
     api_ai_key_secret: str
+    api_ai_key_name: str
     openai_key_secret: str
 
     model_config = (
