@@ -1,111 +1,110 @@
-import { useState } from "react";
+// import { useState } from "react";
 import { motion } from "framer-motion";
-import TokenCard from "@/components/Atoms/TokenCard";
 import AvaiableSoon from "@/components/Atoms/AvaiableSoon";
 
-const mockTokenLaunches = [
-  {
-    signature:
-      "4ikuYPcK75jWMDoqMqrb2qyBjYG26ZtD5CZyS2D2sXBmzheTotV1EWe6cXmsyHncQdzTea9jiNUnKUzTp2zAsvye",
-    mint: "3acpPNa9CJt8Grne5grf6e3Dej8oZkHTtCtB3hugXYRf",
-    traderPublicKey: "ELdfNbHR4HgmiaQ44UyRxGWTjFpTuwqfCyy6oq8CMDaJ",
-    txType: "create",
-    initialBuy: 2000000.45,
-    solAmount: 10.25,
-    bondingCurveKey: "DYRDgYy7JYYvKGu7xDMuQA6K4zo8PnJWcjPQHAJTf3yo",
-    vTokensInBondingCurve: 500000.34,
-    vSolInBondingCurve: 25.45,
-    marketCapSol: 50.2,
-    name: "DeepDive",
-    symbol: "DeepGPT",
-    uri: "https://ipfs.io/ipfs/QmYaA88yjqyXU7c4D3cYUBwPkZym7QhZiayQeDrvZNXZuW",
-    pool: "pump",
-    timestamp: 1672531200000,
-  },
-  {
-    signature:
-      "2mktXPfC12345DoqMqrb2qyBjYG26ZtD5CZyS2D2sXBmzheTovWE6cXmsyHncQdzTea9jiNUnKUzTp2zAsvye",
-    mint: "1bcpPQ3Jt9CJt8Grne5grf6e3Dej8oZkHTtCtB3hugXYRf",
-    traderPublicKey: "VLdfNbHR4HgmiaQ44UyRxGWTjFpTuwqfCyy6oq8CMDaL",
-    txType: "buy",
-    initialBuy: 1500000.67,
-    solAmount: 5.8,
-    bondingCurveKey: "JTYRgXrY7JYYvKGu7xDMuQA6K4zo8PnJWcjPQHAJTf3yo",
-    vTokensInBondingCurve: 800000.99,
-    vSolInBondingCurve: 30.65,
-    marketCapSol: 35.89,
-    name: "MoonToken",
-    symbol: "MOON",
-    uri: "https://ipfs.io/ipfs/QmYaC79Djz4HgmG4YQUkZYAYfRNfCqAukDrLyRkmBZL3Qo",
-    pool: "pump",
-    timestamp: 1672617600000,
-  },
-];
+// const mockTokenLaunches = [
+//   {
+//     signature:
+//       "4ikuYPcK75jWMDoqMqrb2qyBjYG26ZtD5CZyS2D2sXBmzheTotV1EWe6cXmsyHncQdzTea9jiNUnKUzTp2zAsvye",
+//     mint: "3acpPNa9CJt8Grne5grf6e3Dej8oZkHTtCtB3hugXYRf",
+//     traderPublicKey: "ELdfNbHR4HgmiaQ44UyRxGWTjFpTuwqfCyy6oq8CMDaJ",
+//     txType: "create",
+//     initialBuy: 2000000.45,
+//     solAmount: 10.25,
+//     bondingCurveKey: "DYRDgYy7JYYvKGu7xDMuQA6K4zo8PnJWcjPQHAJTf3yo",
+//     vTokensInBondingCurve: 500000.34,
+//     vSolInBondingCurve: 25.45,
+//     marketCapSol: 50.2,
+//     name: "DeepDive",
+//     symbol: "DeepGPT",
+//     uri: "https://ipfs.io/ipfs/QmYaA88yjqyXU7c4D3cYUBwPkZym7QhZiayQeDrvZNXZuW",
+//     pool: "pump",
+//     timestamp: 1672531200000,
+//   },
+//   {
+//     signature:
+//       "2mktXPfC12345DoqMqrb2qyBjYG26ZtD5CZyS2D2sXBmzheTovWE6cXmsyHncQdzTea9jiNUnKUzTp2zAsvye",
+//     mint: "1bcpPQ3Jt9CJt8Grne5grf6e3Dej8oZkHTtCtB3hugXYRf",
+//     traderPublicKey: "VLdfNbHR4HgmiaQ44UyRxGWTjFpTuwqfCyy6oq8CMDaL",
+//     txType: "buy",
+//     initialBuy: 1500000.67,
+//     solAmount: 5.8,
+//     bondingCurveKey: "JTYRgXrY7JYYvKGu7xDMuQA6K4zo8PnJWcjPQHAJTf3yo",
+//     vTokensInBondingCurve: 800000.99,
+//     vSolInBondingCurve: 30.65,
+//     marketCapSol: 35.89,
+//     name: "MoonToken",
+//     symbol: "MOON",
+//     uri: "https://ipfs.io/ipfs/QmYaC79Djz4HgmG4YQUkZYAYfRNfCqAukDrLyRkmBZL3Qo",
+//     pool: "pump",
+//     timestamp: 1672617600000,
+//   },
+// ];
 
-type FilterKey =
-  | "initialBuy"
-  | "marketCapSol"
-  | "vTokensInBondingCurve"
-  | "vSolInBondingCurve";
+// type FilterKey =
+//   | "initialBuy"
+//   | "marketCapSol"
+//   | "vTokensInBondingCurve"
+//   | "vSolInBondingCurve";
 
-interface Filter {
-  min: number;
-  max: number;
-}
+// interface Filter {
+//   min: number;
+//   max: number;
+// }
 
 export default function TokenTab() {
-  const [tokenLaunches] = useState(mockTokenLaunches);
-  const [filters, setFilters] = useState<Record<FilterKey, Filter>>({
-    initialBuy: { min: 0, max: Infinity },
-    marketCapSol: { min: 0, max: Infinity },
-    vTokensInBondingCurve: { min: 0, max: Infinity },
-    vSolInBondingCurve: { min: 0, max: Infinity },
-  });
-  const [appliedFilters, setAppliedFilters] = useState(filters);
+  // const [tokenLaunches] = useState(mockTokenLaunches);
+  // const [filters, setFilters] = useState<Record<FilterKey, Filter>>({
+  //   initialBuy: { min: 0, max: Infinity },
+  //   marketCapSol: { min: 0, max: Infinity },
+  //   vTokensInBondingCurve: { min: 0, max: Infinity },
+  //   vSolInBondingCurve: { min: 0, max: Infinity },
+  // });
+  // const [appliedFilters, setAppliedFilters] = useState(filters);
 
-  const handleFilterChange = (
-    key: FilterKey,
-    type: "min" | "max",
-    value: number
-  ) => {
-    setFilters((prevFilters) => ({
-      ...prevFilters,
-      [key]: {
-        ...prevFilters[key],
-        [type]: value,
-      },
-    }));
-  };
+  // const handleFilterChange = (
+  //   key: FilterKey,
+  //   type: "min" | "max",
+  //   value: number
+  // ) => {
+  //   setFilters((prevFilters) => ({
+  //     ...prevFilters,
+  //     [key]: {
+  //       ...prevFilters[key],
+  //       [type]: value,
+  //     },
+  //   }));
+  // };
 
-  const handleApplyFilters = () => {
-    setAppliedFilters(filters);
-  };
+  // const handleApplyFilters = () => {
+  //   setAppliedFilters(filters);
+  // };
 
-  const handleResetFilters = () => {
-    const defaultFilters = {
-      initialBuy: { min: 0, max: Infinity },
-      marketCapSol: { min: 0, max: Infinity },
-      vTokensInBondingCurve: { min: 0, max: Infinity },
-      vSolInBondingCurve: { min: 0, max: Infinity },
-    };
-    setFilters(defaultFilters);
-    setAppliedFilters(defaultFilters);
-  };
+  // const handleResetFilters = () => {
+  //   const defaultFilters = {
+  //     initialBuy: { min: 0, max: Infinity },
+  //     marketCapSol: { min: 0, max: Infinity },
+  //     vTokensInBondingCurve: { min: 0, max: Infinity },
+  //     vSolInBondingCurve: { min: 0, max: Infinity },
+  //   };
+  //   setFilters(defaultFilters);
+  //   setAppliedFilters(defaultFilters);
+  // };
 
-  const filteredLaunches = tokenLaunches.filter((launch) => {
-    return (
-      launch.initialBuy >= appliedFilters.initialBuy.min &&
-      launch.initialBuy <= appliedFilters.initialBuy.max &&
-      launch.marketCapSol >= appliedFilters.marketCapSol.min &&
-      launch.marketCapSol <= appliedFilters.marketCapSol.max &&
-      launch.vTokensInBondingCurve >=
-        appliedFilters.vTokensInBondingCurve.min &&
-      launch.vTokensInBondingCurve <=
-        appliedFilters.vTokensInBondingCurve.max &&
-      launch.vSolInBondingCurve >= appliedFilters.vSolInBondingCurve.min &&
-      launch.vSolInBondingCurve <= appliedFilters.vSolInBondingCurve.max
-    );
-  });
+  // const filteredLaunches = tokenLaunches.filter((launch) => {
+  //   return (
+  //     launch.initialBuy >= appliedFilters.initialBuy.min &&
+  //     launch.initialBuy <= appliedFilters.initialBuy.max &&
+  //     launch.marketCapSol >= appliedFilters.marketCapSol.min &&
+  //     launch.marketCapSol <= appliedFilters.marketCapSol.max &&
+  //     launch.vTokensInBondingCurve >=
+  //       appliedFilters.vTokensInBondingCurve.min &&
+  //     launch.vTokensInBondingCurve <=
+  //       appliedFilters.vTokensInBondingCurve.max &&
+  //     launch.vSolInBondingCurve >= appliedFilters.vSolInBondingCurve.min &&
+  //     launch.vSolInBondingCurve <= appliedFilters.vSolInBondingCurve.max
+  //   );
+  // });
 
   return (
     <div className="flex">

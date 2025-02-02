@@ -212,14 +212,14 @@ export const Navbar = () => {
                 </Link>
               </Button>
             )}
-            {pathname !== "/real-time-monitor" && (
+            {/* {pathname !== "/real-time-monitor" && (
               <Button asChild className={buttonBaseClasses}>
                 <Link href="/real-time-monitor">
                   <Activity className="mr-2 h-4 w-4" />
                   Real Time Monitor
                 </Link>
               </Button>
-            )}
+            )} */}
             {pathname !== "/dashboard" && (
               <Button asChild className={buttonBaseClasses}>
                 <Link href="/dashboard">

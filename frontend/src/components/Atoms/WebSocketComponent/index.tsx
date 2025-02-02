@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 
 interface WebSocketComponentProps {
-  onDataUpdate: (data: any) => void;
+  onDataUpdate: (data: unknown) => void;
 }
 
 const WebSocketComponent = ({ onDataUpdate }: WebSocketComponentProps) => {
@@ -19,7 +19,7 @@ const WebSocketComponent = ({ onDataUpdate }: WebSocketComponentProps) => {
 
     socket.onmessage = (event) => {
       const data = JSON.parse(event.data);
-      onDataUpdate(data); // Envia os dados recebidos ao componente pai
+      onDataUpdate(data);
     };
 
     socket.onerror = (error) => {

@@ -1,7 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Twitter, Github, MessageCircle, Pill } from "lucide-react";
-import HorizontalLogo from "../../../../assets/images/logo-horizontal.png";
 import LogoComplete from "../../../../assets/images/logo-complete.png";
 
 export const Footer = () => {

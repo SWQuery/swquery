@@ -1,12 +1,12 @@
-import { useState } from "react";
+// import { useState } from "react";
 import { motion } from "framer-motion";
-import WalletCard from "@/components/Atoms/WalletCard";
+// import WalletCard from "@/components/Atoms/WalletCard";
 import AvaiableSoon from "@/components/Atoms/AvaiableSoon";
 
-const mockWallets = [{ address: "Wallet_1" }, { address: "Wallet_2" }];
+// const mockWallets = [{ address: "Wallet_1" }, { address: "Wallet_2" }];
 
 export default function WalletTab() {
-  const [wallets] = useState(mockWallets);
+  // const [wallets] = useState(mockWallets);
 
   return (
     <motion.div

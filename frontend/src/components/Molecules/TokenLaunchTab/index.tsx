@@ -1,11 +1,10 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { motion } from "framer-motion";
 import TokenLaunchCard from "@/components/Atoms/TokenLaunchCard";
-import { Loader } from "lucide-react"; // Ícone de loading
+import { Loader } from "lucide-react";
 
-// Configuração inicial dos filtros
 type FilterKey =
   | "initialBuy"
   | "marketCapSol"
@@ -17,6 +16,7 @@ interface Filter {
 }
 
 export default function TokenLaunchTab() {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [tokenLaunches, setTokenLaunches] = useState<any[]>([]);
   const [ws, setWs] = useState<WebSocket | null>(null);
   const [filters, setFilters] = useState<Record<FilterKey, Filter>>({
@@ -27,25 +27,23 @@ export default function TokenLaunchTab() {
   });
   const [appliedFilters, setAppliedFilters] = useState(filters);
   const [isMonitoring, setIsMonitoring] = useState(false);
-  const [isLoading, setIsLoading] = useState(false); // Estado de loading
+  const [isLoading, setIsLoading] = useState(false);
 
-  // Função para conectar ao WebSocket e receber dados em tempo real
   const startWebSocket = () => {
     if (ws || isLoading) {
       console.warn("WebSocket already running or loading!");
       return;
     }
 
-    setIsLoading(true); // Ativa o loading
+    setIsLoading(true);
 
     const socket = new WebSocket("wss://pumpportal.fun/api/data");
 
     socket.onopen = () => {
       console.log("✅ WebSocket connected!");
       setIsMonitoring(true);
-      setIsLoading(false); // Remove o loading
+      setIsLoading(false);
 
-      // Enviar "a" para iniciar o rastreamento
       const payload = {
         method: "subscribeNewToken",
         keys: ["a"],
@@ -81,12 +79,10 @@ export default function TokenLaunchTab() {
     setWs(socket);
   };
 
-  // Aplica os filtros ao apertar o botão "Apply Filters"
   const handleApplyFilters = () => {
     setAppliedFilters(filters);
   };
 
-  // Reseta os filtros ao apertar o botão "Reset Filters"
   const handleResetFilters = () => {
     const defaultFilters = {
       initialBuy: { min: 0, max: Infinity },
@@ -98,7 +94,6 @@ export default function TokenLaunchTab() {
     setAppliedFilters(defaultFilters);
   };
 
-  // Filtro dos tokens
   const filteredLaunches = tokenLaunches.filter((launch) => {
     return (
       launch.initialBuy >= appliedFilters.initialBuy.min &&
@@ -116,9 +111,7 @@ export default function TokenLaunchTab() {
 
   return (
     <div className="flex">
-      {/* Sidebar de Filtros */}
       <div className="w-64 bg-gray-900 text-white p-4 rounded-lg">
-        {/* Botão para iniciar o WebSocket */}
         <div className="mt-4">
           <button
             className={`w-full py-2 rounded-lg flex items-center justify-center gap-2 ${
@@ -195,7 +188,6 @@ export default function TokenLaunchTab() {
         </button>
       </div>
 
-      {/* Cards de Token Launch */}
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}

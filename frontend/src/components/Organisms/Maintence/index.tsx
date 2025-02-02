@@ -69,7 +69,7 @@ export default function Maintenance() {
                 >
                   Under Maintenance
                 </h1>
-                <p className="text-xl text-gray-400 mt-4">We're currently improving our site to serve you better.</p>
+                <p className="text-xl text-gray-400 mt-4">We are currently improving our site to serve you better.</p>
                 <p className="text-md text-gray-500 mt-2">Please check back soon. We appreciate your patience!</p>
               </div>
             </motion.div>
