@@ -8,8 +8,8 @@ use {
 };
 
 // "https://api.swquery.xyz/agent/generate-query";
-const API_URL: &str = "http://0.0.0.0:5500";
-const AGENT_API_URL: &str = "http://0.0.0.0:5500/agent/generate-query";
+const API_URL: &str = "https://api.swquery.xyz";
+const AGENT_API_URL: &str = "https://api.swquery.xyz/agent/generate-query";
 
 /// Enum to represent the Solana network.
 #[derive(Debug, Clone, Copy, Default)]
