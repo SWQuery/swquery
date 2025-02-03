@@ -29,7 +29,7 @@ services:
       agent:
         condition: service_started
     env_file:
-      - ../.env
+      - ../server/.env
     networks:
       - swquery-network
 

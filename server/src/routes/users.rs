@@ -323,10 +323,11 @@ pub async fn get_usage(
         // Record free trial transaction
         sqlx::query(
             "INSERT INTO transactions (user_id, package_id, signature, status)
-             VALUES ($1, $2, 'FREE_TRIAL', 'completed')",
+             VALUES ($1, $2, $3, 'completed')",
         )
         .bind(user.id)
         .bind(free_trial_package)
+        .bind(format!("FREE_TRIAL_{}", user.pubkey))
         .execute(&mut *tx)
         .await
         .map_err(|e| {

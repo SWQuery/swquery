@@ -9,7 +9,6 @@ pub type DbPool = Pool<Postgres>;
 
 pub async fn connect() -> DbPool {
     let database_url = env::var("DATABASE_URL").expect("DATABASE_URL must be set");
-    println!("Connecting to database {}...", database_url);
     let mut attempts = 0;
     let max_attempts = 10;
 
