@@ -127,12 +127,6 @@ pub async fn generate_query(
     println!("Sending query request");
     let query_response = send_query_request(&mut payload, api_key).await?;
 
-    let api_key = headers
-        .get("x-api-key")
-        .and_then(|v| v.to_str().ok())
-        .ok_or((StatusCode::UNAUTHORIZED, "Missing API key".to_string()))?;
-
-    println!("Getting user info");
     let credit = fetch_credit_info(&pool, api_key).await?;
 
     if credit.2 < 1 {
@@ -164,23 +158,8 @@ pub async fn generate_report(
         .ok_or((StatusCode::UNAUTHORIZED, "Missing API key".to_string()))?;
 
     println!("Getting user info");
-    // let credit = fetch_credit_info(&pool, api_key).await?;
 
     let query_response = send_query_request_report(&mut payload, _api_key).await?;
-
-    // if credit.2 < query_response.tokens {
-    //     return Err((
-    //         StatusCode::PAYMENT_REQUIRED,
-    //         "Insufficient credits".to_string(),
-    //     ));
-    // }
-
-    // sqlx::query("UPDATE credits SET balance = balance - $1 WHERE user_id = $2")
-    //     .bind(query_response.tokens)
-    //     .bind(credit.0)
-    //     .execute(&pool)
-    //     .await
-    //     .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
 
     Ok((StatusCode::OK, Json(query_response)))
 }
@@ -196,22 +175,8 @@ pub async fn generate_report_service(
         .ok_or((StatusCode::UNAUTHORIZED, "Missing API key".to_string()))?;
 
     println!("Getting user info");
-    // let credit = fetch_credit_info(&pool, api_key).await?;
 
     let query_response = send_query_request_report(&mut payload, _api_key).await?;
 
-    // if credit.2 < query_response.tokens {
-    //     return Err((
-    //         StatusCode::PAYMENT_REQUIRED,
-    //         "Insufficient credits".to_string(),
-    //     ));
-    // }
-
-    // sqlx::query("UPDATE credits SET balance = balance - $1 WHERE user_id = $2")
-    //     .bind(query_response.tokens)
-    //     .bind(credit.0)
-    //     .execute(&pool)
-    //     .await
-    //     .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
     Ok((StatusCode::OK, Json(query_response)))
 }

@@ -68,7 +68,7 @@ async def generate_query_route(
         #     },
         #     "tokens": 100
         # }
-        
+
         print(result)
 
         return result
@@ -82,6 +82,9 @@ async def generate_visualization_route(
     body: VisualizationBody,
     x_api_key: str = Header(..., alias="x-api-key")
 ):
+    # Debug logging
+    print("Received request body:", body.model_dump(exclude_none=True))
+
     result = generate_visualization(
         body.jsonReturned,
         body.question,

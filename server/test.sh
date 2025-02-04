@@ -89,4 +89,10 @@ response=$(curl -s -w "\n%{http_code}" -H "Content-Type: application/json" -H "x
 status=$(echo "$response" | tail -n1)
 check_response "$response" "$status" 200
 
+# Test user usage after chatbot interaction
+echo "Fetching user usage after chatbot interaction..."
+response=$(curl -s -w "\n%{http_code}" -X GET "$BASE_URL/users/9unenHYtwUowNkWdZmSYTwzGxxdzKVJh7npk6W6uqRF3/usage")
+status=$(echo "$response" | tail -n1)
+check_response "$response" "$status" 200
+
 echo "All tests passed 🎉"
