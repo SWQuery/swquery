@@ -2,7 +2,6 @@
 
 import { Card } from "@/components/Atoms/card"
 import { motion, AnimatePresence } from "framer-motion"
-import Image from "next/image"
 import { ArrowDownRight, ArrowUpRight, TrendingUp, ChevronDown, ChevronUp } from "lucide-react"
 import { useState } from "react"
 

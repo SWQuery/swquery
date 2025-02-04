@@ -13,7 +13,7 @@ import api from "@/services/config/api";
 import { toast } from "react-hot-toast";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { set, useForm } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import PricingModal from "@/components/Atoms/PricingModal";
 import { API_URL } from "@/utils/constants";
 import axios from "axios";
