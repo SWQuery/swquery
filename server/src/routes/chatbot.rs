@@ -245,7 +245,7 @@ pub async fn chatbot_interact(
         Json(ChatResponse {
             credits: remaining_credits - 1,
             response: query_result.response,
-            response_type: "text".to_string(),
+            response_type: query_result.response_type,
             metadata,
             report: report.1.result.clone(),
         }),

@@ -10,6 +10,8 @@ use {
 // "https://api.swquery.xyz/agent/generate-query";
 const API_URL: &str = "https://api.swquery.xyz";
 const AGENT_API_URL: &str = "https://api.swquery.xyz/agent/generate-query";
+// const API_URL: &str = "http://localhost:5500";
+// const AGENT_API_URL: &str = "http://localhost:5500/agent/generate-query";
 
 /// Enum to represent the Solana network.
 #[derive(Debug, Clone, Copy, Default)]
@@ -942,7 +944,7 @@ impl SWqueryClient {
         let top_tokens = trending_tokens_response
             .tokens
             .into_iter()
-            .take(5)
+            .take(10)
             .collect();
 
         Ok(top_tokens)
