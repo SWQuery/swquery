@@ -17,6 +17,7 @@ import { useForm } from "react-hook-form";
 import PricingModal from "@/components/Atoms/PricingModal";
 import { API_URL } from "@/utils/constants";
 import axios from "axios";
+import { TrendingTokensPreview } from "@/components/Molecules/TrendingTokenPreview";
 
 async function interactChatbot(
 	input_user: string,
@@ -73,6 +74,7 @@ export default function ChatInterface() {
 	const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 	const [isPricingModalOpen, setPricingModalOpen] = useState(false);
 	const [usageData, setUsageData] = useState<UsageResponse | null>(null);
+	const [responseType, setResponseType] = useState<string>("");
 
 	const { connected, publicKey } = useWallet();
 
@@ -159,6 +161,7 @@ export default function ChatInterface() {
 			};
 			setChats((prev) => [...prev, newChat]);
 			setCurrentChatId(newChat.id);
+			setResponseType(json.response_type);
 			const heliusTxs = Array.isArray(json.response) ? json.response : [];
 			setFetchedTransactions(heliusTxs);
 			setPrompt("");
@@ -203,6 +206,34 @@ export default function ChatInterface() {
 		}
 	}, [fetchUsageData, isPricingModalOpen]);
 
+	//Function to handle the response type
+	const handleResponseType = (responseType: string) => {
+		switch (responseType) {
+			case "transactions":
+				return (
+					<>
+						<h3 className="text-lg font-medium text-gray-200 mb-4">
+							Transaction Preview
+						</h3>
+						<TransactionPreview
+							transactions={previewData}
+						/>
+					</>
+				);
+
+			case "tokens":
+				return (
+					<>
+						<h3 className="text-lg font-medium text-gray-200 mb-4">
+							Token Preview
+						</h3>
+						<TrendingTokensPreview
+							tokens={fetchedTransactions}
+						/>
+					</>
+				);
+		}
+	};
 	return (
 		<div className="relative flex flex-col h-screen overflow-hidden">
 			{/* Fundo com Efeito 3D */}
@@ -480,12 +511,7 @@ export default function ChatInterface() {
 										</div>
 										<div className="w-full md:w-1/2 flex flex-col bg-black border-t md:border-l border-[#141416] h-1/2 md:h-full overflow-hidden">
 											<div className="flex-1 p-6 overflow-y-auto">
-												<h3 className="text-lg font-medium text-gray-200 mb-4">
-													Transaction Preview
-												</h3>
-												<TransactionPreview
-													transactions={previewData}
-												/>
+												{handleResponseType(responseType)}
 											</div>
 										</div>
 									</motion.div>

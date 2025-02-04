@@ -7,6 +7,8 @@ const nextConfig: NextConfig = {
       "assets.coingecko.com",
       "cdn.helius-rpc.com",
       "ipfs.io",
+      "coin-images.coingecko.com",
+      "gateway.pinata.cloud"
     ],
   },
 };
