@@ -185,6 +185,7 @@ def generate_visualization(input_json: str, question: str, key_openai: str) -> D
         "- **Do not ignore or omit any part of the JSON data, even if the structure varies or seems irrelevant.**\n"
         "- **If certain fields are missing or null, explicitly mention this in the response.**\n"
         "- **If the JSON contains nested or unstructured data, attempt to represent it in the most organized and readable format possible.**\n"
+        "- **Do not display any type of image or chart in the response.**\n\n"
     )
 
     try:
