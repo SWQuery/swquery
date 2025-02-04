@@ -223,27 +223,10 @@ pub async fn chatbot_interact(
         )
     })?;
 
-    // Update remaining credits
-    sqlx::query(
-        "UPDATE credits 
-         SET remaining_requests = remaining_requests - 1 
-         WHERE user_id = $1",
-    )
-    .bind(user_id)
-    .execute(&pool)
-    .await
-    .map_err(|e| {
-        eprintln!("Database error: {}", e);
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            "Failed to update credits".to_string(),
-        )
-    })?;
-
     Ok((
         StatusCode::OK,
         Json(ChatResponse {
-            credits: remaining_credits - 1,
+            credits: remaining_credits,
             response: query_result.response,
             response_type: query_result.response_type,
             metadata,
