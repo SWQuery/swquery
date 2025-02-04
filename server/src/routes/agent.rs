@@ -124,9 +124,6 @@ pub async fn generate_query(
         .and_then(|v| v.to_str().ok())
         .ok_or((StatusCode::UNAUTHORIZED, "Missing API key".to_string()))?;
 
-    println!("Sending query request");
-    let query_response = send_query_request(&mut payload, api_key).await?;
-
     let credit = fetch_credit_info(&pool, api_key).await?;
 
     if credit.2 < 1 {
@@ -136,13 +133,8 @@ pub async fn generate_query(
         ));
     }
 
-    sqlx::query(
-        "UPDATE credits SET remaining_requests = remaining_requests - 1 WHERE user_id = $1",
-    )
-    .bind(credit.0)
-    .execute(&pool)
-    .await
-    .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+    println!("Sending query request");
+    let query_response = send_query_request(&mut payload, api_key).await?;
 
     Ok((StatusCode::OK, Json(query_response)))
 }

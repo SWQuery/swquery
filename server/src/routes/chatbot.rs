@@ -180,6 +180,33 @@ pub async fn chatbot_interact(
             )
         })?;
 
+    let user_id = sqlx::query_scalar::<_, i32>("SELECT id FROM users WHERE pubkey = $1")
+        .bind(&payload.address)
+        .fetch_one(&pool)
+        .await
+        .map_err(|e| {
+            eprintln!("Database error: {}", e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Failed to get user ID".to_string(),
+            )
+        })?;
+
+    // Deduct credits here
+    sqlx::query(
+        "UPDATE credits SET remaining_requests = remaining_requests - 1 WHERE user_id = $1",
+    )
+    .bind(user_id)
+    .execute(&pool)
+    .await
+    .map_err(|e| {
+        eprintln!("Database error: {}", e);
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            "Failed to deduct credits".to_string(),
+        )
+    })?;
+
     let metadata = query_result.response.get("metadata").cloned();
 
     let report_input = QueryRequestReport {
