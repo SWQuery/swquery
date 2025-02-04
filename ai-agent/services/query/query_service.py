@@ -136,54 +136,28 @@ def query_generator_openai(user_input: str, wallet: str):
         "     }\n"
     )
 
-    # response = openAIClient.chat.completions.create(
-    #     model="gpt-4o",
-    #     messages=[
-    #         {"role": "system", "content": system_prompt},
-    #         {"role": "user", "content": f"My wallet address is {wallet}"},
-    #         {"role": "user", "content": user_input}
-    #     ],
-    #     response_format={"type": "json_object"}
-    # )
+    try:
+        response = openAIClient.chat.completions.create(
+            model="gpt-4o",
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": f"My wallet address is {wallet}"},
+                {"role": "user", "content": user_input}
+            ],
+            response_format={"type": "json_object"}
+        )
 
-    # promptResult = response.choices[0].message.content.strip()
+        promptResult = response.choices[0].message.content.strip()
 
-    # promptResult = json.loads(promptResult)
+        promptResult = json.loads(promptResult)
 
-    # return {
-    #     "result": promptResult,
-    #     "tokens": response.usage.total_tokens
-    # }
-
-    print("Query generated: {"
-          "    'result': {"
-          "        'response': 'getRecentTransactions',"
-          "        'params': {"
-          "            'address': wallet,"
-          "            'days': 5,"
-          "            'filters': ["
-          "                {'field': 'status', 'operator': 'equals', 'value': 'success'}"
-          "            ]"
-          "        },"
-          "        'status': 'success'"
-          "    },"
-          "    'tokens': 100"
-          "}")
-
-    return {
-        "result": {
-            "response": "getRecentTransactions",
-            "params": {
-                "address": wallet,
-                "days": 5,
-                "filters": [
-                    {"field": "status", "operator": "equals", "value": "success"}
-                ]
-            },
-            "status": "success"
-        },
-        "tokens": 100
-    }
+        return {
+            "result": promptResult,
+            "tokens": response.usage.total_tokens
+        }
+    except Exception as e:
+        print(f"Error generating query: {str(e)}")
+        raise
 
 
 def generate_visualization(input_json: str, question: str, key_openai: str) -> Dict[str, Any]:
@@ -217,37 +191,27 @@ def generate_visualization(input_json: str, question: str, key_openai: str) -> D
         "- **If the JSON contains nested or unstructured data, attempt to represent it in the most organized and readable format possible.**\n"
     )
 
-    # try:
-    #     print(f"Generating visualization for JSON input...")
-    #     response = openAIClient.chat.completions.create(
-    #         model="gpt-4o",
-    #         messages=[
-    #             {"role": "system", "content": system_prompt},
-    #             {"role": "user", "content": input_json}
-    #         ],
-    #         temperature=0.7
-    #     )
+    try:
+        print(f"Generating visualization for JSON input...")
+        response = openAIClient.chat.completions.create(
+            model="gpt-4o",
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": input_json}
+            ],
+            temperature=0.7
+        )
 
-    #     result = response.choices[0].message.content.strip()
-    #     tokens = response.usage.total_tokens
+        result = response.choices[0].message.content.strip()
+        tokens = response.usage.total_tokens
 
-    #     print(f"Successfully generated visualization. Tokens used: {tokens}")
+        print(f"Successfully generated visualization. Tokens used: {tokens}")
 
-    #     return {
-    #         "result": result,
-    #         "tokens": tokens
-    #     }
+        return {
+            "result": result,
+            "tokens": tokens
+        }
 
-    # except Exception as e:
-    #     print(f"Error generating visualization: {str(e)}")
-    #     raise
-
-    print(f"Visualization generated: {{"
-          f"    'result': 'test',"
-          f"    'tokens': 100"
-          f"}}")
-
-    return {
-        "result": "test",
-        "tokens": 100
-    }
+    except Exception as e:
+        print(f"Error generating visualization: {str(e)}")
+        raise
