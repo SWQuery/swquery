@@ -45,9 +45,5 @@ async fn fetch_token_address(token_name: &str) -> Option<String> {
 
 async fn fetch_market_data(contract_address: &str) -> Option<Value> {
     let url = format!("https://api.coingecko.com/api/v3/coins/solana/contract/{}", contract_address);
-    let response = reqwest::get(&url).await.ok()?.json::<Value>().await.ok();
-    
-    println!("Response from CoinGecko for {}: {:?}", contract_address, &response);
-    
-    response
+    reqwest::get(&url).await.ok()?.json::<Value>().await.ok()
 }

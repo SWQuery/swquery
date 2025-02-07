@@ -90,6 +90,7 @@ def query_generator_openai(user_input: str, wallet: str):
         "   - `accountTransactionSubscription(account_address: String)`\n"
         "   - `tokenTransactionSubscription(token_address: String)`\n"
         "   - `newTokenSubscriptions()`\n"
+        "   - `getTokenDetailsByName(token_name: String)`\n"
         "7. Response Examples:\n\n"
         "   **Example 1:** Query: \"What were my successful transactions in the last 5 days?\"\n"
         "   {\n"

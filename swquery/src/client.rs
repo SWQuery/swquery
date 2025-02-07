@@ -279,6 +279,19 @@ impl SWqueryClient {
                 response = self.new_token_subscriptions(user_address).await?;
                 res_type = "payload"
             }
+            "getTokenDetailsByName" => {
+                let token_name = get_required_str_param(params, "token_name")?;
+
+                if token_name.is_empty() {
+                    return Err(SdkError::InvalidInput(
+                        "Missing token name parameter".to_string(),
+                    ));
+                }
+
+                let response_unparsed = self.get_token_details_by_name(token_name).await?;
+                response = to_value_response(response_unparsed).unwrap();
+                res_type = "token";
+            }
             // "getAssetsByOwner" => {
             //     let owner = get_required_str_param(params, "owner")?;
             //     let response = self.get_assets_by_owner(owner).await?;
@@ -1002,52 +1015,32 @@ impl SWqueryClient {
         Self::send_subscription_request(pubkey, payload).await
     }
 
-    // pub async fn get_token_info(&self, signature: &str) -> Result<Json<Value>, SdkError> {
-    //     println!("Fetching token info for {}", token_name);
+    pub async fn get_token_details_by_name(&self, token_name: &str) -> Result<Value, SdkError> {
+        let url = format!("{}/token/token_info/{}", API_URL, token_name);
         
-    //     let token_address = match fetch_token_address(&token_name).await {
-    //         Some(address) => address,
-    //         None => {
-    //             println!("Token {} not found in Solana token list", token_name);
-    //             return Err(StatusCode::NOT_FOUND);
-    //         }
-    //     };
+        println!("Fetching token info for: {}", token_name);
         
-    //     match fetch_market_data(&token_address).await {
-    //         Some(data) => Ok(Json(data)),
-    //         None => {
-    //             println!("Failed to fetch market data for token {}", token_name);
-    //             Err(StatusCode::BAD_GATEWAY)
-    //         }
-    //     }
-    // }
-
-    // async fn fetch_token_address(token_name: &str) -> Option<String> {
-    //     let url = "https://cdn.jsdelivr.net/gh/solana-labs/token-list@main/src/tokens/solana.tokenlist.json";
-    //     let response: Value = reqwest::get(url).await.ok()?.json().await.ok()?;
-    
-    //     let tokens = response.get("tokens")?.as_array()?; 
+        let response = self.client
+            .get(&url)
+            .send()
+            .await
+            .map_err(|e| {
+                eprintln!("Failed to send request: {:?}", e);
+                SdkError::RequestFailed
+            })?;
         
-    //     tokens.iter()
-    //         .find(|token| {
-    //             token.get("name")
-    //                 .and_then(|name| name.as_str())
-    //                 .map(|name_str| name_str.eq_ignore_ascii_case(token_name))
-    //                 .unwrap_or(false)
-    //         })
-    //         .and_then(|token| {
-    //             let address = token.get("address")?.as_str()?.to_string();
-    //             println!("Found token {} with address {}", token_name, address);
-    //             Some(address)
-    //         })
-    // }
-    
-    // async fn fetch_market_data(contract_address: &str) -> Option<Value> {
-    //     let url = format!("https://api.coingecko.com/api/v3/coins/solana/contract/{}", contract_address);
-    //     let response = reqwest::get(&url).await.ok()?.json::<Value>().await.ok();
+        if !response.status().is_success() {
+            eprintln!("API returned error status: {}", response.status());
+            return Err(SdkError::ApiRequestFailed(response.status().to_string()));
+        }
         
-    //     println!("Response from CoinGecko for {}: {:?}", contract_address, &response);
+        let response_json: Value = response.json().await.map_err(|e| {
+            eprintln!("Failed to parse response: {:?}", e);
+            SdkError::ParseError(e.to_string())
+        })?;
         
-    //     response
-    // }
+        println!("Token info response: {:?}", response_json);
+        
+        Ok(response_json)
+    }
 }
