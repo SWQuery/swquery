@@ -8,6 +8,7 @@ use {
     rust_decimal::Decimal,
     serde::{Deserialize, Serialize},
     sqlx::PgPool,
+    serde_json::{json, Value},
 };
 
 #[derive(Deserialize)]
@@ -15,7 +16,7 @@ pub struct CreateUser {
     pub pubkey: String,
 }
 
-#[derive(Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct SubscriptionPayload {
     method: String,
     keys: Option<Vec<String>>,
@@ -152,7 +153,7 @@ pub async fn manage_subscription(
     State(pool): State<PgPool>,
     Path(pubkey): Path<String>,
     Json(payload): Json<SubscriptionPayload>,
-) -> Result<(StatusCode, String), (StatusCode, String)> {
+) -> Result<(StatusCode, Json<Value>), (StatusCode, Json<Value>)> {
     let user =
         sqlx::query_as::<_, User>("SELECT id, pubkey, subscriptions FROM users WHERE pubkey = $1")
             .bind(&pubkey)
@@ -161,43 +162,50 @@ pub async fn manage_subscription(
             .map_err(|e| {
                 (
                     StatusCode::INTERNAL_SERVER_ERROR,
-                    format!("Error querying user: {}", e),
+                    Json(json!({ "error": format!("Error querying user: {}", e) })),
                 )
             })?;
 
     if let Some(mut user) = user {
-        let mut subscriptions = if user.subscriptions.is_null() {
-            serde_json::json!({})
+        let mut subscriptions: Vec<SubscriptionPayload> = if user.subscriptions.is_null() {
+            vec![]
         } else {
-            user.subscriptions.clone()
+            serde_json::from_value(user.subscriptions.clone()).unwrap_or_else(|_| vec![])
         };
 
-        if let Some(keys) = payload.keys {
-            if payload.method.starts_with("subscribe") {
-                let method_key = payload.method.strip_prefix("subscribe").unwrap();
+        let is_subscribe = payload.method.starts_with("subscribe");
+        let is_unsubscribe = payload.method.starts_with("unsubscribe");
 
-                if !subscriptions.get(method_key).is_some() {
-                    subscriptions[method_key] = serde_json::json!([]);
-                }
-
-                let list = subscriptions
-                    .get_mut(method_key)
-                    .unwrap()
-                    .as_array_mut()
-                    .unwrap();
-
-                for key in keys {
-                    if !list.contains(&serde_json::json!(key)) {
-                        list.push(serde_json::json!(key));
+        if is_subscribe {
+            if let Some(existing) = subscriptions.iter_mut().find(|s| s.method == payload.method) {
+                if let Some(keys) = &payload.keys {
+                    let mut existing_keys = existing.keys.clone().unwrap_or_else(Vec::new);
+                    for key in keys {
+                        if !existing_keys.contains(key) {
+                            existing_keys.push(key.clone());
+                        }
                     }
+                    existing.keys = Some(existing_keys);
                 }
-            } else if payload.method.starts_with("unsubscribe") {
-                let method_key = payload.method.strip_prefix("unsubscribe").unwrap();
-                if let Some(list) = subscriptions
-                    .get_mut(method_key)
-                    .and_then(|v| v.as_array_mut())
-                {
-                    list.retain(|v| !keys.contains(&v.as_str().unwrap_or_default().to_string()));
+            } else {
+                subscriptions.push(payload.clone());
+            }
+        } else if is_unsubscribe {
+            if payload.method == "unsubscribeNewToken" {
+                subscriptions.retain(|s| s.method != "subscribeNewToken");
+            } else {
+                if let Some(existing) = subscriptions.iter_mut().find(|s| s.method == payload.method.replace("unsubscribe", "subscribe")) {
+                    if let Some(keys) = &payload.keys {
+                        existing.keys = Some(
+                            existing
+                                .keys
+                                .clone()
+                                .unwrap_or_else(|| Vec::new())
+                                .into_iter()
+                                .filter(|key| !keys.contains(key))
+                                .collect(),
+                        );
+                    }
                 }
             }
         }
@@ -212,16 +220,19 @@ pub async fn manage_subscription(
         .map_err(|e| {
             (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                format!("Error updating subscriptions: {}", e),
+                Json(json!({ "error": format!("Error updating subscriptions: {}", e) })),
             )
         })?;
 
         Ok((
             StatusCode::OK,
-            format!("Subscriptions updated for user: {}", updated_user.pubkey),
+            Json(json!({ "message": format!("Subscriptions updated for user: {}", updated_user.pubkey) })),
         ))
     } else {
-        Err((StatusCode::NOT_FOUND, "User not found".to_string()))
+        Err((
+            StatusCode::NOT_FOUND,
+            Json(json!({ "error": "User not found" })),
+        ))
     }
 }
 

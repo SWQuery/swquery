@@ -68,7 +68,6 @@ pub async fn send_query_request(
     api_key: &str,
 ) -> Result<QueryResponse, (StatusCode, String)> {
     let client = Client::new();
-    payload.input_user = payload.input_user.to_lowercase();
 
     // Debug print
     println!("Sending payload to AI agent: {:?}", payload);
@@ -149,8 +148,6 @@ pub async fn generate_report(
         .and_then(|v| v.to_str().ok())
         .ok_or((StatusCode::UNAUTHORIZED, "Missing API key".to_string()))?;
 
-    println!("Getting user info");
-
     let query_response = send_query_request_report(&mut payload, _api_key).await?;
 
     Ok((StatusCode::OK, Json(query_response)))
@@ -165,8 +162,6 @@ pub async fn generate_report_service(
         .get("x-api-key")
         .and_then(|v| v.to_str().ok())
         .ok_or((StatusCode::UNAUTHORIZED, "Missing API key".to_string()))?;
-
-    println!("Getting user info");
 
     let query_response = send_query_request_report(&mut payload, _api_key).await?;
 

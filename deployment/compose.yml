@@ -17,32 +17,32 @@ services:
     networks:
       - swquery-network
 
-  server:
-    build:
-      context: ..
-      dockerfile: server/Dockerfile
-    ports:
-      - "5500:5500"
-    depends_on:
-      swquery-db:
-        condition: service_healthy
-      agent:
-        condition: service_started
-    env_file:
-      - ../server/.env
-    networks:
-      - swquery-network
+  # server:
+  #   build:
+  #     context: ..
+  #     dockerfile: server/Dockerfile
+  #   ports:
+  #     - "5500:5500"
+  #   depends_on:
+  #     swquery-db:
+  #       condition: service_healthy
+  #     agent:
+  #       condition: service_started
+  #   env_file:
+  #     - ../server/.env
+  #   networks:
+  #     - swquery-network
 
-  agent:
-    build:
-      context: ../ai-agent
-      dockerfile: Dockerfile
-    ports:
-      - "8000:8000"
-    env_file:
-      - ../ai-agent/.env
-    networks:
-      - swquery-network
+  # agent:
+  #   build:
+  #     context: ../ai-agent
+  #     dockerfile: Dockerfile
+  #   ports:
+  #     - "8000:8000"
+  #   env_file:
+  #     - ../ai-agent/.env
+  #   networks:
+  #     - swquery-network
 
 networks:
   swquery-network:

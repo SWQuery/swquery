@@ -8,10 +8,10 @@ use {
 };
 
 // "https://api.swquery.xyz/agent/generate-query";
-const API_URL: &str = "https://api.swquery.xyz";
-const AGENT_API_URL: &str = "https://api.swquery.xyz/agent/generate-query";
-// const API_URL: &str = "http://localhost:5500";
-// const AGENT_API_URL: &str = "http://localhost:5500/agent/generate-query";
+// const API_URL: &str = "https://api.swquery.xyz";
+// const AGENT_API_URL: &str = "https://api.swquery.xyz/agent/generate-query";
+const API_URL: &str = "http://localhost:5500";
+const AGENT_API_URL: &str = "http://localhost:5500/agent/generate-query";
 
 /// Enum to represent the Solana network.
 #[derive(Debug, Clone, Copy, Default)]
@@ -241,12 +241,7 @@ impl SWqueryClient {
                 res_type = "tokens";
             }
             "accountTransactionSubscription" => {
-                let user_address = get_optional_str_param(params, "user_address").unwrap_or_default();
-                if user_address.is_empty() {
-                    return Err(SdkError::InvalidInput(
-                        "Missing address parameter".to_string(),
-                    ));
-                }
+                let user_address = pubkey;
 
                 let account_address = get_optional_str_param(params, "account_address").unwrap_or_default();
                 if account_address.is_empty() {
@@ -255,17 +250,12 @@ impl SWqueryClient {
                     ));
                 }
 
-                let account_addresses = vec![account_address.clone()];
-                self.account_transaction_subscription(user_address, account_addresses);
+                let account_addresses = vec![account_address];
+                response = self.account_transaction_subscription(user_address, account_addresses).await?;
                 res_type = "payload";
-            }
+            } 
             "tokenTransactionSubscription" => {
-                let user_address = get_optional_str_param(params, "user_address").unwrap_or_default();
-                if user_address.is_empty() {
-                    return Err(SdkError::InvalidInput(
-                        "Missing address parameter".to_string(),
-                    ));
-                }
+                let user_address = pubkey;
 
                 let token_address = get_optional_str_param(params, "token_address").unwrap_or_default();
                 if token_address.is_empty() {
@@ -274,8 +264,8 @@ impl SWqueryClient {
                     ));
                 }
 
-                let token_addresses = vec![token_address.clone()];
-                self.token_transaction_subscription(user_address, token_addresses);
+                let token_addresses = vec![token_address];
+                response = self.token_transaction_subscription(user_address, token_addresses).await?;
                 res_type = "payload"
             }
             "newTokenSubscriptions" => {
@@ -286,8 +276,7 @@ impl SWqueryClient {
                     ));
                 }
 
-                self.new_token_subscriptions(user_address);
-                println!("New token subscriptions created for {}", user_address);
+                response = self.new_token_subscriptions(user_address).await?;
                 res_type = "payload"
             }
             // "getAssetsByOwner" => {
@@ -951,6 +940,7 @@ impl SWqueryClient {
     }
 
     async fn send_subscription_request(pubkey: &str, payload: Value) -> Result<Value, SdkError> {
+        println!("Sending subscription request...");
         let client = Client::new();
         let url = format!("{}/users/{}/subscriptions", API_URL, pubkey);
 
@@ -1009,8 +999,55 @@ impl SWqueryClient {
             "method": "subscribeNewToken"
         });
 
-        println!("Payload: {:#?}", payload);
-
         Self::send_subscription_request(pubkey, payload).await
     }
+
+    // pub async fn get_token_info(&self, signature: &str) -> Result<Json<Value>, SdkError> {
+    //     println!("Fetching token info for {}", token_name);
+        
+    //     let token_address = match fetch_token_address(&token_name).await {
+    //         Some(address) => address,
+    //         None => {
+    //             println!("Token {} not found in Solana token list", token_name);
+    //             return Err(StatusCode::NOT_FOUND);
+    //         }
+    //     };
+        
+    //     match fetch_market_data(&token_address).await {
+    //         Some(data) => Ok(Json(data)),
+    //         None => {
+    //             println!("Failed to fetch market data for token {}", token_name);
+    //             Err(StatusCode::BAD_GATEWAY)
+    //         }
+    //     }
+    // }
+
+    // async fn fetch_token_address(token_name: &str) -> Option<String> {
+    //     let url = "https://cdn.jsdelivr.net/gh/solana-labs/token-list@main/src/tokens/solana.tokenlist.json";
+    //     let response: Value = reqwest::get(url).await.ok()?.json().await.ok()?;
+    
+    //     let tokens = response.get("tokens")?.as_array()?; 
+        
+    //     tokens.iter()
+    //         .find(|token| {
+    //             token.get("name")
+    //                 .and_then(|name| name.as_str())
+    //                 .map(|name_str| name_str.eq_ignore_ascii_case(token_name))
+    //                 .unwrap_or(false)
+    //         })
+    //         .and_then(|token| {
+    //             let address = token.get("address")?.as_str()?.to_string();
+    //             println!("Found token {} with address {}", token_name, address);
+    //             Some(address)
+    //         })
+    // }
+    
+    // async fn fetch_market_data(contract_address: &str) -> Option<Value> {
+    //     let url = format!("https://api.coingecko.com/api/v3/coins/solana/contract/{}", contract_address);
+    //     let response = reqwest::get(&url).await.ok()?.json::<Value>().await.ok();
+        
+    //     println!("Response from CoinGecko for {}: {:?}", contract_address, &response);
+        
+    //     response
+    // }
 }
