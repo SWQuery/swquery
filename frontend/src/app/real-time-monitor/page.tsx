@@ -10,7 +10,9 @@ import TokenLaunchTab from "@/components/Molecules/TokenLaunchTab";
 export default function RealTimeMonitor() {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [activeTab, setActiveTab] = useState<number>(0);
-  const tabItems = ["Token Launches", "My Tokens", "My Wallets"];
+  // const tabItems = ["Token Launches", "My Tokens", "My Wallets"];
+  const tabItems = ["Token Launches"];
+
 
   return (
     <>
@@ -42,12 +44,12 @@ export default function RealTimeMonitor() {
             <Tab.Panel>
               <TokenLaunchTab />
             </Tab.Panel>
-            <Tab.Panel>
+            {/* <Tab.Panel>
               <TokenTab />
             </Tab.Panel>
             <Tab.Panel>
               <WalletTab />
-            </Tab.Panel>
+            </Tab.Panel> */}
           </Tab.Panels>
         </Tab.Group>
       </div>
