@@ -103,7 +103,9 @@ export default function TokenLaunchCard({ launch }: TokenLaunchCardProps) {
       initial={{ scale: 0.9, opacity: 0 }}
       animate={{ scale: 1, opacity: 1 }}
       transition={{ duration: 0.3 }}
-      className="bg-gray-800 rounded-lg p-6 shadow-lg flex gap-6 mb-6"
+      className="p-6 rounded-xl bg-[#161616] border border-[#414141] 
+                 shadow-[0_0_25px_#8F00FF55] hover:shadow-[0_0_35px_#E156FFAA] 
+                 transition-shadow duration-500 ease-in-out flex gap-6 mb-6"
     >
       {/* 📌 Coluna 1: Imagem */}
       <div className="flex-shrink-0 w-2/9 flex items-center justify-center">

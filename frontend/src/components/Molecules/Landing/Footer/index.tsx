@@ -27,14 +27,6 @@ export const Footer = () => {
                   href="/soon"
                   className="text-gray-400 hover:text-[#9945FF]"
                 >
-                  SWquery FAQ
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/soon"
-                  className="text-gray-400 hover:text-[#9945FF]"
-                >
                   SWquery Whitepaper
                 </Link>
               </li>
@@ -69,14 +61,6 @@ export const Footer = () => {
               </li>
               <li>
                 <Link
-                  href="/soon"
-                  className="text-gray-400 hover:text-[#9945FF]"
-                >
-                  Apply to Build
-                </Link>
-              </li>
-              <li>
-                <Link
                   href="https://github.com/vict0rcarvalh0/swquery"
                   className="text-gray-400 hover:text-[#9945FF]"
                 >
@@ -94,14 +78,6 @@ export const Footer = () => {
                   className="text-gray-400 hover:text-[#9945FF]"
                 >
                   SWquery Dashboard
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/soon"
-                  className="text-gray-400 hover:text-[#9945FF]"
-                >
-                  Join the Newsletter
                 </Link>
               </li>
               <li>

@@ -111,7 +111,8 @@ export default function TokenLaunchTab() {
 
   return (
     <div className="flex">
-      <div className="w-64 bg-gray-900 text-white p-4 rounded-lg">
+      <div className="w-64 p-4 rounded-lg bg-[#161616] border border-[#414141] 
+                      shadow-[0_0_25px_#8F00FF55] mb-4 text-white">
         <div className="mt-4">
           <button
             className={`w-full py-2 rounded-lg flex items-center justify-center gap-2 ${
@@ -150,7 +151,7 @@ export default function TokenLaunchTab() {
             <div className="flex space-x-2 mt-1">
               <input
                 type="number"
-                className="w-full p-2 bg-gray-800 rounded-lg"
+                className="w-full p-2 bg-[#1A1A1A] rounded-lg"
                 placeholder="Min"
                 onChange={(e) =>
                   setFilters((prev) => ({
@@ -161,7 +162,7 @@ export default function TokenLaunchTab() {
               />
               <input
                 type="number"
-                className="w-full p-2 bg-gray-800 rounded-lg"
+                className="w-full p-2 bg-[#1A1A1A] rounded-lg"
                 placeholder="Max"
                 onChange={(e) =>
                   setFilters((prev) => ({
@@ -199,6 +200,27 @@ export default function TokenLaunchTab() {
           <TokenLaunchCard key={index} launch={launch} />
         ))}
       </motion.div>
+      <style jsx>{`
+        input[type="number"] {
+          outline: none;
+          border: 1px solid #414141;
+          color: #FFFFFF;
+          background-color: #1A1A1A;
+        }
+
+        input[type="number"]:focus {
+          border-color: #8F00FF;
+        }
+
+        input[type="number"]::-webkit-inner-spin-button,
+        input[type="number"]::-webkit-outer-spin-button {
+          -webkit-appearance: none;
+          appearance: none;
+          margin: 0;
+          color: #FFFFFF;
+          background-color: #1A1A1A;
+        }
+      `}</style>
     </div>
   );
 }

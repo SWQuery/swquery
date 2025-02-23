@@ -457,7 +457,7 @@ export const Landing: React.FC = () => {
           <CoreFeaturesSection />
           <div className=" justify-center   items-center pt-28 md:pt-40">
             <FeatureSection
-              title="Query Wallet Transactions"
+              title=""
               subtitle="Real-Time Data Retrieval."
               description="Leverage the SWQuery SDK to fetch and analyze wallet transactions instantly."
               buttonText="View Documentation"
