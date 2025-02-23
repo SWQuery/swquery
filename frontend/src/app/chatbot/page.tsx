@@ -1,26 +1,29 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-"use client"
+"use client";
 
-import { useState, useEffect, useCallback } from "react"
-import { Button } from "@/components/Atoms/Buttons/button"
-import { cn } from "@/lib/utils"
-import { ArrowRight, Loader2, MessageSquarePlus, X, CreditCard } from "lucide-react"
-import { TransactionPreview } from "@/components/Molecules/TransactionPrev/TransactionPreview"
-import { Navbar } from "@/components/Molecules/Navbar"
-import { motion, AnimatePresence } from "framer-motion"
-import { useWallet } from "@solana/wallet-adapter-react"
-import api from "@/services/config/api"
-import { toast } from "react-hot-toast"
-import ReactMarkdown from "react-markdown"
-import remarkGfm from "remark-gfm"
-import { useForm } from "react-hook-form"
-import PricingModal from "@/components/Atoms/PricingModal"
-import { API_URL } from "@/utils/constants"
-import axios from "axios"
-import { TrendingTokensPreview } from "@/components/Molecules/TrendingTokenPreview"
-import Sidebar from "@/components/Molecules/Sidebar"
+import { useState, useEffect, useCallback } from "react";
+import { Button } from "@/components/Atoms/Buttons/button";
+import { cn } from "@/lib/utils";
+import { ArrowRight, Loader2, MessageSquarePlus, X } from "lucide-react";
+import { TransactionPreview } from "@/components/Molecules/TransactionPrev/TransactionPreview";
+import { Navbar } from "@/components/Molecules/Navbar";
+import { motion, AnimatePresence } from "framer-motion";
+import { useWallet } from "@solana/wallet-adapter-react";
+import api from "@/services/config/api";
+import { toast } from "react-hot-toast";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+import { useForm } from "react-hook-form";
+import PricingModal from "@/components/Atoms/PricingModal";
+import { API_URL } from "@/utils/constants";
+import axios from "axios";
+import { TrendingTokensPreview } from "@/components/Molecules/TrendingTokenPreview";
 
-async function interactChatbot(input_user: string, address: string, apiKey: string) {
+async function interactChatbot(
+  input_user: string,
+  address: string,
+  apiKey: string
+) {
   try {
     const response = await api.post(
       "/chatbot/interact",
@@ -33,52 +36,52 @@ async function interactChatbot(input_user: string, address: string, apiKey: stri
           "Content-Type": "application/json",
           "x-api-key": apiKey,
         },
-      },
-    )
-    return response.data
+      }
+    );
+    return response.data;
   } catch (error: unknown) {
-    throw error
+    throw error;
   }
 }
 
 interface Message {
-  content: string
-  isUser: boolean
+  content: string;
+  isUser: boolean;
 }
 
 interface Chat {
-  id: number
-  name: string
-  messages: Message[]
+  id: number;
+  name: string;
+  messages: Message[];
 }
 
 interface UsageResponse {
-  remaining_credits: number
-  total_spent_usdc: number
+  remaining_credits: number;
+  total_spent_usdc: number;
   last_transaction?: {
-    package_id: string
-    amount_usdc: number
-    created_at: number
-  }
+    package_id: string;
+    amount_usdc: number;
+    created_at: number;
+  };
 }
 
 export default function ChatInterface() {
-  const [chats, setChats] = useState<Chat[]>([])
-  const [currentChatId, setCurrentChatId] = useState<number | null>(null)
-  const [prompt, setPrompt] = useState("")
-  const [fetchedTransactions, setFetchedTransactions] = useState<any[]>([])
-  const [isLoading, setIsLoading] = useState(false)
-  const [isPricingModalOpen, setPricingModalOpen] = useState(false)
-  const [usageData, setUsageData] = useState<UsageResponse | null>(null)
-  const [responseType, setResponseType] = useState<string>("")
-  const [activeMenuItem, setActiveMenuItem] = useState("chatbot")
+  const [chats, setChats] = useState<Chat[]>([]);
+  const [currentChatId, setCurrentChatId] = useState<number | null>(null);
+  const [prompt, setPrompt] = useState("");
+  const [fetchedTransactions, setFetchedTransactions] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isPricingModalOpen, setPricingModalOpen] = useState(false);
+  const [usageData, setUsageData] = useState<UsageResponse | null>(null);
+  const [responseType, setResponseType] = useState<string>("");
 
-  const { connected, publicKey } = useWallet()
+  const { connected, publicKey } = useWallet();
 
-  const currentChat = chats.find((chat) => chat.id === currentChatId)
+  const currentChat = chats.find((chat) => chat.id === currentChatId);
 
   function mapHeliusResponseToPreviewData(transactions: any[]) {
-    const fullTransactions: any = []
+    const fullTransactions: any = [];
     transactions.forEach((tx: any) => {
       tx.details?.transfers?.forEach((transfer: any) => {
         fullTransactions.push({
@@ -93,51 +96,56 @@ export default function ChatInterface() {
             tx.token_metadata &&
             tx.token_metadata[transfer.mint]?.files &&
             tx.token_metadata[transfer.mint].files[0]?.cdn_uri,
-          coin_name: tx.token_metadata && tx.token_metadata[transfer.mint]?.metadata?.symbol,
-        })
-      })
-    })
-    return fullTransactions
+          coin_name:
+            tx.token_metadata &&
+            tx.token_metadata[transfer.mint]?.metadata?.symbol,
+        });
+      });
+    });
+    return fullTransactions;
   }
 
   const fetchApiKey = useCallback(async () => {
-    if (!publicKey) return
+    if (!publicKey) return;
 
     try {
-      const response = await axios.get(`${API_URL}/users/${publicKey.toBase58()}`, {
-        headers: { "Content-Type": "application/json" },
-      })
+      const response = await axios.get(
+        `${API_URL}/users/${publicKey.toBase58()}`,
+        {
+          headers: { "Content-Type": "application/json" },
+        }
+      );
 
       if (response.data.api_key) {
-        setApiKey(response.data.api_key)
-        console.log(response.data.api_key)
+        setApiKey(response.data.api_key);
+        console.log(response.data.api_key);
       } else {
-        console.warn("⚠️ No API Key found.")
-        toast.error("Failed to load API Key!")
+        console.warn("⚠️ No API Key found.");
+        toast.error("Failed to load API Key!");
       }
     } catch (error) {
-      console.error("❌ Error fetching API Key:", error)
-      toast.error("Failed to load API Key!")
+      console.error("❌ Error fetching API Key:", error);
+      toast.error("Failed to load API Key!");
     }
-  }, [publicKey])
+  }, [publicKey]);
 
-  const [apiKey, setApiKey] = useState<string>("")
+  const [apiKey, setApiKey] = useState<string>("");
 
   useEffect(() => {
-    fetchApiKey()
-  }, [fetchApiKey])
+    fetchApiKey();
+  }, [fetchApiKey, publicKey]);
 
   async function handleSend() {
-    if (!prompt.trim()) return
+    if (!prompt.trim()) return;
     if (!connected || !publicKey) {
-      toast.error("You need to have a connected wallet!")
-      return
+      toast.error("You need to have a connected wallet!");
+      return;
     }
 
-    setIsLoading(true)
+    setIsLoading(true);
     try {
-      const json = await interactChatbot(prompt, publicKey.toString(), apiKey)
-      const llmAnswer = json.report || "Here are the transactions I found:"
+      const json = await interactChatbot(prompt, publicKey.toString(), apiKey);
+      const llmAnswer = json.report || "Here are the transactions I found:";
       const newChat: Chat = {
         id: Date.now(),
         name: prompt,
@@ -145,80 +153,81 @@ export default function ChatInterface() {
           { content: prompt, isUser: true },
           { content: llmAnswer, isUser: false },
         ],
-      }
-      setChats((prev) => [...prev, newChat])
-      setCurrentChatId(newChat.id)
-      setResponseType(json.response_type)
-      const heliusTxs = Array.isArray(json.response) ? json.response : []
-      setFetchedTransactions(heliusTxs)
-      setPrompt("")
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      };
+      setChats((prev) => [...prev, newChat]);
+      setCurrentChatId(newChat.id);
+      setResponseType(json.response_type);
+      const heliusTxs = Array.isArray(json.response) ? json.response : [];
+      setFetchedTransactions(heliusTxs);
+      setPrompt("");
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (err) {
-      toast.error("There was an error processing your request.")
+      toast.error("There was an error processing your request.");
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
   }
 
-  const previewData = mapHeliusResponseToPreviewData(fetchedTransactions)
+  const previewData = mapHeliusResponseToPreviewData(fetchedTransactions);
 
-  const { register, handleSubmit } = useForm()
+  const { register, handleSubmit } = useForm();
 
   const handleCloseChat = () => {
-    setCurrentChatId(null)
-    setFetchedTransactions([])
-    setPrompt("")
-  }
+    setCurrentChatId(null);
+    setFetchedTransactions([]);
+    setPrompt("");
+  };
 
   const fetchUsageData = useCallback(async () => {
     try {
-      const response = await api.get<UsageResponse>(`/users/${publicKey}/usage`)
-      setUsageData(response.data)
+      const response = await api.get<UsageResponse>(
+        `/users/${publicKey}/usage`
+      );
+      setUsageData(response.data);
     } catch (error) {
-      console.error("Error fetching usage data:", error)
+      console.error("Error fetching usage data:", error);
     }
-  }, [publicKey])
+  }, [publicKey]);
 
   useEffect(() => {
     if (publicKey) {
-      fetchUsageData()
+      fetchUsageData();
     }
-  }, [fetchUsageData, publicKey])
+  }, [fetchUsageData, publicKey]);
 
   useEffect(() => {
     if (isPricingModalOpen) {
-      fetchUsageData()
+      fetchUsageData();
     }
-  }, [fetchUsageData, isPricingModalOpen])
+  }, [fetchUsageData, isPricingModalOpen]);
 
+  //Function to handle the response type
   const handleResponseType = (responseType: string) => {
     switch (responseType) {
       case "transactions":
         return (
           <>
-            <h3 className="text-lg font-medium text-gray-200 mb-4">Transaction Preview</h3>
+            <h3 className="text-lg font-medium text-gray-200 mb-4">
+              Transaction Preview
+            </h3>
             <TransactionPreview transactions={previewData} />
           </>
-        )
+        );
 
       case "tokens":
         return (
           <>
-            <h3 className="text-lg font-medium text-gray-200 mb-4">Token Preview</h3>
+            <h3 className="text-lg font-medium text-gray-200 mb-4">
+              Token Preview
+            </h3>
             <TrendingTokensPreview tokens={fetchedTransactions} />
           </>
-        )
+        );
     }
-  }
-
-  const handleMenuItemClick = (item: string) => {
-    setActiveMenuItem(item)
-    // You can add logic here to change the content based on the selected menu item
-  }
-
+  };
   return (
     <div className="relative flex flex-col h-screen overflow-hidden">
-      {/* Background with 3D Effect */}
+      {/* Fundo com Efeito 3D */}
       <motion.div
         className="absolute inset-0 z-0"
         initial={{ opacity: 0 }}
@@ -231,32 +240,35 @@ export default function ChatInterface() {
         }}
         transition={{ duration: 2 }}
       >
-        {/* Additional layer for depth */}
+        {/* Camada adicional para profundidade */}
         <motion.div
           className="absolute inset-0 z-0"
           initial={{ opacity: 0 }}
           animate={{ opacity: 0.05 }}
           style={{
-            background: "radial-gradient(circle at center, rgba(156, 136, 255, 0.1), transparent 70%)",
+            background:
+              "radial-gradient(circle at center, rgba(156, 136, 255, 0.1), transparent 70%)",
             transform: "translateZ(-1px) scale(2)",
           }}
           transition={{
             duration: 3,
-            repeat: Number.POSITIVE_INFINITY,
+            repeat: Infinity,
             repeatType: "mirror",
           }}
         />
+        {}
         <motion.div
           className="absolute inset-0 z-0"
           initial={{ opacity: 0 }}
           animate={{ opacity: 0.03 }}
           style={{
-            background: "radial-gradient(circle at top left, rgba(255, 255, 255, 0.05), transparent 80%)",
+            background:
+              "radial-gradient(circle at top left, rgba(255, 255, 255, 0.05), transparent 80%)",
             transform: "translateZ(-2px) scale(3)",
           }}
           transition={{
             duration: 4,
-            repeat: Number.POSITIVE_INFINITY,
+            repeat: Infinity,
             repeatType: "mirror",
           }}
         />
@@ -267,7 +279,8 @@ export default function ChatInterface() {
         initial={{ opacity: 0 }}
         animate={{ opacity: 0.1 }}
         style={{
-          background: "linear-gradient(to right, transparent, #9C88FF15, transparent)",
+          background:
+            "linear-gradient(to right, transparent, #9C88FF15, transparent)",
         }}
       >
         <motion.div
@@ -276,7 +289,7 @@ export default function ChatInterface() {
           animate={{ x: "100%" }}
           transition={{
             duration: 5,
-            repeat: Number.POSITIVE_INFINITY,
+            repeat: Infinity,
             repeatType: "reverse",
             ease: "easeInOut",
           }}
@@ -286,10 +299,14 @@ export default function ChatInterface() {
       <div className="relative z-20 flex flex-col h-screen bg-black/70 backdrop-blur-md">
         <Navbar />
         <div className="flex flex-1 h-[calc(100vh-5rem)] bg-black">
-          {/* Sidebar */}
-          <Sidebar activeItem={activeMenuItem} onItemClick={handleMenuItemClick} />
+          {/* Mobile backdrop */}
+          {isSidebarOpen && (
+            <div
+              className="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden"
+              onClick={() => setIsSidebarOpen(false)}
+            />
+          )}
 
-          {/* Main content */}
           <div className="flex-1 flex flex-col bg-gradient-to-br from-zinc-900 to-black pt-20">
             <div className="flex-1 overflow-hidden">
               <AnimatePresence mode="wait">
@@ -303,7 +320,7 @@ export default function ChatInterface() {
                     transition={{ duration: 0.3 }}
                     className="flex flex-col md:flex-row h-full relative"
                   >
-                    {/* Close chat button */}
+                    {/* Botão de fechar chat */}
                     <Button
                       onClick={handleCloseChat}
                       className="absolute top-4 right-4 bg-transparent p-3 rounded-full hover:bg-gray-800 transition-colors z-50"
@@ -324,7 +341,10 @@ export default function ChatInterface() {
                         {currentChat.messages.map((message, index) => (
                           <div
                             key={index}
-                            className={cn("flex items-start gap-3", message.isUser ? "justify-end" : "justify-start")}
+                            className={cn(
+                              "flex items-start gap-3",
+                              message.isUser ? "justify-end" : "justify-start"
+                            )}
                           >
                             {message.isUser ? (
                               <motion.p
@@ -393,15 +413,26 @@ export default function ChatInterface() {
                                             />
                                           ),
                                           h4: ({ ...props }) => (
-                                            <h4 className="text-white font-sans font-medium mb-2" {...props} />
+                                            <h4
+                                              className="text-white font-sans font-medium mb-2"
+                                              {...props}
+                                            />
                                           ),
                                           p: ({ ...props }) => (
-                                            <p className="text-gray-300 mb-2 whitespace-pre-wrap" {...props} />
+                                            <p
+                                              className="text-gray-300 mb-2 whitespace-pre-wrap"
+                                              {...props}
+                                            />
                                           ),
                                           ul: ({ ...props }) => (
-                                            <ul className="list-disc list-inside text-gray-300 mb-2" {...props} />
+                                            <ul
+                                              className="list-disc list-inside text-gray-300 mb-2"
+                                              {...props}
+                                            />
                                           ),
-                                          li: ({ ...props }) => <li className="ml-6" {...props} />,
+                                          li: ({ ...props }) => (
+                                            <li className="ml-6" {...props} />
+                                          ),
                                           code: ({ children, ...props }) => (
                                             <span
                                               className="text-gray-300 px-1 py-1 rounded-md text-sm bg-[#9C88FF30]"
@@ -410,7 +441,11 @@ export default function ChatInterface() {
                                               {children}
                                             </span>
                                           ),
-                                          strong: ({ children }) => <span className="text-gray-300">{children}</span>,
+                                          strong: ({ children }) => (
+                                            <span className="text-gray-300">
+                                              {children}
+                                            </span>
+                                          ),
                                         }}
                                       >
                                         {message.content}
@@ -427,7 +462,9 @@ export default function ChatInterface() {
                       </div>
                     </div>
                     <div className="w-full md:w-1/2 flex flex-col bg-black border-t md:border-l border-[#141416] h-1/2 md:h-full overflow-hidden">
-                      <div className="flex-1 p-6 overflow-y-auto">{handleResponseType(responseType)}</div>
+                      <div className="flex-1 p-6 overflow-y-auto">
+                        {handleResponseType(responseType)}
+                      </div>
                     </div>
                   </motion.div>
                 ) : (
@@ -454,7 +491,8 @@ export default function ChatInterface() {
                         <h1
                           className="text-2xl font-semibold text-gray-200 relative inline-block"
                           style={{
-                            background: "linear-gradient(to right, #9C88FF, #6C5CE7, #9C88FF)",
+                            background:
+                              "linear-gradient(to right, #9C88FF, #6C5CE7, #9C88FF)",
                             backgroundSize: "200% auto",
                             WebkitBackgroundClip: "text",
                             WebkitTextFillColor: "transparent",
@@ -464,8 +502,19 @@ export default function ChatInterface() {
                           How can I assist you today?
                         </h1>
                         <p className="text-sm text-gray-400">
-                          You can ask about a prompt below or type in your own query.
+                          You can ask about a prompt below or type in your own
+                          query.
                         </p>
+                        {/* <button
+														onClick={() =>
+															setPricingModalOpen(
+																true
+															)
+														}
+														className="px-6 py-2 bg-purple-600 text-white rounded-lg"
+													>
+														Open Pricing Modal
+													</button> */}
                       </div>
                       <div
                         className="flex-1 overflow-y-auto space-y-8"
@@ -477,11 +526,11 @@ export default function ChatInterface() {
                           <div className="max-w-3xl mx-auto space-y-4">
                             <form
                               onSubmit={handleSubmit(() => {
-                                handleSend()
+                                handleSend();
                               })}
                               className="relative"
                             >
-                              {/* Prompt box with Glowing Border and Rotating Effect */}
+                              {/* Caixa de Prompt com Borda Brilhante e Efeito Rotativo */}
                               <div className="relative">
                                 <textarea
                                   {...register("message")}
@@ -491,9 +540,10 @@ export default function ChatInterface() {
                                       : "You need to buy credits to continue chatting..."
                                   }
                                   className={cn(
-                                    "w-full h-32 p-4 text-white bg-black/70 backdrop-blur-md rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-[#9C88FF] transition-all",
+                                    "w-full h-32 p-4 text-white bg-black/50 backdrop-blur-md rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-[#9C88FF] transition-all",
                                     "placeholder-gray-500",
-                                    !usageData?.remaining_credits && "cursor-not-allowed opacity-50",
+                                    !usageData?.remaining_credits &&
+                                      "cursor-not-allowed opacity-50"
                                   )}
                                   maxLength={2000}
                                   onChange={(e) => setPrompt(e.target.value)}
@@ -509,21 +559,25 @@ export default function ChatInterface() {
                                     </div>
                                   </div>
                                 )}
-                                {/* Animated Border */}
+                                {/* Borda Animada */}
                                 <div className="absolute inset-0 rounded-lg border-4 border-transparent animate-border-gradient"></div>
-                                {/* Character Counter */}
+                                {/* Contador de Caracteres */}
                                 <div className="absolute left-4 bottom-4 text-sm text-gray-500 z-20">
-                                  {prompt.length}/2000
+                                  {prompt.length}
+                                  /2000
                                 </div>
-                                {/* Send Button */}
+                                {/* Botão de Enviar */}
                                 <div className="absolute right-4 bottom-4 z-20">
                                   <Button
                                     type="submit"
                                     className={cn(
                                       "bg-gradient-to-r from-[#9C88FF] to-[#6C5CE7] hover:scale-105 text-white p-2 rounded-full flex items-center justify-center transition-transform",
-                                      !usageData?.remaining_credits && "opacity-50 cursor-not-allowed",
+                                      !usageData?.remaining_credits &&
+                                        "opacity-50 cursor-not-allowed"
                                     )}
-                                    disabled={isLoading || !usageData?.remaining_credits}
+                                    disabled={
+                                      isLoading || !usageData?.remaining_credits
+                                    }
                                   >
                                     {isLoading ? (
                                       <Loader2 className="w-4 h-4 animate-spin" />
@@ -534,29 +588,26 @@ export default function ChatInterface() {
                                 </div>
                               </div>
 
-                              <div className="mt-4 flex items-center justify-between bg-black/70 rounded-lg p-3 shadow-[0_0_15px_#9C88FF]">
-                                <div className="flex items-center space-x-2">
-                                  <CreditCard className="w-5 h-5 text-purple-400" />
-                                  <span className="text-sm text-gray-300">
-                                    {usageData?.remaining_credits
-                                      ? `${usageData.remaining_credits} credits left`
-                                      : "No credits available"}
-                                  </span>
-                                </div>
-                                <Button
-                                  onClick={() => setPricingModalOpen(true)}
-                                  className="bg-gradient-to-r from-[#9C88FF] to-[#6C5CE7] hover:from-[#8A76FF] hover:to-[#5B4DD6] text-white px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-opacity-50"
-                                >
-                                  Manage Credits
-                                </Button>
-                              </div>
+                              {/* Show how many credits are left or if you need to buy credits */}
+                              {usageData?.remaining_credits ? (
+                                <p className="text-sm text-gray-400">
+                                  {usageData?.remaining_credits} credits left
+                                </p>
+                              ) : (
+                                <p className="text-sm text-gray-400">
+                                  You need to buy credits to continue
+                                  chatting...
+                                </p>
+                              )}
                             </form>
                           </div>
                         </div>
 
                         {/* Cards Section */}
                         <div className="space-y-4 px-28">
-                          <h2 className="text-xl font-semibold text-gray-400">Suggestions</h2>
+                          <h2 className="text-xl font-semibold text-gray-400">
+                            Suggestions
+                          </h2>
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             {[
                               {
@@ -576,9 +627,10 @@ export default function ChatInterface() {
                               },
                               {
                                 title: "Check Token Transactions",
-                                description: "What is the biggest transactions involving a specific token address?",
+                                description:
+                                  "What is the biggest transactions involving a specific token address?",
                               },
-                              {
+							  {
                                 title: "Search Token",
                                 description: "Search for a token named $Example",
                               },
@@ -591,11 +643,23 @@ export default function ChatInterface() {
                                 key={card.title}
                                 className="p-4 bg-[#1A1A1A]/50 rounded-lg border-[#141416] hover:bg-[#2b2b2b]/70 transition-colors cursor-pointer"
                               >
-                                <h3 className="font-bold text-gray-200 mb-2">{card.title}</h3>
-                                <p className="text-sm text-gray-400">{card.description}</p>
+                                <h3 className="font-bold text-gray-200 mb-2">
+                                  {card.title}
+                                </h3>
+                                <p className="text-sm text-gray-400">
+                                  {card.description}
+                                </p>
                               </div>
                             ))}
                           </div>
+                        </div>
+                        <div className="flex justify-center mt-6">
+                          <Button
+                            onClick={() => setPricingModalOpen(true)}
+                            className="bg-gradient-to-r from-[#9C88FF] to-[#6C5CE7] hover:scale-105 text-white px-6 py-2 rounded-lg transition-transform"
+                          >
+                            Manage Your Credits
+                          </Button>
                         </div>
                       </div>
                     </div>
@@ -612,83 +676,83 @@ export default function ChatInterface() {
         onPurchaseSuccess={fetchUsageData}
       />
       <style jsx>{`
-				@keyframes shimmer {
-					0% {
-						background-position: 0% center;
-					}
-					50% {
-						background-position: 100% center;
-					}
-					100% {
-						background-position: 0% center;
-					}
-				}
-				@keyframes borderGradient {
-					0% {
-						background-position: 0% 50%;
-					}
-					50% {
-						background-position: 100% 50%;
-					}
-					100% {
-						background-position: 0% 50%;
-					}
-				}
+        @keyframes shimmer {
+          0% {
+            background-position: 0% center;
+          }
+          50% {
+            background-position: 100% center;
+          }
+          100% {
+            background-position: 0% center;
+          }
+        }
+        @keyframes borderGradient {
+          0% {
+            background-position: 0% 50%;
+          }
+          50% {
+            background-position: 100% 50%;
+          }
+          100% {
+            background-position: 0% 50%;
+          }
+        }
 
-				.animate-border-gradient {
-					border-radius: 0.5rem;
-					background: linear-gradient(
-						45deg,
-						#9c88ff,
-						#6c5ce7,
-						#9c88ff,
-						#6c5ce7
-					);
-					background-size: 400% 400%;
-					position: absolute;
-					top: -2px;
-					left: -2px;
-					right: -2px;
-					bottom: -2px;
-					z-index: -1;
-					animation: borderGradient 8s linear infinite;
-				}
+        .animate-border-gradient {
+          border-radius: 0.5rem;
+          background: linear-gradient(
+            45deg,
+            #9c88ff,
+            #6c5ce7,
+            #9c88ff,
+            #6c5ce7
+          );
+          background-size: 400% 400%;
+          position: absolute;
+          top: -2px;
+          left: -2px;
+          right: -2px;
+          bottom: -2px;
+          z-index: -1;
+          animation: borderGradient 8s linear infinite;
+        }
 
-				/* Additional style for background with 3D effect */
-				@keyframes rotateBackground {
-					0% {
-						transform: rotate(0deg);
-					}
-					100% {
-						transform: rotate(360deg);
-					}
-				}
+        /* Estilo adicional para o background com efeito 3D */
+        @keyframes rotateBackground {
+          0% {
+            transform: rotate(0deg);
+          }
+          100% {
+            transform: rotate(360deg);
+          }
+        }
 
-				/* Optional: Adding smooth rotation animation to the background */
-				.background-rotation {
-					animation: rotateBackground 60s linear infinite;
-				}
+        /* Opcional: Adicionando animação de rotação suave ao fundo */
+        .background-rotation {
+          animation: rotateBackground 60s linear infinite;
+        }
 
-				@keyframes glow {
-					0% {
-						box-shadow: 0 0 5px #9c88ff, 0 0 10px #9c88ff,
-							0 0 15px #9c88ff, 0 0 20px #9c88ff;
-					}
-					50% {
-						box-shadow: 0 0 10px #6c5ce7, 0 0 20px #6c5ce7,
-							0 0 30px #6c5ce7, 0 0 40px #6c5ce7;
-					}
-					100% {
-						box-shadow: 0 0 5px #9c88ff, 0 0 10px #9c88ff,
-							0 0 15px #9c88ff, 0 0 20px #9c88ff;
-					}
-				}
+        @keyframes glow {
+          0% {
+            box-shadow: 0 0 5px #9c88ff, 0 0 10px #9c88ff, 0 0 15px #9c88ff,
+              0 0 20px #9c88ff;
+          }
+          50% {
+            box-shadow: 0 0 10px #6c5ce7, 0 0 20px #6c5ce7, 0 0 30px #6c5ce7,
+              0 0 40px #6c5ce7;
+          }
+          100% {
+            box-shadow: 0 0 5px #9c88ff, 0 0 10px #9c88ff, 0 0 15px #9c88ff,
+              0 0 20px #9c88ff;
+          }
+        }
 
-				.glow-border {
-					animation: glow 2s infinite alternate;
-					border-radius: 0.5rem;
-				}
-			`}</style>
+        .glow-border {
+          animation: glow 2s infinite alternate;
+          border-radius: 0.5rem;
+        }
+      `}</style>
     </div>
-  )
+  );
 }
