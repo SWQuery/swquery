@@ -200,27 +200,6 @@ export default function TokenLaunchTab() {
           <TokenLaunchCard key={index} launch={launch} />
         ))}
       </motion.div>
-      <style jsx>{`
-        input[type="number"] {
-          outline: none;
-          border: 1px solid #414141;
-          color: #FFFFFF;
-          background-color: #1A1A1A;
-        }
-
-        input[type="number"]:focus {
-          border-color: #8F00FF;
-        }
-
-        input[type="number"]::-webkit-inner-spin-button,
-        input[type="number"]::-webkit-outer-spin-button {
-          -webkit-appearance: none;
-          appearance: none;
-          margin: 0;
-          color: #FFFFFF;
-          background-color: #1A1A1A;
-        }
-      `}</style>
     </div>
   );
 }

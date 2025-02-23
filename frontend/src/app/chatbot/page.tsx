@@ -152,6 +152,7 @@ export default function ChatInterface() {
       const heliusTxs = Array.isArray(json.response) ? json.response : []
       setFetchedTransactions(heliusTxs)
       setPrompt("")
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (err) {
       toast.error("There was an error processing your request.")
     } finally {
