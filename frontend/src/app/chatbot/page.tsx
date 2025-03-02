@@ -11,14 +11,15 @@ import { motion, AnimatePresence } from "framer-motion"
 import { useWallet } from "@solana/wallet-adapter-react"
 import api from "@/services/config/api"
 import { toast } from "react-hot-toast"
-import ReactMarkdown from "react-markdown"
-import remarkGfm from "remark-gfm"
+// import ReactMarkdown from "react-markdown"
+// import remarkGfm from "remark-gfm"
 import { useForm } from "react-hook-form"
 import PricingModal from "@/components/Atoms/PricingModal"
 import { API_URL } from "@/utils/constants"
 import axios from "axios"
 import { TrendingTokensPreview } from "@/components/Molecules/TrendingTokenPreview"
 import Sidebar from "@/components/Molecules/Sidebar"
+import TypewriterMarkdown from "@/components/Atoms/TypeWriterMarkdown"
 
 async function interactChatbot(input_user: string, address: string, apiKey: string) {
   try {
@@ -63,57 +64,57 @@ interface UsageResponse {
 }
 
 
-function TypewriterMarkdown({ content }: { content: string }) {
-  const [typedText, setTypedText] = useState("")
+// function TypewriterMarkdown({ content }: { content: string }) {
+//   const [typedText, setTypedText] = useState("")
 
-  useEffect(() => {
-    let i = 0
-    setTypedText("")
-    const timer = setInterval(() => {
-      setTypedText((prev) => prev + content[i])
-      i++
-      if (i >= content.length) clearInterval(timer)
-    }, 5)
+//   useEffect(() => {
+//     let i = 0
+//     setTypedText("")
+//     const timer = setInterval(() => {
+//       setTypedText((prev) => prev + content[i])
+//       i++
+//       if (i >= content.length) clearInterval(timer)
+//     }, 5)
 
-    return () => clearInterval(timer)
-  }, [content])
+//     return () => clearInterval(timer)
+//   }, [content])
 
-  // As typedText grows character‑by‑character, ReactMarkdown re‑parses
-  return (
-    <ReactMarkdown
-      remarkPlugins={[remarkGfm]}
-      components={{
-        h1: ({ ...props }) => (
-          <h1 className="text-xl text-white font-sans font-semibold mb-4" {...props} />
-        ),
-        h2: ({ ...props }) => (
-          <h2 className="text-lg text-white font-sans font-semibold mb-3" {...props} />
-        ),
-        h3: ({ ...props }) => (
-          <h3 className="text-base text-white font-sans font-medium mb-2" {...props} />
-        ),
-        h4: ({ ...props }) => (
-          <h4 className="text-white font-sans font-medium mb-2" {...props} />
-        ),
-        p: ({ ...props }) => (
-          <p className="text-gray-300 mb-2 whitespace-pre-wrap" {...props} />
-        ),
-        ul: ({ ...props }) => (
-          <ul className="list-disc list-inside text-gray-300 mb-2" {...props} />
-        ),
-        li: ({ ...props }) => <li className="ml-6" {...props} />,
-        code: ({ children, ...props }) => (
-          <span className="text-gray-300 px-1 py-1 rounded-md text-sm bg-[#9C88FF30]" {...props}>
-            {children}
-          </span>
-        ),
-        strong: ({ children }) => <span className="text-gray-300">{children}</span>,
-      }}
-    >
-      {typedText}
-    </ReactMarkdown>
-  )
-}
+//   // As typedText grows character‑by‑character, ReactMarkdown re‑parses
+//   return (
+//     <ReactMarkdown
+//       remarkPlugins={[remarkGfm]}
+//       components={{
+//         h1: ({ ...props }) => (
+//           <h1 className="text-xl text-white font-sans font-semibold mb-4" {...props} />
+//         ),
+//         h2: ({ ...props }) => (
+//           <h2 className="text-lg text-white font-sans font-semibold mb-3" {...props} />
+//         ),
+//         h3: ({ ...props }) => (
+//           <h3 className="text-base text-white font-sans font-medium mb-2" {...props} />
+//         ),
+//         h4: ({ ...props }) => (
+//           <h4 className="text-white font-sans font-medium mb-2" {...props} />
+//         ),
+//         p: ({ ...props }) => (
+//           <p className="text-gray-300 mb-2 whitespace-pre-wrap" {...props} />
+//         ),
+//         ul: ({ ...props }) => (
+//           <ul className="list-disc list-inside text-gray-300 mb-2" {...props} />
+//         ),
+//         li: ({ ...props }) => <li className="ml-6" {...props} />,
+//         code: ({ children, ...props }) => (
+//           <span className="text-gray-300 px-1 py-1 rounded-md text-sm bg-[#9C88FF30]" {...props}>
+//             {children}
+//           </span>
+//         ),
+//         strong: ({ children }) => <span className="text-gray-300">{children}</span>,
+//       }}
+//     >
+//       {typedText}
+//     </ReactMarkdown>
+//   )
+// }
 
 export default function ChatInterface() {
   const [chats, setChats] = useState<Chat[]>([])
