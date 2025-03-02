@@ -145,7 +145,6 @@ const Dashboard = () => {
           </p>
         </div>
 
-        {/* API Key Section */}
         <Card>
           <CardContent>
             <div className="flex justify-between items-center mb-4 p-6">
@@ -189,7 +188,6 @@ const Dashboard = () => {
         </Card>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Requests Overview */}
           <Card>
             <CardContent>
               <div className="flex justify-between items-center mb-4 p-6">
@@ -262,7 +260,6 @@ const Dashboard = () => {
             </CardContent>
           </Card>
 
-          {/* Daily Requests Chart */}
           <Card>
             <CardContent>
               <div className="flex justify-between items-center mb-4 p-6">
@@ -333,7 +330,6 @@ const Dashboard = () => {
         </div>
       )}
 
-      {/* Alert Component */}
       <Snackbar
         open={alertOpen}
         autoHideDuration={6000}

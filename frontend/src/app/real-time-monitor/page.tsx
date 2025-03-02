@@ -57,9 +57,3 @@ export default function RealTimeMonitor() {
     </>
   );
 }
-
-// export default function RealTimeMonitor() {
-//   return (
-//     <div></div>
-//   );
-// }

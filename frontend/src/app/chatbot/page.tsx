@@ -3,23 +3,23 @@
 "use client"
 
 import { useState, useEffect, useCallback} from "react"
-import { Button } from "@/components/Atoms/Buttons/button"
 import { cn } from "@/lib/utils"
 import { ArrowRight, Loader2, MessageSquarePlus, X, CreditCard } from "lucide-react"
-import { TransactionPreview } from "@/components/Molecules/TransactionPrev/TransactionPreview"
-import { Navbar } from "@/components/Molecules/Navbar"
 import { motion, AnimatePresence } from "framer-motion"
 import { useWallet } from "@solana/wallet-adapter-react"
-import api from "@/services/config/api"
 import { toast } from "react-hot-toast"
-import ReactMarkdown from "react-markdown"
-import remarkGfm from "remark-gfm"
 import { useForm } from "react-hook-form"
-import PricingModal from "@/components/Atoms/PricingModal"
-import { API_URL } from "@/utils/constants"
 import axios from "axios"
+
+import api from "@/services/config/api"
+import { API_URL } from "@/utils/constants"
+import { Button } from "@/components/Atoms/Buttons/button"
+import TypewriterMarkdown from "@/components/Atoms/TypeWriterMarkdown"
+import PricingModal from "@/components/Atoms/PricingModal"
+import { TransactionPreview } from "@/components/Molecules/TransactionPrev/TransactionPreview"
 import { TrendingTokensPreview } from "@/components/Molecules/TrendingTokenPreview"
 import Sidebar from "@/components/Molecules/Sidebar"
+import { Navbar } from "@/components/Molecules/Navbar"
 
 async function interactChatbot(input_user: string, address: string, apiKey: string) {
   try {
@@ -61,73 +61,6 @@ interface UsageResponse {
     amount_usdc: number
     created_at: number
   }
-}
-
-
-function TypewriterMarkdown({ content }: { content: string }) {
-  const [typedText, setTypedText] = useState("");
-
-  useEffect(() => {
-    let i = 0;
-    setTypedText("");
-    const timer = setInterval(() => {
-      setTypedText((prev) => prev + content[i]);
-      i++;
-      if (i >= content.length) clearInterval(timer);
-    }, 5);
-
-    return () => clearInterval(timer);
-  }, [content]);
-
-  return (
-    <ReactMarkdown
-      remarkPlugins={[remarkGfm]}
-      components={{
-        h1: (props) => {
-          const { ...rest } = props;
-          return <h1 className="text-xl text-white font-sans font-semibold mb-4" {...rest} />;
-        },
-        h2: (props) => {
-          const { ...rest } = props;
-          return <h2 className="text-lg text-white font-sans font-semibold mb-3" {...rest} />;
-        },
-        h3: (props) => {
-          const { ...rest } = props;
-          return <h3 className="text-base text-white font-sans font-medium mb-2" {...rest} />;
-        },
-        h4: (props) => {
-          const { ...rest } = props;
-          return <h4 className="text-white font-sans font-medium mb-2" {...rest} />;
-        },
-        p: (props) => {
-          const { ...rest } = props;
-          return <p className="text-gray-300 mb-2 whitespace-pre-wrap" {...rest} />;
-        },
-        ul: (props) => {
-          const { ...rest } = props;
-          return <ul className="list-disc list-inside text-gray-300 mb-2" {...rest} />;
-        },
-        li: (props) => {
-          const { ...rest } = props;
-          return <li className="ml-6" {...rest} />;
-        },
-        code: ({ children, ...props }) => {
-          const { ...rest } = props;
-          return (
-            <span className="text-gray-300 px-1 py-1 rounded-md text-sm bg-[#9C88FF30]" {...rest}>
-              {children}
-            </span>
-          );
-        },
-        strong: ({ children, ...props }) => {
-          const { ...rest } = props;
-          return <span className="text-gray-300" {...rest}>{children}</span>;
-        },
-      }}
-    >
-      {typedText}
-    </ReactMarkdown>
-  );
 }
 
 export default function ChatInterface() {
@@ -285,7 +218,6 @@ export default function ChatInterface() {
 
   return (
     <div className="relative flex flex-col h-screen overflow-hidden">
-      {/* Background with 3D Effect */}
       <motion.div
         className="absolute inset-0 z-0"
         initial={{ opacity: 0 }}
@@ -298,7 +230,6 @@ export default function ChatInterface() {
         }}
         transition={{ duration: 2 }}
       >
-        {/* Additional layer for depth */}
         <motion.div
           className="absolute inset-0 z-0"
           initial={{ opacity: 0 }}
@@ -353,15 +284,12 @@ export default function ChatInterface() {
       <div className="relative z-20 flex flex-col h-screen bg-black/70 backdrop-blur-md">
         <Navbar />
         <div className="flex flex-1 h-[calc(100vh-5rem)] bg-black">
-          {/* Sidebar */}
           <Sidebar activeItem={activeMenuItem} onItemClick={handleMenuItemClick} />
 
-          {/* Main content */}
           <div className="flex-1 flex flex-col bg-gradient-to-br from-zinc-900 to-black pt-20">
             <div className="flex-1 overflow-hidden">
               <AnimatePresence mode="wait">
                 {currentChat ? (
-                  // Chat view content
                   <motion.div
                     key="chat-view"
                     initial={{ opacity: 0, y: 10 }}
@@ -370,7 +298,6 @@ export default function ChatInterface() {
                     transition={{ duration: 0.3 }}
                     className="flex flex-col md:flex-row h-full relative"
                   >
-                    {/* Close chat button */}
                     <Button
                       onClick={handleCloseChat}
                       className="absolute top-4 right-4 bg-transparent p-3 rounded-full hover:bg-gray-800 transition-colors z-50"
@@ -455,7 +382,6 @@ export default function ChatInterface() {
                     </div>
                   </motion.div>
                 ) : (
-                  // Initial view content
                   <motion.div
                     key="initial-view"
                     initial={{ opacity: 0, y: 10 }}
@@ -464,7 +390,6 @@ export default function ChatInterface() {
                     transition={{ duration: 0.3 }}
                     className="flex-1 p-6 flex flex-col space-y-6 h-full"
                   >
-                    {/* Initial view content... */}
                     <div
                       className="flex-1 overflow-y-auto space-y-8 my-20"
                       style={{
@@ -498,7 +423,6 @@ export default function ChatInterface() {
                         }}
                       >
 
-                        {/* Cards Section */}
                         <div className="space-y-4 px-28">
                           {/* <h2 className="text-xl font-semibold text-gray-400">Suggestions</h2> */}
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -549,7 +473,6 @@ export default function ChatInterface() {
                               })}
                               className="relative"
                             >
-                              {/* Prompt box with Glowing Border and Rotating Effect */}
                               <div className="relative">
                                 <textarea
                                   {...register("message")}
@@ -577,13 +500,10 @@ export default function ChatInterface() {
                                     </div>
                                   </div>
                                 )}
-                                {/* Animated Border */}
                                 <div className="absolute inset-0 rounded-lg border-4 border-transparent animate-border-gradient"></div>
-                                {/* Character Counter */}
                                 <div className="absolute left-4 bottom-4 text-sm text-gray-500 z-20">
                                   {prompt.length}/2000
                                 </div>
-                                {/* Send Button */}
                                 <div className="absolute right-4 bottom-4 z-20">
                                   <Button
                                     type="submit"
