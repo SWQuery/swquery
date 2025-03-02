@@ -12,7 +12,6 @@ const BuyCredits = () => {
 
       const buyerKeypair = Keypair.generate();
 
-
       const buyerTokenAccount = new PublicKey(
         "9Ld2bRLUC7PrP8NSHK3WgBe3khHgtxAnjDr79YJHDxKF"
       );

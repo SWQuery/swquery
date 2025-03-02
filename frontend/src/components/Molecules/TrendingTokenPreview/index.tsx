@@ -82,7 +82,7 @@ export function TrendingTokensPreview({ tokens }: { tokens: TrendingToken[] }) {
       <AnimatePresence>
         {tokens.map((token) => (
           <motion.div key={token.address} variants={cardVariants} className="relative">
-            <Card className="relative overflow-hidden bg-black/40 border border-purple-500/20 p-4">
+            <Card className="relative overflow-hidden bg-black/40 border border-[#181818] p-4">
               <motion.div
                 variants={glowVariants}
                 initial="initial"
@@ -124,7 +124,11 @@ export function TrendingTokensPreview({ tokens }: { tokens: TrendingToken[] }) {
 
               <button
                 onClick={() => toggleExpanded(token.address)}
-                className="mt-4 w-full flex items-center justify-center gap-2 py-2 px-4 text-sm text-purple-400 hover:text-purple-300 transition-colors cursor-pointer bg-purple-500/10 rounded-md relative z-10"
+                className="mt-4 w-full flex items-center justify-center gap-2 py-2 px-4 text-sm cursor-pointer relative z-10
+                    rounded-lg border border-white/10 
+    bg-gradient-to-r from-blue-500/10 to-purple-500/10 text-white font-bold
+    hover:opacity-80 transition-transform duration-300 shadow-md
+                "
               >
                 {expandedTokens.includes(token.address) ? (
                   <>

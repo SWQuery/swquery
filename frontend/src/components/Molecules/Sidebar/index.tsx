@@ -16,8 +16,8 @@ const Sidebar: React.FC<SidebarProps> = ({ activeItem, onItemClick }) => {
   ]
 
   return (
-    <div className="w-64 h-full bg-black/80 backdrop-blur-md border-r border-black/80">
-      <div className="pt-40">
+    <div className="w-64 h-full bg-transparent backdrop-blur-md border-r border-black/80 pt-32">
+      <div className="pt-8">
         <nav>
           <ul className="space-y-2">
             {menuItems.map((item) => (

@@ -180,7 +180,7 @@ export const Navbar = () => {
               : "bg-transparent"
           }`}
       >
-        <div className="container mx-auto px-6 py-4 flex items-center justify-between">
+        <div className="container mx-auto px-60 py-4 flex items-center justify-between">
           <Link href="/">
             <motion.div
               initial={{ opacity: 0, y: -20 }}

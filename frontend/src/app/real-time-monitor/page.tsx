@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Tab } from "@headlessui/react";
+import { Tab, TabGroup, TabList, TabPanel, TabPanels } from "@headlessui/react";
 import { Navbar } from "@/components/Molecules/Navbar";
 import TokenLaunchTab from "@/components/Molecules/TokenLaunchTab";
 
@@ -22,8 +22,8 @@ export default function RealTimeMonitor() {
           Real-Time Transaction Monitor
         </h1>
 
-        <Tab.Group onChange={setActiveTab}>
-          <Tab.List className="flex space-x-4 mb-8">
+        <TabGroup onChange={setActiveTab}>
+          <TabList className="flex space-x-4 mb-8">
             {tabItems.map((item, index) => (
               <Tab
                 key={index}
@@ -39,20 +39,20 @@ export default function RealTimeMonitor() {
                 {item.label}
               </Tab>
             ))}
-          </Tab.List>
+          </TabList>
 
-          <Tab.Panels>
-            <Tab.Panel>
+          <TabPanels>
+            <TabPanel>
               <TokenLaunchTab />
-            </Tab.Panel>
+            </TabPanel>
             {/* <Tab.Panel>
               <TokenTab />
             </Tab.Panel>
             <Tab.Panel>
               <WalletTab />
             </Tab.Panel> */}
-          </Tab.Panels>
-        </Tab.Group>
+          </TabPanels>
+        </TabGroup>
       </div>
     </>
   );
