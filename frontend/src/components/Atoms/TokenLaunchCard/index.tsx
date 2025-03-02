@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import Image from "next/image";
 import { motion } from "framer-motion";
 import {
   Twitter,
@@ -96,7 +97,7 @@ export default function TokenLaunchCard({ launch }: TokenLaunchCardProps) {
     }
   }, [launch.uri]);
 
-  const currentData = liveData.get(launch.mint) || launch; // Pegando os dados apenas do token correto
+  const currentData = liveData.get(launch.mint) || launch;
 
   return (
     <motion.div
@@ -107,13 +108,13 @@ export default function TokenLaunchCard({ launch }: TokenLaunchCardProps) {
                  shadow-[0_0_25px_#8F00FF55] hover:shadow-[0_0_35px_#E156FFAA] 
                  transition-shadow duration-500 ease-in-out flex gap-6 mb-6"
     >
-      {/* 📌 Coluna 1: Imagem */}
       <div className="flex-shrink-0 w-2/9 flex items-center justify-center">
-        {details?.image ? (
-          <img
+          {details?.image ? (<Image
             src={details.image}
             alt={details.name}
-            className="w-20 h-20 md:w-24 md:h-24 rounded-full object-cover"
+            width={96}
+            height={96} 
+            className="rounded-full object-cover"
           />
         ) : (
           <div className="w-20 h-20 md:w-24 md:h-24 rounded-full bg-gray-600 flex items-center justify-center text-white">
@@ -122,7 +123,6 @@ export default function TokenLaunchCard({ launch }: TokenLaunchCardProps) {
         )}
       </div>
 
-      {/* 📌 Coluna 2: Informações principais */}
       <div className="flex-1">
         <h3 className="text-2xl font-bold mb-2">
           {details?.name || launch.name}
@@ -133,7 +133,6 @@ export default function TokenLaunchCard({ launch }: TokenLaunchCardProps) {
         <p className="text-sm text-gray-400 mb-4">Mint: {launch.mint}</p>
         <p className="text-base text-gray-300 mb-4">{details?.description}</p>
 
-        {/* 🔗 Links */}
         <div className="flex items-center gap-4">
           {details?.twitter && (
             <a
@@ -160,7 +159,6 @@ export default function TokenLaunchCard({ launch }: TokenLaunchCardProps) {
         </div>
       </div>
 
-      {/* 📌 Coluna 3: Dados Dinâmicos (Atualizados em tempo real) */}
       <div className="flex-1 grid grid-cols-1 gap-y-4">
         <p className="text-base flex items-center gap-2">
           <PiggyBank className="text-purple-500" />

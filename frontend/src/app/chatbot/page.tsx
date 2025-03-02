@@ -62,12 +62,8 @@ interface UsageResponse {
   }
 }
 
-/**
- * This component types each line in sequence. 
- * As soon as a line finishes typing, it's passed to the 
- * final rendered Markdown, so headings/formatting remain intact.
- */
-export function TypewriterMarkdown({ content }: { content: string }) {
+
+function TypewriterMarkdown({ content }: { content: string }) {
   const [typedText, setTypedText] = useState("")
 
   useEffect(() => {

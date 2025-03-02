@@ -4,6 +4,7 @@ import { Card } from "@/components/Atoms/card"
 import { motion, AnimatePresence } from "framer-motion"
 import { ArrowDownRight, ArrowUpRight, TrendingUp, ChevronDown, ChevronUp } from "lucide-react"
 import { useState } from "react"
+import Image from "next/image"
 
 interface TrendingToken {
   chainId: string
@@ -91,7 +92,7 @@ export function TrendingTokensPreview({ tokens }: { tokens: TrendingToken[] }) {
               />
               <div className="relative flex items-center gap-4">
                 <div className="relative">
-                  <img
+                  <Image
                     src={token.logoUrl || "/placeholder.svg"}
                     alt={token.name}
                     width={40}
