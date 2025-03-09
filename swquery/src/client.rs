@@ -290,6 +290,12 @@ impl SWqueryClient {
                 println!("New token subscriptions created for {}", user_address);
                 res_type = "payload"
             }
+            "searchTokenByName" => {
+                let token_name = get_required_str_param(params, "token_name")?;
+                let response_unparsed = self.search_token_by_name(token_name).await?;
+                response = to_value_response(response_unparsed).unwrap();
+                res_type = "token_by_name";
+            }
             // "getAssetsByOwner" => {
             //     let owner = get_required_str_param(params, "owner")?;
             //     let response = self.get_assets_by_owner(owner).await?;
@@ -1012,5 +1018,19 @@ impl SWqueryClient {
         println!("Payload: {:#?}", payload);
 
         Self::send_subscription_request(pubkey, payload).await
+    }
+
+    pub async fn search_token_by_name(&self, token_name: &str) -> Result<Value, SdkError> {
+        let client = Client::new();
+        let url = format!("{}/token/token_info/{}", API_URL, token_name);
+
+        let response = self.client
+            .get(&url)
+            .send()
+            .await?
+            .json::<Value>()
+            .await?;
+
+        Ok(response)
     }
 }

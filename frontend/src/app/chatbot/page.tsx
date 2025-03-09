@@ -20,6 +20,7 @@ import { TransactionPreview } from "@/components/Molecules/TransactionPrev/Trans
 import { TrendingTokensPreview } from "@/components/Molecules/TrendingTokenPreview"
 import Sidebar from "@/components/Molecules/Sidebar"
 import { Navbar } from "@/components/Molecules/Navbar"
+import SearchTokenPreview from "@/components/Molecules/SearchTokenPreview"
 
 async function interactChatbot(input_user: string, address: string, apiKey: string) {
   try {
@@ -72,6 +73,7 @@ export default function ChatInterface() {
   const [isPricingModalOpen, setPricingModalOpen] = useState(false)
   const [usageData, setUsageData] = useState<UsageResponse | null>(null)
   const [responseType, setResponseType] = useState<string>("")
+  const [response, setResponse] = useState<any>([])
   const [activeMenuItem, setActiveMenuItem] = useState("chatbot")
 
   const { connected, publicKey } = useWallet()
@@ -79,6 +81,7 @@ export default function ChatInterface() {
   const currentChat = chats.find((chat) => chat.id === currentChatId)
 
   function mapHeliusResponseToPreviewData(transactions: any[]) {
+    console.log("transactions", transactions)
     const fullTransactions: any = []
     transactions.forEach((tx: any) => {
       tx.details?.transfers?.forEach((transfer: any) => {
@@ -138,6 +141,8 @@ export default function ChatInterface() {
     setIsLoading(true)
     try {
       const json = await interactChatbot(prompt, publicKey.toString(), apiKey)
+      console.log("jeison res", json.response)
+      console.log("jeison report", json.report)
       const llmAnswer = json.report || "Here are the transactions I found:"
       const newChat: Chat = {
         id: Date.now(),
@@ -150,6 +155,7 @@ export default function ChatInterface() {
       setChats((prev) => [...prev, newChat])
       setCurrentChatId(newChat.id)
       setResponseType(json.response_type)
+      setResponse(json.response);
       const heliusTxs = Array.isArray(json.response) ? json.response : []
       setFetchedTransactions(heliusTxs)
       setPrompt("")
@@ -193,6 +199,8 @@ export default function ChatInterface() {
   }, [fetchUsageData, isPricingModalOpen])
 
   const handleResponseType = (responseType: string) => {
+    console.log("previs", previewData)
+    console.log("fetchedis", fetchedTransactions)
     switch (responseType) {
       case "transactions":
         return (
@@ -207,6 +215,14 @@ export default function ChatInterface() {
           <>
             <h3 className="text-lg font-medium text-gray-200 mb-4">Token Preview</h3>
             <TrendingTokensPreview tokens={fetchedTransactions} />
+          </>
+        )
+      
+      case "token_by_name":
+        return (
+          <>
+            <h3 className="text-lg font-medium text-gray-200 mb-4">Token Preview</h3>
+            <SearchTokenPreview tokenData={response} />
           </>
         )
     }
