@@ -19,7 +19,7 @@ use {
         credits::{buy_credits, refund_credits},
         packages::{get_packages, get_user_usage, verify_transaction},
         users::{create_user, get_usage, get_user_by_pubkey, get_users, manage_subscription},
-        token::get_token_info
+        token::{get_token_info, analyze_rug_pull_risk}
     },
     std::time::Duration,
     tower_http::cors::{Any, CorsLayer},
@@ -56,7 +56,8 @@ async fn main() {
         .route("/usage", post(get_user_usage))
         .route("/:pubkey/usage", get(get_usage));
     let token_router = Router::new()
-        .route("/token_info/:name", get(get_token_info));
+        .route("/token_info/:name", get(get_token_info))
+        .route("/analyze_rug_pull_risk", post(analyze_rug_pull_risk));
 
     let app = Router::new()
         .route("/health", get(|| async { "ok" }))
