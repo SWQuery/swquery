@@ -287,7 +287,6 @@ impl SWqueryClient {
                 }
 
                 self.new_token_subscriptions(user_address);
-                println!("New token subscriptions created for {}", user_address);
                 res_type = "payload"
             }
             "searchTokenByName" => {
@@ -295,6 +294,12 @@ impl SWqueryClient {
                 let response_unparsed = self.search_token_by_name(token_name).await?;
                 response = to_value_response(response_unparsed).unwrap();
                 res_type = "token_by_name";
+            }
+            "analyzeRugPullRisk" => {
+                let token_address = get_required_str_param(params, "token_address")?;
+                let response_unparsed = self.analyze_rug_pull_risk(token_address).await?;
+                response = to_value_response(response_unparsed).unwrap();
+                res_type = "rug_pull_risk";
             }
             // "getAssetsByOwner" => {
             //     let owner = get_required_str_param(params, "owner")?;
@@ -1031,6 +1036,20 @@ impl SWqueryClient {
             .json::<Value>()
             .await?;
 
+        Ok(response)
+    }
+
+    pub async fn analyze_rug_pull_risk(&self, token_address: &str) -> Result<Value, SdkError> {
+        let url = format!("{}/token/analyze_rug_pull_risk", API_URL);
+    
+        let response = self.client
+            .post(&url)
+            .json(&serde_json::json!({ "token_address": token_address }))
+            .send()
+            .await?
+            .json::<Value>()
+            .await?;
+    
         Ok(response)
     }
 }

@@ -123,18 +123,19 @@ pub async fn analyze_rug_pull_risk(
     let holders = holders_list.unwrap_or(&empty_vec);
 
     let mut risk_score = 0;
+    let mut explanation = String::new();
 
     if liquidity_locked {
-        println!("✅ Liquidity locked.");
+        explanation.push_str("✅ Liquidity locked.\n");
     } else {
-        println!("⚠️ Liquidity not locked! High risk of rug pull.");
+        explanation.push_str("⚠️ Liquidity not locked! High risk of rug pull.\n");
         risk_score += 3;
     }
 
     if contract_audited {
-        println!("✅ Contract audited.");
+        explanation.push_str("✅ Contract audited.\n");
     } else {
-        println!("⚠️ Contract not audited! Medium risk.");
+        explanation.push_str("⚠️ Contract not audited! Medium risk.\n");
         risk_score += 2;
     }
 
@@ -143,22 +144,22 @@ pub async fn analyze_rug_pull_risk(
     if let Some(top_holder) = holders.iter().max_by_key(|entry| entry.get(1).and_then(|v| v.as_u64()).unwrap_or(0)) {
         if let Some(amount) = top_holder.get(1).and_then(|v| v.as_u64()) {
             top_holder_percent = (amount as f64 / total_supply) * 100.0;
-            println!(
-                "Top holder ({}) holds {:.2}% of the supply.",
+            explanation.push_str(&format!(
+                "Top holder ({}) holds {:.2}% of the supply.\n",
                 top_holder.get(0).and_then(|v| v.as_str()).unwrap_or("Unknown"),
                 top_holder_percent
-            );
+            ));
         }
     }
 
     if top_holder_percent > 50.0 {
-        println!("⚠️ A single holder holds more than 50%! High risk.");
+        explanation.push_str("⚠️ A single holder holds more than 50%! High risk.\n");
         risk_score += 4;
     } else if top_holder_percent > 20.0 {
-        println!("⚠️ A holder has more than 20%, caution.");
+        explanation.push_str("⚠️ A holder has more than 20%, caution.\n");
         risk_score += 2;
     } else {
-        println!("✅ Reasonable distribution.");
+        explanation.push_str("✅ Reasonable distribution.\n");
     }
 
     let risk_level = match risk_score {
@@ -167,11 +168,13 @@ pub async fn analyze_rug_pull_risk(
         _ => "High risk of rug pull! ❌",
     };
 
+    explanation.push_str(&format!("Token analysis {}: {}", payload.token_address, risk_level));
+
     (
         StatusCode::OK,
         Json(RugPullResponse {
             risk_level: risk_level.to_string(),
-            explanation: format!("Token analysis {}: {}", payload.token_address, risk_level),
+            explanation,
         }),
     )
 }
