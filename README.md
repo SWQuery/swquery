@@ -14,10 +14,10 @@
 
 - [ ] Multiple Agents
 - [ ] Jupiter Integration
-- [ ] Rug Check
+- [X] Rug Check
 - [ ] Social Media Check
 - [ ] Rig
-- [ ] Search tokens
+- [X] Search tokens
 - [ ] New RPC Methods
 
 

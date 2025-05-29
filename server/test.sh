@@ -83,7 +83,7 @@ check_response "$response" "$status" 200
 # Test chatbot interaction
 echo "Chatbot interaction..."
 response=$(curl -s -w "\n%{http_code}" -H "Content-Type: application/json" -H "x-api-key: $API_KEY" -X POST -d "{
-    \"input_user\": \"What was the trending tokens today?\",
+    \"input_user\": \"Please analyze the social media of account swquery\",
     \"address\": \"$TEST_PUBKEY\"
 }" "$BASE_URL/chatbot/interact")
 status=$(echo "$response" | tail -n1)
