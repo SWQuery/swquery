@@ -1,20 +1,24 @@
-**🔍 SWquery: Smart Wallet Query**
-
-<h1 align="center">
-    <a href="https://github.com/swquery">
-        <img src=".docs/5be57833-5a4f-41a1-849c-260b660df496-2.png" width="200px" alt="SWquery Logo">
-    </a>
-</h1>
+# SWquery
 
 <p align="center">
     <i>"Connecting intelligence and accessibility to the world of blockchain transactions."</i>
 </p>
 
 <p align="center">
-    <img src=".docs/landing.png" width="800px" alt="SWquery Banner">
+    <img src=".docs/swqueryhorizontal.jpg" alt="SWquery Banner">
 </p>
 
 ---
+
+## **Roadmap**
+
+- [ ] Multiple Agents
+- [ ] Jupiter Integration
+- [X] Rug Check
+- [ ] Social Media Check
+- [X] Search tokens
+- [ ] New RPC Methods
+
 
 ## **📜 About the Project**
 

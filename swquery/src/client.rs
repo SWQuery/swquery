@@ -8,10 +8,10 @@ use {
 };
 
 // "https://api.swquery.xyz/agent/generate-query";
-const API_URL: &str = "https://api.swquery.xyz";
-const AGENT_API_URL: &str = "https://api.swquery.xyz/agent/generate-query";
-// const API_URL: &str = "http://localhost:5500";
-// const AGENT_API_URL: &str = "http://localhost:5500/agent/generate-query";
+// const API_URL: &str = "https://api.swquery.xyz";
+// const AGENT_API_URL: &str = "https://api.swquery.xyz/agent/generate-query";
+const API_URL: &str = "http://localhost:5500";
+const AGENT_API_URL: &str = "http://localhost:5500/agent/generate-query";
 
 /// Enum to represent the Solana network.
 #[derive(Debug, Clone, Copy, Default)]
@@ -287,8 +287,19 @@ impl SWqueryClient {
                 }
 
                 self.new_token_subscriptions(user_address);
-                println!("New token subscriptions created for {}", user_address);
                 res_type = "payload"
+            }
+            "searchTokenByName" => {
+                let token_name = get_required_str_param(params, "token_name")?;
+                let response_unparsed = self.search_token_by_name(token_name).await?;
+                response = to_value_response(response_unparsed).unwrap();
+                res_type = "token_by_name";
+            }
+            "analyzeRugPullRisk" => {
+                let token_address = get_required_str_param(params, "token_address")?;
+                let response_unparsed = self.analyze_rug_pull_risk(token_address).await?;
+                response = to_value_response(response_unparsed).unwrap();
+                res_type = "rug_pull_risk";
             }
             // "getAssetsByOwner" => {
             //     let owner = get_required_str_param(params, "owner")?;
@@ -1012,5 +1023,33 @@ impl SWqueryClient {
         println!("Payload: {:#?}", payload);
 
         Self::send_subscription_request(pubkey, payload).await
+    }
+
+    pub async fn search_token_by_name(&self, token_name: &str) -> Result<Value, SdkError> {
+        let client = Client::new();
+        let url = format!("{}/token/token_info/{}", API_URL, token_name);
+
+        let response = self.client
+            .get(&url)
+            .send()
+            .await?
+            .json::<Value>()
+            .await?;
+
+        Ok(response)
+    }
+
+    pub async fn analyze_rug_pull_risk(&self, token_address: &str) -> Result<Value, SdkError> {
+        let url = format!("{}/token/analyze_rug_pull_risk", API_URL);
+    
+        let response = self.client
+            .post(&url)
+            .json(&serde_json::json!({ "token_address": token_address }))
+            .send()
+            .await?
+            .json::<Value>()
+            .await?;
+    
+        Ok(response)
     }
 }

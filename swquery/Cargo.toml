@@ -1,7 +1,7 @@
 [package]
 name = "swquery"
 description = "A natural language query for solana wallets"
-version = "0.0.2"
+version = "0.0.3"
 edition = "2021"
 authors = [
     "Arthur Bretas <arthurbretas1@gmail.com>",
