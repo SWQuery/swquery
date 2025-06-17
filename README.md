@@ -16,7 +16,6 @@
 - [ ] Jupiter Integration
 - [X] Rug Check
 - [ ] Social Media Check
-- [ ] Rig
 - [X] Search tokens
 - [ ] New RPC Methods
 
